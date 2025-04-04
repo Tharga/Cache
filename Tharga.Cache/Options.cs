@@ -2,7 +2,7 @@
 
 public record Options
 {
-    public TimeSpan? DefaultFreshSpan { get; set; }
+    //public TimeSpan? DefaultFreshSpan { get; set; }
     //public EvictionPolicy? EvictionPolicy { get; set; }
     //public bool StaleWhileRevalidate { get; set; }
     //public long? MaxSize { get; set; }

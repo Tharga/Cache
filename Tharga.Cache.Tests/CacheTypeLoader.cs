@@ -1,6 +1,4 @@
-﻿using System.Reflection.Emit;
-using Microsoft.Extensions.Logging;
-using Moq;
+﻿using Moq;
 
 namespace Tharga.Cache.Tests;
 
@@ -19,10 +17,10 @@ internal static class CacheTypeLoader
 
         //var serviceProvider = new Mock<IServiceProvider>();
         //var hostEnvironment = new Mock<IHostEnvironment>();
-        var loggerFactory = new Mock<ILoggerFactory>(MockBehavior.Loose);
+        //var loggerFactory = new Mock<ILoggerFactory>(MockBehavior.Loose);
         var options = new Options
         {
-            DefaultFreshSpan = defaultFreshSpan,
+            //DefaultFreshSpan = defaultFreshSpan,
             //EvictionPolicy = evictionPolicy,
             //StaleWhileRevalidate = staleWhileRevalidate,
         };

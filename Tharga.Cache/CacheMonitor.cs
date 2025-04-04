@@ -35,8 +35,6 @@ internal class CacheMonitor : IManagedCacheMonitor
                     }
                 }
             }
-            //Datas = new Dictionary<string, object> { { key, data } },
-            //Size = bytes.Length
         }, (a, b) =>
         {
             Debugger.Break();
@@ -44,6 +42,11 @@ internal class CacheMonitor : IManagedCacheMonitor
         });
 
         DataSetEvent?.Invoke(this, new DataSetEventArgs());
+    }
+
+    public void Drop(Type type, Key key)
+    {
+        throw new NotImplementedException();
     }
 
     public event EventHandler<DataSetEventArgs> DataSetEvent;
@@ -58,17 +61,18 @@ public interface IPersist
 {
     Task<(bool Found, T Data)> GetAsync<T>(Key key);
     Task SetAsync<T>(Key key, T data);
+    Task<(bool Found, T Data)> DropAsync<T>(Key key);
 }
 
 public interface IMemory : IPersist
 {
 }
-public interface IRedis : IPersist
-{
-}
-public interface IMongoDB : IPersist
-{
-}
+//public interface IRedis : IPersist
+//{
+//}
+//public interface IMongoDB : IPersist
+//{
+//}
 internal class Memory : IMemory
 {
     private readonly ConcurrentDictionary<string, object> _datas = new();
@@ -83,6 +87,12 @@ internal class Memory : IMemory
     {
         _datas.AddOrUpdate(key, data, (_, _) => data);
         return Task.CompletedTask;
+    }
+
+    public async Task<(bool Found, T Data)> DropAsync<T>(Key key)
+    {
+        if (_datas.TryRemove(key, out var data)) return (true, (T)data);
+        return (false, (T)default);
     }
 }
 

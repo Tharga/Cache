@@ -14,6 +14,8 @@ internal abstract class CacheBase : ICache
     }
 
     public event EventHandler<DataSetEventArgs> DataSetEvent;
+    public event EventHandler<DataGetEventArgs> DataGetEvent;
+    public event EventHandler<DataDropEventArgs> DataDropEvent;
 
     public async Task<T> GetAsync<T>(Key key, Func<Task<T>> fetch)
     {
@@ -23,6 +25,7 @@ internal abstract class CacheBase : ICache
 
         if (result.Found)
         {
+            DataGetEvent?.Invoke(this, new DataGetEventArgs());
             return result.Data;
         }
 
@@ -31,6 +34,7 @@ internal abstract class CacheBase : ICache
         await _persist.SetAsync(key, data);
 
         DataSetEvent?.Invoke(this, new DataSetEventArgs());
+        DataGetEvent?.Invoke(this, new DataGetEventArgs());
         _cacheMonitor.Add(typeof(T), key, data);
 
         return data;
@@ -41,6 +45,11 @@ internal abstract class CacheBase : ICache
         key = BuildKey<T>(key);
 
         var result = await _persist.GetAsync<T>(key);
+        if (result.Found)
+        {
+            DataGetEvent?.Invoke(this, new DataGetEventArgs());
+        }
+
         return result.Data;
     }
 
@@ -54,8 +63,19 @@ internal abstract class CacheBase : ICache
         _cacheMonitor.Add(typeof(T), key, data);
     }
 
-    public async Task DropAsync<T>(Key key)
+    public async Task<T> DropAsync<T>(Key key)
     {
+        key = BuildKey<T>(key);
+
+        var item = await _persist.DropAsync<T>(key);
+        if (item.Found)
+        {
+            DataDropEvent?.Invoke(this, new DataDropEventArgs());
+            _cacheMonitor.Drop(typeof(T), key);
+            return item.Data;
+        }
+
+        return default;
     }
 
     protected virtual string BuildKey<T>(string key)

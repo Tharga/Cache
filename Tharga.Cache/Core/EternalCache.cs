@@ -1,4 +1,4 @@
-﻿namespace Tharga.Cache;
+﻿namespace Tharga.Cache.Core;
 
 internal class EternalCache : CacheBase, IEternalCache, IScopeCache
 {
@@ -6,4 +6,6 @@ internal class EternalCache : CacheBase, IEternalCache, IScopeCache
         : base(cacheMonitor, persist, options)
     {
     }
+
+    protected override TimeSpan DefaultFreshSpan => TimeSpan.MaxValue;
 }

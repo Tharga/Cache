@@ -1,4 +1,4 @@
-﻿namespace Tharga.Cache;
+﻿namespace Tharga.Cache.Core;
 
 internal class GenericTimeCache : TimeCacheBase
 {

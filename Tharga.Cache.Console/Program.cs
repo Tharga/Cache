@@ -12,6 +12,14 @@ serviceCollection.RegisterCache(o =>
 {
     //o.DefaultFreshSpan = TimeSpan.FromMinutes(15);
     //o.EvictionPolicy = EvictionPolicy.ARC;
+
+    o.RegisterType<string>(s =>
+    {
+        s.StaleWhileRevalidate = false;
+        s.MaxSize = 100;
+        s.MaxCount = 10;
+    });
+
 });
 var serviceProvider = serviceCollection.BuildServiceProvider();
 

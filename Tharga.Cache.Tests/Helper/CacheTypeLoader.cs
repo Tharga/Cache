@@ -27,6 +27,11 @@ internal static class CacheTypeLoader
             //StaleWhileRevalidate = staleWhileRevalidate,
         };
 
+        options.RegisterType<string>(s =>
+        {
+            s.StaleWhileRevalidate = staleWhileRevalidate;
+        });
+
         ICache cache;
         switch (cacheType.Name)
         {

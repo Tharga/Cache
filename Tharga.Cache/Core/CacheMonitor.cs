@@ -1,5 +1,4 @@
 ﻿using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.Text.Json;
 
 namespace Tharga.Cache.Core;
@@ -8,7 +7,7 @@ internal class CacheMonitor : IManagedCacheMonitor
 {
     private readonly ConcurrentDictionary<Type, CacheTypeInfo> _caches = new();
 
-    public void Add(Type type, Key key, object data)
+    public void Set(Type type, Key key, object data)
     {
         var bytes = JsonSerializer.SerializeToUtf8Bytes(data);
 
@@ -24,13 +23,28 @@ internal class CacheMonitor : IManagedCacheMonitor
                     }
                 }
             }
-        }, (a, b) =>
+        }, (_, b) =>
         {
-            Debugger.Break();
+            b.Items.TryAdd(key, new CacheItemInfo
+            {
+                Size = bytes.Length
+            });
             return b;
         });
 
-        DataSetEvent?.Invoke(this, new DataSetEventArgs());
+        DataSetEvent?.Invoke(this, new DataSetEventArgs(key, data));
+    }
+
+    public void Get(Type type, Key key)
+    {
+        if (_caches.TryGetValue(type, out var info))
+        {
+            info.Items.FirstOrDefault(x => x.Key.Equals(key)).Value.SetAccess();
+        }
+        else
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public void Drop(Type type, Key key)
@@ -38,8 +52,15 @@ internal class CacheMonitor : IManagedCacheMonitor
         if (_caches.TryGetValue(type, out var info))
         {
             var redused = info.Items.Where(x => !x.Key.Equals(key)).ToDictionary();
-            var updated = info with { Items = redused };
-            _caches.TryUpdate(type, updated, info);
+            if (redused.Any())
+            {
+                var updated = info with { Items = redused };
+                _caches.TryUpdate(type, updated, info);
+            }
+            else
+            {
+                _caches.TryRemove(type, out _);
+            }
         }
         else
         {
@@ -49,7 +70,7 @@ internal class CacheMonitor : IManagedCacheMonitor
 
     public event EventHandler<DataSetEventArgs> DataSetEvent;
 
-    public IEnumerable<CacheTypeInfo> Get()
+    public IEnumerable<CacheTypeInfo> GetInfos()
     {
         return _caches.Values;
     }

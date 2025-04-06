@@ -29,11 +29,11 @@ public class FirstCallTests
 
         //Assert
         _dataSetEventCount.Should().Be(1);
-        _dataGetEventCount.Should().Be(1);
+        _dataGetEventCount.Should().Be(0);
         _dataDropEventCount.Should().Be(0);
         _monitorSetEventCount.Should().Be(1);
         item.Should().Be(value);
-        result.Monitor.Get().SelectMany(x => x.Items).Sum(x => x.Value.Size).Should().BeGreaterThan(0);
+        result.Monitor.GetInfos().SelectMany(x => x.Items).Sum(x => x.Value.Size).Should().BeGreaterThan(0);
     }
 
     [Theory]
@@ -57,7 +57,7 @@ public class FirstCallTests
         _dataDropEventCount.Should().Be(0);
         _monitorSetEventCount.Should().Be(0);
         item.Should().BeNull();
-        result.Monitor.Get().SelectMany(x => x.Items).Sum(x => x.Value.Size).Should().Be(0);
+        result.Monitor.GetInfos().SelectMany(x => x.Items).Sum(x => x.Value.Size).Should().Be(0);
     }
 
     [Theory]
@@ -83,7 +83,7 @@ public class FirstCallTests
         _monitorSetEventCount.Should().Be(1);
         var item = await sut.GetAsync("Key", () => Task.FromResult("crap"));
         item.Should().Be(value);
-        result.Monitor.Get().SelectMany(x => x.Items).Sum(x => x.Value.Size).Should().BeGreaterThan(0);
+        result.Monitor.GetInfos().SelectMany(x => x.Items).Sum(x => x.Value.Size).Should().BeGreaterThan(0);
     }
 
     [Theory]
@@ -107,6 +107,6 @@ public class FirstCallTests
         _dataDropEventCount.Should().Be(0);
         _monitorSetEventCount.Should().Be(0);
         item.Should().BeNull();
-        result.Monitor.Get().SelectMany(x => x.Items).Sum(x => x.Value.Size).Should().Be(0);
+        result.Monitor.GetInfos().SelectMany(x => x.Items).Sum(x => x.Value.Size).Should().Be(0);
     }
 }

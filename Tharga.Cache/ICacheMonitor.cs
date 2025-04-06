@@ -4,5 +4,5 @@ public interface ICacheMonitor
 {
     public event EventHandler<DataSetEventArgs> DataSetEvent;
 
-    IEnumerable<CacheTypeInfo> Get();
+    IEnumerable<CacheTypeInfo> GetInfos();
 }

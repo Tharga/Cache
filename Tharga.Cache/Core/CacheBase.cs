@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Tharga.Cache.Core;
+﻿namespace Tharga.Cache.Core;
 
 internal abstract class CacheBase : ICache
 {
@@ -23,11 +21,10 @@ internal abstract class CacheBase : ICache
 
     public virtual Task<T> GetAsync<T>(Key key, Func<Task<T>> fetch)
     {
-        return GetAsync(key, fetch, DefaultFreshSpan);
+        return GetAsyncX(key, fetch, DefaultFreshSpan);
     }
 
-    //TODO: Rename and protect
-    public virtual async Task<T> GetAsync<T>(Key key, Func<Task<T>> fetch, TimeSpan freshSpan)
+    protected async Task<T> GetAsyncX<T>(Key key, Func<Task<T>> fetch, TimeSpan freshSpan)
     {
         key = BuildKey<T>(key);
 
@@ -35,17 +32,39 @@ internal abstract class CacheBase : ICache
 
         if (result.IsValid())
         {
-            DataGetEvent?.Invoke(this, new DataGetEventArgs());
+            OnGet<T>(key);
             return result.GetData<T>();
         }
 
+        if (GetTypeOptions<T>().StaleWhileRevalidate && result != null)
+        {
+            var response = result.GetData<T>();
+            OnGet<T>(key);
+
+            Task.Run(async () =>
+            {
+                await LoadData(key, fetch, freshSpan);
+            });
+
+            return response;
+        }
+
+        return await LoadData(key, fetch, freshSpan);
+    }
+
+    private TypeOptions GetTypeOptions<T>()
+    {
+        var options = _options.Get<T>();
+        return options;
+    }
+
+    private async Task<T> LoadData<T>(Key key, Func<Task<T>> fetch, TimeSpan freshSpan)
+    {
         var data = await fetch.Invoke();
 
         await _persist.SetAsync(key, data, freshSpan);
-
-        DataSetEvent?.Invoke(this, new DataSetEventArgs());
-        DataGetEvent?.Invoke(this, new DataGetEventArgs());
-        _cacheMonitor.Add(typeof(T), key, data);
+        DropWhenStale<T>(key, freshSpan);
+        OnSet(key, data);
 
         return data;
     }
@@ -57,26 +76,35 @@ internal abstract class CacheBase : ICache
         var result = await _persist.GetAsync<T>(key);
         if (result.IsValid())
         {
-            DataGetEvent?.Invoke(this, new DataGetEventArgs());
+            var response = result.GetData<T>();
+            OnGet<T>(key);
+
+            return response;
         }
 
-        return result == null ? default : result.GetData<T>();
+        if (GetTypeOptions<T>().StaleWhileRevalidate && result != null)
+        {
+            var response = result.GetData<T>();
+            OnGet<T>(key);
+
+            return response;
+        }
+
+        return default;
     }
 
     public virtual Task SetAsync<T>(Key key, T data)
     {
-        return SetAsync(key, data, DefaultFreshSpan);
+        return SetAsyncX(key, data, DefaultFreshSpan);
     }
 
-    //TODO: Rename and protect
-    public virtual async Task SetAsync<T>(Key key, T data, TimeSpan freshSpan)
+    protected async Task SetAsyncX<T>(Key key, T data, TimeSpan freshSpan)
     {
         key = BuildKey<T>(key);
 
         await _persist.SetAsync(key, data, freshSpan);
-
-        DataSetEvent?.Invoke(this, new DataSetEventArgs());
-        _cacheMonitor.Add(typeof(T), key, data);
+        DropWhenStale<T>(key, freshSpan);
+        OnSet(key, data);
     }
 
     public virtual async Task<T> DropAsync<T>(Key key)
@@ -86,8 +114,7 @@ internal abstract class CacheBase : ICache
         var item = await _persist.DropAsync<T>(key);
         if (item.IsValid())
         {
-            DataDropEvent?.Invoke(this, new DataDropEventArgs());
-            _cacheMonitor.Drop(typeof(T), key);
+            OnDrop<T>(key, item);
             return item.GetData<T>();
         }
 
@@ -98,5 +125,39 @@ internal abstract class CacheBase : ICache
     {
         var k = $"{typeof(T).Name}.{key}";
         return k;
+    }
+
+    private void DropWhenStale<T>(Key key, TimeSpan freshSpan)
+    {
+        if (!GetTypeOptions<T>().StaleWhileRevalidate)
+        {
+            Task.Run(async () =>
+            {
+                await Task.Delay(freshSpan);
+                var item = await _persist.DropAsync<T>(key);
+                if (item != null)
+                {
+                    OnDrop<T>(key, item);
+                }
+            });
+        }
+    }
+
+    private void OnSet<T>(Key key, T data)
+    {
+        DataSetEvent?.Invoke(this, new DataSetEventArgs(key, data));
+        _cacheMonitor.Set(typeof(T), key, data);
+    }
+
+    private void OnGet<T>(Key key)
+    {
+        DataGetEvent?.Invoke(this, new DataGetEventArgs(key));
+        _cacheMonitor.Get(typeof(T), key);
+    }
+
+    private void OnDrop<T>(Key key, CacheItem item)
+    {
+        DataDropEvent?.Invoke(this, new DataDropEventArgs(key, item.Data));
+        _cacheMonitor.Drop(typeof(T), key);
     }
 }

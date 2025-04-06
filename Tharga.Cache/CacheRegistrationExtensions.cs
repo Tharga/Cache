@@ -23,13 +23,13 @@ public static class CacheRegistrationExtensions
         {
             //var hostEnvironment = s.GetService<IHostEnvironment>();
             var cacheMonitor = new CacheMonitor(); //s, hostEnvironment, o);
-            //cacheMonitor.Add();
+            //cacheMonitor.Set();
             return cacheMonitor;
         });
 
         serviceCollection.AddSingleton<IPersist>(s =>
         {
-            //TODO: Add configuration to pick correct type of persist.
+            //TODO: Set configuration to pick correct type of persist.
             return new Memory();
         });
 

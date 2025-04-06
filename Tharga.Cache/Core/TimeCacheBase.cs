@@ -1,4 +1,6 @@
-﻿namespace Tharga.Cache.Core;
+﻿using System.Text.RegularExpressions;
+
+namespace Tharga.Cache.Core;
 
 internal abstract class TimeCacheBase : CacheBase, ITimeCache
 {
@@ -8,6 +10,17 @@ internal abstract class TimeCacheBase : CacheBase, ITimeCache
     }
 
     protected override TimeSpan DefaultFreshSpan => TimeSpan.FromMinutes(60);
+
+    public Task<T> GetAsync<T>(Key key, Func<Task<T>> fetch, TimeSpan freshSpan)
+    {
+        return GetAsyncX(key, fetch, freshSpan);
+    }
+
+    public Task SetAsync<T>(Key key, T data, TimeSpan freshSpan)
+    {
+        return SetAsyncX(key, data, freshSpan);
+    }
+
 
     //public virtual async Task<T> GetAsync<T>(Key key, Func<Task<T>> fetch, TimeSpan freshSpan)
     //{
@@ -27,7 +40,7 @@ internal abstract class TimeCacheBase : CacheBase, ITimeCache
 
     //    //DataSetEvent?.Invoke(this, new DataSetEventArgs());
     //    //DataGetEvent?.Invoke(this, new DataGetEventArgs());
-    //    _cacheMonitor.Add(typeof(T), key, data);
+    //    _cacheMonitor.Set(typeof(T), key, data);
 
     //    return data;
     //}

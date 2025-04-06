@@ -12,6 +12,7 @@ internal static class CacheItemExtensions
     public static T GetData<T>(this CacheItem item)
     {
         if (item == null) return default;
+        //item.SetAccess();
         return (T)item.Data;
     }
 }

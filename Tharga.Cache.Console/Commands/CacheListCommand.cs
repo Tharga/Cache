@@ -14,11 +14,12 @@ internal class CacheListCommand : AsyncActionCommandBase
 
     public override async Task InvokeAsync(string[] param)
     {
-        var items = _cacheMonitor.Get().Select(x => new[]
+        var items = _cacheMonitor.GetInfos().Select(x => new[]
         {
             $"{x.Type}",
             $"{x.Items.Sum(y => y.Value.Size)}",
             $"{x.Items.Count}"
+            //TODO: Add count
         });
         OutputTable(["Type", "Size", "Count"], items);
     }

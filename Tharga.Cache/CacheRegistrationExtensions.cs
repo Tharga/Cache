@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using StackExchange.Redis;
 using Tharga.Cache.Core;
 
 namespace Tharga.Cache;
@@ -9,14 +11,31 @@ public static class CacheRegistrationExtensions
     {
         var o = new Options
         {
-            //ConnectionStringLoader = serviceProvider =>
-            //{
-            //    var configuration = serviceProvider.GetService<IConfiguration>();
-            //    var connectionString = configuration?.GetSection("RedisCache:ConnectionString").Value;
-            //    return connectionString;
-            //},
+            ConnectionStringLoader = serviceProvider =>
+            {
+                var configuration = serviceProvider.GetService<IConfiguration>();
+                var connectionString = configuration?.GetSection("RedisCache:ConnectionString").Value;
+                return connectionString;
+            },
         };
         options?.Invoke(o);
+
+        serviceCollection.AddSingleton<IConnectionMultiplexer>(sp =>
+        {
+            var configuration = o.ConnectionStringLoader?.Invoke(sp);
+            if (configuration == "LOCAL")
+            {
+                throw new NotImplementedException();
+            }
+            else if (configuration == "DISABLED")
+            {
+                throw new NotImplementedException();
+            }
+            else
+            {
+                return ConnectionMultiplexer.Connect(configuration);
+            }
+        });
 
         serviceCollection.AddSingleton<ICacheMonitor>(s => s.GetService<IManagedCacheMonitor>());
         serviceCollection.AddSingleton<IManagedCacheMonitor>(s =>

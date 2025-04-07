@@ -6,6 +6,11 @@
       "Projects": {
         "Tharga.Cache.Console": {}
       }
+    },
+    "Web": {
+      "Projects": {
+        "Tharga.Cache.Web": {}
+      }
     }
   }
 }

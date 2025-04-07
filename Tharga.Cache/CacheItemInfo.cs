@@ -2,14 +2,14 @@
 
 public record CacheItemInfo
 {
-    private int _count;
+    private int _accessCount;
 
     public required int Size { get; init; }
-    public int Count => _count;
+    public int AccessCount => _accessCount;
 
     public CacheItemInfo SetAccess()
     {
-        _count++;
+        _accessCount++;
         return this;
     }
 }

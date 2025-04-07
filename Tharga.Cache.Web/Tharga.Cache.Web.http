@@ -1,0 +1,6 @@
+@Tharga.Cache.Web_HostAddress = http://localhost:5148
+
+GET {{Tharga.Cache.Web_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

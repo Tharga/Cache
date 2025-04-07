@@ -155,7 +155,8 @@ internal abstract class CacheBase : ICache
     {
         //NOTE: Evict if needed
         var result = _cacheMonitor.GetInfos().FirstOrDefault(x => x.Type == typeof(T));
-        if (result?.Items.Count >= GetTypeOptions<T>().MaxCount)
+        if (result?.Items.Count >= GetTypeOptions<T>().MaxCount
+            || result?.Items.Sum(x => x.Value.Size) + data.ToSize() >= GetTypeOptions<T>().MaxSize)
         {
             switch (GetTypeOptions<T>().EvictionPolicy)
             {

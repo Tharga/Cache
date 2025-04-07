@@ -1,5 +1,4 @@
 ﻿using System.Collections.Concurrent;
-using System.Text.Json;
 
 namespace Tharga.Cache.Core;
 
@@ -9,7 +8,7 @@ internal class CacheMonitor : IManagedCacheMonitor
 
     public void Set(Type type, Key key, object data)
     {
-        var bytes = JsonSerializer.SerializeToUtf8Bytes(data);
+        var size = data.ToSize();
 
         _caches.AddOrUpdate(type, new CacheTypeInfo
         {
@@ -19,7 +18,7 @@ internal class CacheMonitor : IManagedCacheMonitor
                 {
                     key, new CacheItemInfo
                     {
-                        Size = bytes.Length,
+                        Size = size,
                     }
                 }
             }
@@ -27,7 +26,7 @@ internal class CacheMonitor : IManagedCacheMonitor
         {
             b.Items.TryAdd(key, new CacheItemInfo
             {
-                Size = bytes.Length
+                Size = size
             });
             return b;
         });

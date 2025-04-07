@@ -1,8 +1,40 @@
-﻿using FluentAssertions;
+﻿using System.Diagnostics;
+using FluentAssertions;
+using Tharga.Cache.Core;
 using Tharga.Cache.Tests.Helper;
 using Xunit;
 
 namespace Tharga.Cache.Tests;
+
+public class UnloadDataTests
+{
+    [Fact]
+    public async Task UnloadOnCount()
+    {
+        //Arrange
+        var dataDropEventCount = 0;
+        var options = new Options();
+        options.RegisterType<string>(s => s.MaxCount = 3);
+        var cacheMonitor = new CacheMonitor();
+        var sut = new EternalCache(cacheMonitor, new Memory(), options);
+        sut.DataDropEvent += (s, e) =>
+        {
+            dataDropEventCount++;
+        };
+        await sut.SetAsync("a", "aa");
+        await sut.SetAsync("b", "bb");
+        await sut.SetAsync("c", "cc");
+
+        //Act
+        await sut.SetAsync("d", "dd");
+
+        //Assert
+        dataDropEventCount.Should().Be(1);
+        //(await sut.GetAsync<string>().toas).
+        cacheMonitor.GetInfos().Single().Items.Count.Should().Be(3);
+        cacheMonitor.GetInfos().SelectMany(x => x.Items).Sum(x => x.Value.Size).Should().BeGreaterThan(0);
+    }
+}
 
 public class SecondCallTests
 {

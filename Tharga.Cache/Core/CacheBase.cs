@@ -19,6 +19,14 @@ internal abstract class CacheBase : ICache
 
     protected abstract TimeSpan DefaultFreshSpan { get; }
 
+    public async IAsyncEnumerable<T> GetAsync<T>()
+    {
+        await foreach (var item in _persist.GetAsync<T>())
+        {
+            yield return item.GetData<T>();
+        }
+    }
+
     public virtual Task<T> GetAsync<T>(Key key, Func<Task<T>> fetch)
     {
         return GetAsyncX(key, fetch, DefaultFreshSpan);
@@ -64,7 +72,7 @@ internal abstract class CacheBase : ICache
 
         await _persist.SetAsync(key, data, freshSpan);
         DropWhenStale<T>(key, freshSpan);
-        OnSet(key, data);
+        await OnSetAsync(key, data);
 
         return data;
     }
@@ -104,7 +112,7 @@ internal abstract class CacheBase : ICache
 
         await _persist.SetAsync(key, data, freshSpan);
         DropWhenStale<T>(key, freshSpan);
-        OnSet(key, data);
+        await OnSetAsync(key, data);
     }
 
     public virtual async Task<T> DropAsync<T>(Key key)
@@ -143,8 +151,23 @@ internal abstract class CacheBase : ICache
         }
     }
 
-    private void OnSet<T>(Key key, T data)
+    private async Task OnSetAsync<T>(Key key, T data)
     {
+        //NOTE: Evict if needed
+        var result = _cacheMonitor.GetInfos().FirstOrDefault(x => x.Type == typeof(T));
+        if (result?.Items.Count >= GetTypeOptions<T>().MaxCount)
+        {
+            switch (GetTypeOptions<T>().EvictionPolicy)
+            {
+                case EvictionPolicy.FirstInFirstOut:
+                    var item = await _persist.DropFirst();
+                    OnDrop<T>(item.Key, item.Item);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(EvictionPolicy), $"Unknown {nameof(EvictionPolicy)} {GetTypeOptions<T>().EvictionPolicy}.");
+            }
+        }
+
         DataSetEvent?.Invoke(this, new DataSetEventArgs(key, data));
         _cacheMonitor.Set(typeof(T), key, data);
     }

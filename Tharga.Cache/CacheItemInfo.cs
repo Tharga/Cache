@@ -7,8 +7,9 @@ public record CacheItemInfo
     public required int Size { get; init; }
     public int Count => _count;
 
-    public void SetAccess()
+    public CacheItemInfo SetAccess()
     {
         _count++;
+        return this;
     }
 }

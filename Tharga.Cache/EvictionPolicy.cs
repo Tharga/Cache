@@ -16,19 +16,19 @@ public enum EvictionPolicy
     ///// </summary>
     //LeastFrequentlyUsed,
 
-    ///// <summary>
-    ///// FIFO (First-In, First-Out)
-    ///// + Predictable, simple.
-    ///// - Ignores usage patterns.
-    ///// </summary>
-    //FirstInFirstOut,
-
     /// <summary>
-    /// RR (Random Replacement)
-    /// + Ultra-low overhead.
-    /// - Unpredictable, lower hit rate.
+    /// FIFO (First-In, First-Out)
+    /// + Predictable, simple.
+    /// - Ignores usage patterns.
     /// </summary>
-    RandomReplacement,
+    FirstInFirstOut,
+
+    ///// <summary>
+    ///// RR (Random Replacement)
+    ///// + Ultra-low overhead.
+    ///// - Unpredictable, lower hit rate.
+    ///// </summary>
+    //RandomReplacement,
 
     ///// <summary>
     ///// MRU (Most Recently Used)

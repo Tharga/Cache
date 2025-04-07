@@ -23,4 +23,16 @@ internal class Memory : IMemory
         if (_datas.TryRemove(key, out var val)) return val;
         return null;
     }
+
+    public IAsyncEnumerable<CacheItem> GetAsync<T>()
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task<(Key Key, CacheItem Item)> DropFirst()
+    {
+        var item = _datas.First();
+        _datas.TryRemove(item.Key, out var removed);
+        return (item.Key, removed);
+    }
 }

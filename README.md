@@ -1,8 +1,9 @@
 # Tharga Cache
 
-- EternalCache
-- TimeToLiveCache
+- Eternal
 - ScopeCache
+- TimeToLive
+- TimeToIdle
 
 - ITimeCache (with ExpirationPolicies and PersistType)
 - ICache (with ExpirationPolicies and PersistType)
@@ -11,35 +12,19 @@
 - EvictionPolicy
 
 ## TODO
-- Clean out depending on time
-    - TTL
-    - TTI
-- Stale while revalidate
 - Clean out when cache is too large
+- Health check
 - Add distribute provider
 - Combine distribute provider with memory cache
+- TTI
+- Opt-out from loading even if data is stale
+- Cascade-load when loading much data at the same time
 
-## Legacy
-
-- ForeverCache (IForeverCache)
-- ForeverDistributedCache (IForeverDistributedCache)
-- RollingCache (IRollingCache)
-- RollingDistributedCache (IRollingDistributedCache)
-- TimeCache (TimeCache)
-- TimeDistributedCache (ITimeDistributedCache)
-- BackgroundCache (IBackgroundCache)
-- BackgroundDistributedCache (IBackgroundDistributedCache)
-
-## TODO
 - Test for distributed "LOCAL"
 - Test for distributed "DISABLED"
 - Test for distributed (on different instances)
 - Test local (different instances) ==> Should be isolated.
-
-- Test for expired values
 - Tests for background tasks that should load values in the background, trigger an event and then be updated.
-
-- Rolling distributed cache does not automatically unload values, since it does not know when to do it.
 - Tests for rolling cache, should be keept in memory as long as it is used.
 
 - Make sure dual calls does not make more database calls

@@ -19,7 +19,7 @@ internal class CacheMonitor : IManagedCacheMonitor
                 {
                     key, new CacheItemInfo
                     {
-                        Size = bytes.Length
+                        Size = bytes.Length,
                     }
                 }
             }

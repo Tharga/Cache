@@ -11,6 +11,7 @@ internal class CacheCommands : ContainerCommandBase
 
         RegisterCommand<CacheListCommand>();
         RegisterCommand<CacheGetCommand>();
+        RegisterCommand<CacheGetWithCallbackCommand>();
         RegisterCommand<CachePeekCommand>();
         RegisterCommand<CacheSetCommand>();
         RegisterCommand<CacheDropCommand>();

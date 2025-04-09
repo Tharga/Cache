@@ -15,7 +15,7 @@ serviceCollection.RegisterCache(o =>
 
     o.RegisterType<string>(s =>
     {
-        s.StaleWhileRevalidate = false;
+        s.StaleWhileRevalidate = true;
         s.MaxSize = 100;
         s.MaxCount = 10;
     });

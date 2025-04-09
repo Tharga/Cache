@@ -25,9 +25,8 @@ public static class CacheRegistrationExtensions
         serviceCollection.AddSingleton<ICacheMonitor>(s => s.GetService<IManagedCacheMonitor>());
         serviceCollection.AddSingleton<IManagedCacheMonitor>(s =>
         {
-            //var hostEnvironment = s.GetService<IHostEnvironment>();
-            var cacheMonitor = new CacheMonitor(); //s, hostEnvironment, o);
-            //cacheMonitor.Set();
+            var persistLoader = s.GetService<IPersistLoader>();
+            var cacheMonitor = new CacheMonitor(persistLoader, o);
             return cacheMonitor;
         });
 
@@ -59,12 +58,12 @@ public static class CacheRegistrationExtensions
             var persistLoader = s.GetService<IPersistLoader>();
             return new TimeToLiveCache(cacheMonitor, persistLoader, o);
         });
-        //serviceCollection.AddSingleton<ITimeToIdleCache>(s =>
-        //{
-        //    var cacheMonitor = s.GetService<IManagedCacheMonitor>();
-        //    var persistLoader = s.GetService<IPersistLoader>();
-        //    return new TimeToIdleCache(cacheMonitor, persistLoader, o);
-        //});
+        serviceCollection.AddSingleton<ITimeToIdleCache>(s =>
+        {
+            var cacheMonitor = s.GetService<IManagedCacheMonitor>();
+            var persistLoader = s.GetService<IPersistLoader>();
+            return new TimeToIdleCache(cacheMonitor, persistLoader, o);
+        });
         serviceCollection.AddScoped<IScopeCache>(s =>
         {
             var cacheMonitor = s.GetService<IManagedCacheMonitor>();

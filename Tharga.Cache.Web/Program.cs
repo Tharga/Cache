@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Quilt4Net.Toolkit.Api;
 using Tharga.Cache;
 using Tharga.Cache.Web;
@@ -11,6 +10,7 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.RegisterCache(o =>
 {
+    o.MaxConcurrentFetchCount = 1;
     o.RegisterType<WeatherForecast[]?>(s =>
     {
         s.StaleWhileRevalidate = false;

@@ -18,6 +18,18 @@ internal class Memory : IMemory
         return Task.CompletedTask;
     }
 
+    public Task<bool> BuyMoreTime(Key key)
+    {
+        if (_datas.TryGetValue(key, out var item))
+        {
+            var updatedItem = item with { UpdateTime = DateTime.UtcNow };
+            var r = _datas.TryUpdate(key, updatedItem, item);
+            return Task.FromResult(r);
+        }
+
+        return Task.FromResult(false);
+    }
+
     public Task<bool> DropAsync<T>(Key key)
     {
         return Task.FromResult(_datas.TryRemove(key, out _));

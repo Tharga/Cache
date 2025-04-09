@@ -14,7 +14,7 @@ public class CacheMonitorController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetCache()
+    public Task<IActionResult> GetCache()
     {
         var infos = _cacheMonitor.GetInfos();
         var response = infos.Select(x => new
@@ -24,11 +24,11 @@ public class CacheMonitorController : ControllerBase
             Size = x.Items.Sum(y => y.Value.Size),
             TotalAccessCount = x.Items.Sum(y => y.Value.AccessCount)
         });
-        return Ok(response);
+        return Task.FromResult<IActionResult>(Ok(response));
     }
 
     [HttpGet("type/{type}")]
-    public async Task<IActionResult> GetType(string type)
+    public Task<IActionResult> GetType(string type)
     {
         //TODO: Make it possible to provide a type.
         //var t = Type.GetType(type);
@@ -44,6 +44,12 @@ public class CacheMonitorController : ControllerBase
             x.Value.CreateTime,
             x.Value.LastAccessTime,
         });
-        return Ok(response);
+        return Task.FromResult<IActionResult>(Ok(response));
+    }
+
+    [HttpGet("fetchQueue")]
+    public Task<IActionResult> GetQueueCount()
+    {
+        return Task.FromResult<IActionResult>(Ok(_cacheMonitor.GetFetchQueueCount()));
     }
 }

@@ -90,29 +90,3 @@ public class ExpiredEndingCacheTests
         }
     }
 }
-
-//public class TimeToLiveCacheTests
-//{
-//    [Theory]
-//    [InlineData(typeof(TimeToLiveCache), true)]
-//    [InlineData(typeof(TimeToLiveCache), false)]
-//    public async Task GetValueAsync(Type type, bool staleWhileRevalidate)
-//    {
-//        //Arrange
-//        //Act
-//        //Assert
-//    }
-//}
-
-//public class TimeToIdleCacheTests
-//{
-//    [Theory]
-//    [InlineData(typeof(TimeToIdleCache), true)]
-//    [InlineData(typeof(TimeToIdleCache), false)]
-//    public async Task GetValueAsync(Type type, bool staleWhileRevalidate)
-//    {
-//        //Arrange
-//        //Act
-//        //Assert
-//    }
-//}

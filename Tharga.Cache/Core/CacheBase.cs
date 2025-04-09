@@ -1,16 +1,24 @@
-﻿namespace Tharga.Cache.Core;
+﻿using System.Collections.Concurrent;
+
+namespace Tharga.Cache.Core;
 
 internal abstract class CacheBase : ICache
 {
     private readonly IManagedCacheMonitor _cacheMonitor;
     private readonly IPersistLoader _persistLoader;
     private readonly CacheOptions _options;
+    private readonly SemaphoreSlim _globalSemaphore;
+    private readonly ConcurrentDictionary<Key, Lazy<Task<object>>> _inFlightFetches = new();
 
     protected CacheBase(IManagedCacheMonitor cacheMonitor, IPersistLoader persistLoader, CacheOptions options)
     {
+        if (options.MaxConcurrentFetchCount <= 0) throw new InvalidOperationException($"Min value for {nameof(options.MaxConcurrentFetchCount)} is 1.");
+
         _cacheMonitor = cacheMonitor;
         _persistLoader = persistLoader;
         _options = options;
+        _globalSemaphore = new(options.MaxConcurrentFetchCount, options.MaxConcurrentFetchCount);
+        _cacheMonitor.QueueCountLoader = () => _inFlightFetches.Count;
     }
 
     public event EventHandler<DataSetEventArgs> DataSetEvent;
@@ -34,14 +42,14 @@ internal abstract class CacheBase : ICache
 
         if (result.IsValid())
         {
-            OnGet<T>(key);
+            await OnGetAsync<T>(key);
             return result.GetData();
         }
 
         if (GetTypeOptions<T>().StaleWhileRevalidate && result != null)
         {
             var response = result.GetData();
-            OnGet<T>(key);
+            await OnGetAsync<T>(key);
 
             Task.Run(async () =>
             {
@@ -52,7 +60,7 @@ internal abstract class CacheBase : ICache
         }
 
         var loadResponse = await LoadData(key, fetch, fs);
-        OnGet<T>(key);
+        await OnGetAsync<T>(key);
         return loadResponse;
     }
 
@@ -64,13 +72,31 @@ internal abstract class CacheBase : ICache
 
     private async Task<T> LoadData<T>(Key key, Func<Task<T>> fetch, TimeSpan? freshSpan)
     {
-        var data = await fetch.Invoke();
+        var lazyTask = _inFlightFetches.GetOrAdd(key, _ =>
+            new Lazy<Task<object>>(async () =>
+            {
+                await _globalSemaphore.WaitAsync();
+                try
+                {
+                    var result = await fetch();
 
-        await GetPersist<T>().SetAsync(key, data, freshSpan, GetTypeOptions<T>().StaleWhileRevalidate);
-        DropWhenStale<T>(key, freshSpan);
-        await OnSetAsync(key, data);
+                    await GetPersist<T>().SetAsync(key, result, freshSpan, GetTypeOptions<T>().StaleWhileRevalidate);
+                    DropWhenStale<T>(key, freshSpan);
+                    await OnSetAsync(key, result);
 
-        return data;
+                    return result!;
+                }
+                finally
+                {
+                    _globalSemaphore.Release();
+                    _inFlightFetches.TryRemove(key, out var _);
+                }
+            }, LazyThreadSafetyMode.ExecutionAndPublication)
+        );
+
+        var result = await lazyTask.Value;
+
+        return (T)result!;
     }
 
     public virtual async Task<T> PeekAsync<T>(Key key)
@@ -81,7 +107,7 @@ internal abstract class CacheBase : ICache
         if (result.IsValid())
         {
             var response = result.GetData();
-            OnGet<T>(key);
+            await OnGetAsync<T>(key);
 
             return response;
         }
@@ -89,7 +115,7 @@ internal abstract class CacheBase : ICache
         if (GetTypeOptions<T>().StaleWhileRevalidate && result != null)
         {
             var response = result.GetData();
-            OnGet<T>(key);
+            await OnGetAsync<T>(key);
 
             return response;
         }
@@ -131,35 +157,44 @@ internal abstract class CacheBase : ICache
     {
         if (!GetTypeOptions<T>().StaleWhileRevalidate && freshSpan.HasValue && freshSpan != TimeSpan.MaxValue)
         {
+            //TODO: We want to cancel this task, if buy-more-time is called, since we do not want threads not needed.
             Task.Run(async () =>
             {
                 await Task.Delay(freshSpan.Value);
-                await GetPersist<T>().DropAsync<T>(key);
-                OnDrop<T>(key);
+                var current = await GetPersist<T>().GetAsync<T>(key);
+                if (!current.IsValid())
+                {
+                    await GetPersist<T>().DropAsync<T>(key);
+                    OnDrop<T>(key);
+                }
             });
         }
     }
 
     private async Task OnSetAsync<T>(Key key, T data)
     {
-        //NOTE: Evict if needed
-        var result = _cacheMonitor.GetInfos().FirstOrDefault(x => x.Type == typeof(T));
-        if (result?.Items.Count >= GetTypeOptions<T>().MaxCount
-            || result?.Items.Sum(x => x.Value.Size) + data.ToSize() >= GetTypeOptions<T>().MaxSize)
-        {
-            var keyToDrop = _cacheMonitor.Get<T>(GetTypeOptions<T>().EvictionPolicy);
-            await GetPersist<T>().DropAsync<T>(keyToDrop);
-            OnDrop<T>(keyToDrop);
-        }
+        await EvictItems(data);
 
         DataSetEvent?.Invoke(this, new DataSetEventArgs(key, data));
         _cacheMonitor.Set(typeof(T), key, data);
     }
 
-    private void OnGet<T>(Key key)
+    protected virtual Task OnGetAsync<T>(Key key)
+    {
+        return OnGetCoreAsync<T>(key, false);
+    }
+
+    protected async Task OnGetCoreAsync<T>(Key key, bool buyMoreTime)
     {
         DataGetEvent?.Invoke(this, new DataGetEventArgs(key));
-        _cacheMonitor.Accessed(typeof(T), key);
+
+        var moreTimeBought = false;
+        if (buyMoreTime)
+        {
+            moreTimeBought = await GetPersist<T>().BuyMoreTime(key);
+        }
+
+        _cacheMonitor.Accessed(typeof(T), key, moreTimeBought);
     }
 
     private void OnDrop<T>(Key key)
@@ -170,7 +205,24 @@ internal abstract class CacheBase : ICache
 
     private IPersist GetPersist<T>()
     {
-        var persist = _persistLoader.GetPersist(_options.Get<T>());
+        var persist = _persistLoader.GetPersist(_options.Get<T>().PersistType);
         return persist;
+    }
+
+    private async Task EvictItems<T>(T data)
+    {
+        var maxCount = GetTypeOptions<T>().MaxCount;
+        var maxSize = GetTypeOptions<T>().MaxSize;
+
+        if (maxCount != null || maxSize != null)
+        {
+            var result = _cacheMonitor.GetInfos().FirstOrDefault(x => x.Type == typeof(T));
+            if (maxCount <= result?.Items.Count || maxSize <= result?.Items.Sum(x => x.Value.Size) + data.ToSize())
+            {
+                var keyToDrop = _cacheMonitor.Get<T>(GetTypeOptions<T>().EvictionPolicy);
+                await GetPersist<T>().DropAsync<T>(keyToDrop);
+                OnDrop<T>(keyToDrop);
+            }
+        }
     }
 }

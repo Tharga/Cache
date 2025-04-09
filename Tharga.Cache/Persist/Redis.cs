@@ -28,7 +28,7 @@ internal class Redis : IRedis
         var redisConnection = await GetConnection();
         if (redisConnection == default) return default;
 
-        var db = redisConnection.GetDatabase();
+        var db = redisConnection.Multiplexer.GetDatabase();
         var data = await db.StringGetAsync((string)key);
         if (!string.IsNullOrEmpty(data))
         {
@@ -53,11 +53,16 @@ internal class Redis : IRedis
         var redisConnection = await GetConnection();
         if (redisConnection == default) return;
 
-        var db = redisConnection.GetDatabase();
+        var db = redisConnection.Multiplexer.GetDatabase();
         if (freshSpan == null || freshSpan == TimeSpan.MaxValue || staleWhileRevalidate)
             await db.StringSetAsync((string)key, item);
         else
             await db.StringSetAsync((string)key, item, freshSpan);
+    }
+
+    public Task<bool> BuyMoreTime(Key key)
+    {
+        throw new NotImplementedException();
     }
 
     public async Task<bool> DropAsync<T>(Key key)
@@ -65,18 +70,8 @@ internal class Redis : IRedis
         var redisConnection = await GetConnection();
         if (redisConnection == default) return default;
 
-        var db = redisConnection.GetDatabase();
+        var db = redisConnection.Multiplexer.GetDatabase();
         return await db.KeyDeleteAsync((string)key);
-    }
-
-    public IAsyncEnumerable<CacheItem<T>> GetAsync<T>()
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<(Key Key, CacheItem<T> Item)> DropFirst<T>()
-    {
-        throw new NotImplementedException();
     }
 
     public void Dispose()
@@ -84,35 +79,42 @@ internal class Redis : IRedis
         _redisConnection?.Dispose();
     }
 
+    public async Task<(bool Success, string Message)> CanConnectAsync()
+    {
+        var redisConnection = await GetConnection();
+        if (redisConnection.Multiplexer == default) return (false, redisConnection.Message);
+
+        return (redisConnection.Multiplexer.IsConnected, redisConnection.Message);
+    }
+
     public async ValueTask DisposeAsync()
     {
         if (_redisConnection != null) await _redisConnection.DisposeAsync();
     }
 
-    private async Task<ConnectionMultiplexer> GetConnection()
+    private async Task<(ConnectionMultiplexer Multiplexer, string Message)> GetConnection()
     {
-        if (_redisConnection?.IsConnected ?? false) return _redisConnection;
+        if (_redisConnection?.IsConnected ?? false) return (_redisConnection, "Connected (Cached).");
 
         var connectionString = _options.ConnectionStringLoader(_serviceProvider);
         if (string.IsNullOrEmpty(connectionString))
         {
-            if (_hostEnvironment.IsDevelopment()) return default;
-            _logger?.LogWarning("No connection string set for distributed cache.");
-            return default;
+            if (!_hostEnvironment.IsDevelopment()) _logger?.LogWarning("No connection string set for distributed cache.");
+            return (default, "No connection string.");
         }
-        if (string.Equals(connectionString, "DISABLED", StringComparison.InvariantCultureIgnoreCase)) return default;
+        if (string.Equals(connectionString, "DISABLED", StringComparison.InvariantCultureIgnoreCase)) return (default, "Disabled.");
 
         try
         {
             _redisConnection = await ConnectionMultiplexer.ConnectAsync(connectionString);
-            return _redisConnection;
+            return (_redisConnection, "Connected to Redis.");
         }
         catch (Exception e)
         {
             _logger?.LogError(e, e.Message);
             if (_redisConnection != null) await _redisConnection.DisposeAsync();
             _redisConnection = null;
-            return default;
+            return (default, e.Message);
         }
     }
 }

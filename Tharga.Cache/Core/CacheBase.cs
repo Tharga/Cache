@@ -191,7 +191,7 @@ internal abstract class CacheBase : ICache
         var moreTimeBought = false;
         if (buyMoreTime)
         {
-            moreTimeBought = await GetPersist<T>().BuyMoreTime(key);
+            moreTimeBought = await GetPersist<T>().BuyMoreTime<T>(key);
         }
 
         _cacheMonitor.Accessed(typeof(T), key, moreTimeBought);

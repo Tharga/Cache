@@ -18,7 +18,7 @@ internal class Memory : IMemory
         return Task.CompletedTask;
     }
 
-    public Task<bool> BuyMoreTime(Key key)
+    public Task<bool> BuyMoreTime<T>(Key key)
     {
         if (_datas.TryGetValue(key, out var item))
         {

@@ -2,7 +2,7 @@
 
 internal abstract class TimeCacheBase : CacheBase, ITimeCache
 {
-    protected TimeCacheBase(IManagedCacheMonitor cacheMonitor, IPersistLoader persistLoader, Options options)
+    protected TimeCacheBase(IManagedCacheMonitor cacheMonitor, IPersistLoader persistLoader, CacheOptions options)
         : base(cacheMonitor, persistLoader, options)
     {
     }
@@ -11,12 +11,12 @@ internal abstract class TimeCacheBase : CacheBase, ITimeCache
 
     public Task<T> GetAsync<T>(Key key, Func<Task<T>> fetch, TimeSpan freshSpan)
     {
-        return GetAsyncX(key, fetch, freshSpan);
+        return GetCoreAsync(key, fetch, freshSpan);
     }
 
     public Task SetAsync<T>(Key key, T data, TimeSpan freshSpan)
     {
-        return SetAsyncX(key, data, freshSpan);
+        return SetCoreAsync(key, data, freshSpan);
     }
 
 

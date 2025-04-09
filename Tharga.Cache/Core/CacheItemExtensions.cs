@@ -9,10 +9,9 @@ internal static class CacheItemExtensions
         return true;
     }
 
-    public static T GetData<T>(this CacheItem item)
+    public static T GetData<T>(this CacheItem<T> item)
     {
         if (item == null) return default;
-        //item.SetAccess();
-        return (T)item.Data;
+        return item.Data;
     }
 }

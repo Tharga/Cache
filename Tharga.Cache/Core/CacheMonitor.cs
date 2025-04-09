@@ -34,7 +34,7 @@ internal class CacheMonitor : IManagedCacheMonitor
         DataSetEvent?.Invoke(this, new DataSetEventArgs(key, data));
     }
 
-    public void Get(Type type, Key key)
+    public void Accessed(Type type, Key key)
     {
         if (_caches.TryGetValue(type, out var info))
         {
@@ -67,10 +67,38 @@ internal class CacheMonitor : IManagedCacheMonitor
         }
     }
 
+    public Key Get<T>(EvictionPolicy evictionPolicy)
+    {
+        if (!_caches.TryGetValue(typeof(T), out var val)) return default;
+
+        switch (evictionPolicy)
+        {
+            case EvictionPolicy.LeastRecentlyUsed:
+                return val.Items.OrderByDescending(x => x.Value.LastAccessTime ?? DateTime.MinValue).FirstOrDefault().Key;
+            case EvictionPolicy.FirstInFirstOut:
+                return val.Items.OrderBy(x => x.Value.CreateTime).FirstOrDefault().Key;
+            case EvictionPolicy.RandomReplacement:
+                return val.Items.TakeRandom().Key;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(EvictionPolicy), $"Unknown {nameof(EvictionPolicy)} {evictionPolicy}.");
+        }
+    }
+
     public event EventHandler<DataSetEventArgs> DataSetEvent;
 
     public IEnumerable<CacheTypeInfo> GetInfos()
     {
         return _caches.Values;
+    }
+
+    public Dictionary<string, CacheItemInfo> GetByType<T>()
+    {
+        return GetByType(typeof(T));
+    }
+
+    public Dictionary<string, CacheItemInfo> GetByType(Type type)
+    {
+        if (_caches.TryGetValue(type, out var data)) return data.Items;
+        return new Dictionary<string, CacheItemInfo>();
     }
 }

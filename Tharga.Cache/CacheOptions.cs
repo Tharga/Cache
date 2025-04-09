@@ -1,8 +1,8 @@
 ﻿namespace Tharga.Cache;
 
-public record Options
+public record CacheOptions
 {
-    private readonly Dictionary<Type, TypeOptions> _typeOptions = new();
+    private readonly Dictionary<Type, CacheTypeOptions> _typeOptions = new();
 
     //public TimeSpan? DefaultFreshSpan { get; set; }
     //public int? MaxParallelSourceLoadCount { get; set; }
@@ -16,20 +16,21 @@ public record Options
     /// - LOCAL: Use the local cache instead of the distributed cache. This can be used in development or testing environments when there is only one instance of the application running.
     /// </summary>
     public Func<IServiceProvider, string> ConnectionStringLoader { get; set; }
+    //public string ConnectionString { get; set; }
 
-    public void RegisterType<T>(Action<TypeOptions> options = null)
+    public void RegisterType<T>(Action<CacheTypeOptions> options = null)
     {
         var typeOptions = Default with { };
         options?.Invoke(typeOptions);
         _typeOptions.TryAdd(typeof(T), typeOptions);
     }
 
-    internal TypeOptions Get<T>()
+    internal CacheTypeOptions Get<T>()
     {
         return _typeOptions.GetValueOrDefault(typeof(T)) ?? Default;
     }
 
-    private TypeOptions Default => new()
+    private CacheTypeOptions Default => new()
     {
         StaleWhileRevalidate = false,
         MaxCount = 1000,

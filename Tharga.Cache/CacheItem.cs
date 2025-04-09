@@ -2,14 +2,12 @@
 
 public record CacheItem
 {
-    public CacheItem(object data, TimeSpan freshSpan)
-    {
-        Data = data;
-        CreateTime = DateTime.UtcNow;
-        FreshSpan = freshSpan;
-    }
+    //public required object Data { get; init; }
+    public required DateTime CreateTime { get; init; }
+    public TimeSpan? FreshSpan { get; init; }
+}
 
-    public object Data { get; }
-    public DateTime CreateTime { get; }
-    public TimeSpan FreshSpan { get; }
+public record CacheItem<T> : CacheItem
+{
+    public required T Data { get; init; }
 }

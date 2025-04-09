@@ -37,6 +37,9 @@
 - Cache in fromt of MongoDB (Replace buffer)
 - Redis
 
+
+!!! When calling get the first time, it should count as an access.
+
 //internal class Redis : IRedis
 //{
 //    /*

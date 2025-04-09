@@ -1,6 +1,6 @@
 ﻿namespace Tharga.Cache;
 
-public record TypeOptions
+public record CacheTypeOptions
 {
     public bool StaleWhileRevalidate { get; set; }
     public long MaxSize { get; set; }

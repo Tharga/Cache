@@ -2,12 +2,12 @@
 
 public enum EvictionPolicy
 {
-    ///// <summary>
-    ///// LRU (Least Recently Used)
-    ///// + Simple, effective.
-    ///// - Can evict frequently used cold items.
-    ///// </summary>
-    //LeastRecentlyUsed,
+    /// <summary>
+    /// LRU (Least Recently Used)
+    /// + Simple, effective.
+    /// - Can evict frequently used cold items.
+    /// </summary>
+    LeastRecentlyUsed,
 
     ///// <summary>
     ///// LFU (Least Frequently Used)
@@ -23,12 +23,12 @@ public enum EvictionPolicy
     /// </summary>
     FirstInFirstOut,
 
-    ///// <summary>
-    ///// RR (Random Replacement)
-    ///// + Ultra-low overhead.
-    ///// - Unpredictable, lower hit rate.
-    ///// </summary>
-    //RandomReplacement,
+    /// <summary>
+    /// RR (Random Replacement)
+    /// + Ultra-low overhead.
+    /// - Unpredictable, lower hit rate.
+    /// </summary>
+    RandomReplacement,
 
     ///// <summary>
     ///// MRU (Most Recently Used)

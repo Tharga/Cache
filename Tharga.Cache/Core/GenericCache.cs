@@ -2,7 +2,7 @@
 
 internal class GenericCache : EternalCache
 {
-    public GenericCache(IManagedCacheMonitor cacheMonitor, IPersistLoader persistLoader, Options options)
+    public GenericCache(IManagedCacheMonitor cacheMonitor, IPersistLoader persistLoader, CacheOptions options)
         : base(cacheMonitor, persistLoader, options)
     {
     }

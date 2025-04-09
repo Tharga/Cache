@@ -2,5 +2,5 @@
 
 public interface IPersistLoader
 {
-    IPersist GetPersist(TypeOptions typeOptions);
+    IPersist GetPersist(CacheTypeOptions typeOptions);
 }

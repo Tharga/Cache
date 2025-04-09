@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using StackExchange.Redis;
+using Microsoft.Extensions.Options;
 using Tharga.Cache.Core;
 using Tharga.Cache.Persist;
 
@@ -8,19 +8,20 @@ namespace Tharga.Cache;
 
 public static class CacheRegistrationExtensions
 {
-    public static void RegisterCache(this IServiceCollection serviceCollection, Action<Options> options = null)
+    public static void RegisterCache(this IServiceCollection serviceCollection, Action<CacheOptions> options = null)
     {
-        var o = new Options
+        var o = new CacheOptions
         {
             ConnectionStringLoader = serviceProvider =>
             {
                 var configuration = serviceProvider.GetService<IConfiguration>();
-                var connectionString = configuration?.GetSection("RedisCache:ConnectionString").Value;
+                var connectionString = configuration?.GetSection("ThargaCache:ConnectionString").Value;
                 return connectionString;
-            },
+            }
         };
         options?.Invoke(o);
 
+        serviceCollection.AddSingleton(Options.Create(o));
         serviceCollection.AddSingleton<ICacheMonitor>(s => s.GetService<IManagedCacheMonitor>());
         serviceCollection.AddSingleton<IManagedCacheMonitor>(s =>
         {
@@ -77,7 +78,7 @@ public static class CacheRegistrationExtensions
         serviceCollection.AddTransient<IPersistLoader, PersistLoader>();
         serviceCollection.AddSingleton<IPersist>(_ => throw new InvalidOperationException($"Cannot inject {nameof(IPersist)} directly, use {nameof(IPersistLoader)} instead."));
         serviceCollection.AddSingleton<IMemory, Memory>();
-        serviceCollection.AddSingleton<Persist.IRedis, Redis>();
+        serviceCollection.AddSingleton<IRedis, Redis>();
 
         //serviceCollection.AddSingleton<IConnectionMultiplexer>(sp =>
         //{

@@ -21,7 +21,7 @@ internal static class CacheTypeLoader
         //var serviceProvider = new Mock<IServiceProvider>();
         //var hostEnvironment = new Mock<IHostEnvironment>();
         //var loggerFactory = new Mock<ILoggerFactory>(MockBehavior.Loose);
-        var options = new Options
+        var options = new CacheOptions
         {
             //DefaultFreshSpan = defaultFreshSpan,
             //EvictionPolicy = evictionPolicy,

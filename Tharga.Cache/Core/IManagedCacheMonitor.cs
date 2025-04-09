@@ -3,6 +3,7 @@
 internal interface IManagedCacheMonitor : ICacheMonitor
 {
     void Set(Type type, Key key, object data);
-    void Get(Type type, Key key);
+    void Accessed(Type type, Key key);
     void Drop(Type type, Key key);
+    Key Get<T>(EvictionPolicy evictionPolicy);
 }

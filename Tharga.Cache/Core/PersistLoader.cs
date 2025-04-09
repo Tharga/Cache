@@ -12,7 +12,7 @@ internal class PersistLoader : IPersistLoader
         _serviceProvider = serviceProvider;
     }
 
-    public IPersist GetPersist(TypeOptions typeOptions)
+    public IPersist GetPersist(CacheTypeOptions typeOptions)
     {
         switch (typeOptions.PersistType)
         {

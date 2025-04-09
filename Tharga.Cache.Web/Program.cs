@@ -10,6 +10,8 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.RegisterCache(o =>
 {
+    //o.ConnectionStringLoader = _ => "FROM_CODE";
+
     //TODO: This in combination with Peak will increase performance.
     o.RegisterType<WeatherForecast[]?>(s =>
     {
@@ -17,6 +19,7 @@ builder.Services.RegisterCache(o =>
         //s.MaxCount = 3;
         s.MaxSize = 2000;
         s.EvictionPolicy = EvictionPolicy.FirstInFirstOut;
+        s.PersistType = PersistType.Memory;
     });
 });
 

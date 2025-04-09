@@ -15,6 +15,8 @@ internal class CacheMonitor : IManagedCacheMonitor
         _cacheOptions = cacheOptions;
     }
 
+    public Func<int> QueueCountLoader { get; set; }
+
     public void Set(Type type, Key key, object data)
     {
         var size = data.ToSize();
@@ -129,5 +131,10 @@ internal class CacheMonitor : IManagedCacheMonitor
             Message = $"There are {totalCount} items cached with a size of {totalSize} bytes. {result.Message}".TrimEnd(),
             Success = result.Success,
         };
+    }
+
+    public int GetFetchQueueCount()
+    {
+        return QueueCountLoader?.Invoke() ?? -1;
     }
 }

@@ -8,4 +8,5 @@ public interface ICacheMonitor
     Dictionary<string, CacheItemInfo> GetByType<T>();
     Dictionary<string, CacheItemInfo> GetByType(Type type);
     Task<HealthDto> GetHealthAsync();
+    int GetFetchQueueCount();
 }

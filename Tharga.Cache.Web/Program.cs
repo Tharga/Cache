@@ -11,6 +11,7 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.RegisterCache(o =>
 {
+    o.MaxConcurrentFetchCount = 1;
     o.RegisterType<WeatherForecast[]?>(s =>
     {
         s.StaleWhileRevalidate = false;

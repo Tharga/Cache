@@ -30,29 +30,39 @@ public class MoreWeatherForecastController : ControllerBase
     [HttpGet("cache_new")]
     public async Task<IActionResult> GetNew()
     {
-        return await GetDataAsync(Guid.NewGuid().ToString());
+        return await GetDataAsync(null);
     }
 
-    private async Task<IActionResult> GetDataAsync(string cacheKey)
+    [HttpGet("many_slow")]
+    public async Task<IActionResult> ManySlow()
+    {
+        return await GetDataAsync(null, 10, TimeSpan.FromSeconds(2));
+    }
+
+    private async Task<IActionResult> GetDataAsync(string? cacheKey, int count = 3, TimeSpan? delayPerItem = null)
     {
         var sw = Stopwatch.StartNew();
 
-        var r = await _ttlCache.GetAsync(cacheKey, () =>
-        {
-            var x = Enumerable.Range(1, 5).Select(index => new WeatherForecast
+        var response = Enumerable.Range(0, count).Select(async index =>
+            {
+                var item = await _ttlCache.GetAsync(cacheKey ?? Guid.NewGuid().ToString(), async () =>
                 {
-                    Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-                    TemperatureC = Random.Shared.Next(-20, 55),
-                    Summary = Summaries[Random.Shared.Next(Summaries.Length)]
-                })
-                .ToArray();
-            return Task.FromResult(x);
-        }, TimeSpan.FromSeconds(10));
+                    await Task.Delay(delayPerItem ?? TimeSpan.Zero);
+                    return new WeatherForecast
+                    {
+                        Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
+                        TemperatureC = Random.Shared.Next(-20, 55),
+                        Summary = Summaries[Random.Shared.Next(Summaries.Length)]
+                    };
+                }, TimeSpan.FromSeconds(10));
+                return item;
+            })
+            .ToArray();
 
         sw.Stop();
 
         Response.Headers.Add("LoadTime", $"{sw.Elapsed.TotalMilliseconds}ms");
 
-        return Ok(r);
+        return Ok(response);
     }
 }

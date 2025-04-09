@@ -46,4 +46,10 @@ public class CacheMonitorController : ControllerBase
         });
         return Ok(response);
     }
+
+    [HttpGet("fetchQueue")]
+    public async Task<IActionResult> GetQueueCount()
+    {
+        return Ok(_cacheMonitor.GetFetchQueueCount());
+    }
 }

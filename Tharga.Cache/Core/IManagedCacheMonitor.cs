@@ -6,4 +6,5 @@ internal interface IManagedCacheMonitor : ICacheMonitor
     void Accessed(Type type, Key key);
     void Drop(Type type, Key key);
     Key Get<T>(EvictionPolicy evictionPolicy);
+    Func<int> QueueCountLoader { get; set; }
 }

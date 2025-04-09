@@ -18,6 +18,7 @@ internal abstract class CacheBase : ICache
         _persistLoader = persistLoader;
         _options = options;
         _globalSemaphore = new(options.MaxConcurrentFetchCount, options.MaxConcurrentFetchCount);
+        _cacheMonitor.QueueCountLoader = () => _inFlightFetches.Count;
     }
 
     public event EventHandler<DataSetEventArgs> DataSetEvent;

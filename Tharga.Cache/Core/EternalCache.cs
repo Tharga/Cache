@@ -2,8 +2,8 @@
 
 internal class EternalCache : CacheBase, IEternalCache, IScopeCache
 {
-    public EternalCache(IManagedCacheMonitor cacheMonitor, IPersist persist, Options options)
-        : base(cacheMonitor, persist, options)
+    public EternalCache(IManagedCacheMonitor cacheMonitor, IPersistLoader persistLoader, Options options)
+        : base(cacheMonitor, persistLoader, options)
     {
     }
 

@@ -24,10 +24,14 @@ public class ExpiredEndingCacheTests
         sut.DataGetEvent += (_, _) => { _dataGetEventCount++; };
         sut.DataDropEvent += (_, _) => { _dataDropEventCount++; };
         result.Monitor.DataSetEvent += (_, _) => { _monitorSetEventCount++; };
-        await Task.Delay(800);
+        await Task.Delay(500);
 
         //Act
-        var item = await sut.GetAsync("Key", () => Task.FromResult("updated"));
+        var item = await sut.GetAsync("Key", async () =>
+        {
+            await Task.Delay(100);
+            return "updated";
+        });
 
         //Assert
         if (staleWhileRevalidate)
@@ -62,7 +66,7 @@ public class ExpiredEndingCacheTests
         sut.DataGetEvent += (_, _) => { _dataGetEventCount++; };
         sut.DataDropEvent += (_, _) => { _dataDropEventCount++; };
         result.Monitor.DataSetEvent += (_, _) => { _monitorSetEventCount++; };
-        await Task.Delay(800);
+        await Task.Delay(500);
 
         //Act
         var item = await sut.PeekAsync<string>("Key");

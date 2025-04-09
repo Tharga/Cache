@@ -15,7 +15,8 @@ internal static class CacheTypeLoader
         //var cacheMonitor = new Mock<IManagedCacheMonitor>();
         var cacheMonitor = new CacheMonitor();
 
-        var persist = new Memory();
+        //var persist = new Memory();
+        var persist = new MemoryPersistLoader();
 
         //var serviceProvider = new Mock<IServiceProvider>();
         //var hostEnvironment = new Mock<IHostEnvironment>();

@@ -1,11 +1,9 @@
-﻿using System.Text.RegularExpressions;
-
-namespace Tharga.Cache.Core;
+﻿namespace Tharga.Cache.Core;
 
 internal abstract class TimeCacheBase : CacheBase, ITimeCache
 {
-    protected TimeCacheBase(IManagedCacheMonitor cacheMonitor, IPersist persist, Options options)
-        : base(cacheMonitor, persist, options)
+    protected TimeCacheBase(IManagedCacheMonitor cacheMonitor, IPersistLoader persistLoader, Options options)
+        : base(cacheMonitor, persistLoader, options)
     {
     }
 

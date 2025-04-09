@@ -16,7 +16,7 @@ public class UnloadDataTests
         var options = new Options();
         options.RegisterType<string>(s => s.MaxCount = 3);
         var cacheMonitor = new CacheMonitor();
-        var sut = new EternalCache(cacheMonitor, new Memory(), options);
+        var sut = new EternalCache(cacheMonitor, new MemoryPersistLoader(), options);
         sut.DataDropEvent += (s, e) =>
         {
             dataDropEventCount++;
@@ -30,7 +30,6 @@ public class UnloadDataTests
 
         //Assert
         dataDropEventCount.Should().Be(1);
-        //(await sut.GetAsync<string>().toas).
         cacheMonitor.GetInfos().Single().Items.Count.Should().Be(3);
         cacheMonitor.GetInfos().SelectMany(x => x.Items).Sum(x => x.Value.Size).Should().BeGreaterThan(0);
     }

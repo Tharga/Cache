@@ -6,4 +6,5 @@ public record TypeOptions
     public long MaxSize { get; set; }
     public int MaxCount { get; set; }
     public EvictionPolicy EvictionPolicy { get; set; } = EvictionPolicy.FirstInFirstOut;
+    public PersistType PersistType { get; set; } = PersistType.Memory;
 }

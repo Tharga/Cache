@@ -1,15 +1,17 @@
-﻿namespace Tharga.Cache.Core;
+﻿using Microsoft.Extensions.Options;
+
+namespace Tharga.Cache.Core;
 
 internal abstract class CacheBase : ICache
 {
     private readonly IManagedCacheMonitor _cacheMonitor;
-    private readonly IPersist _persist;
+    private readonly IPersistLoader _persistLoader;
     private readonly Options _options;
 
-    protected CacheBase(IManagedCacheMonitor cacheMonitor, IPersist persist, Options options)
+    protected CacheBase(IManagedCacheMonitor cacheMonitor, IPersistLoader persistLoader, Options options)
     {
         _cacheMonitor = cacheMonitor;
-        _persist = persist;
+        _persistLoader = persistLoader;
         _options = options;
     }
 
@@ -21,7 +23,7 @@ internal abstract class CacheBase : ICache
 
     public async IAsyncEnumerable<T> GetAsync<T>()
     {
-        await foreach (var item in _persist.GetAsync<T>())
+        await foreach (var item in GetPersist<T>().GetAsync<T>())
         {
             yield return item.GetData<T>();
         }
@@ -36,7 +38,7 @@ internal abstract class CacheBase : ICache
     {
         key = BuildKey<T>(key);
 
-        var result = await _persist.GetAsync<T>(key);
+        var result = await GetPersist<T>().GetAsync<T>(key);
 
         if (result.IsValid())
         {
@@ -70,7 +72,7 @@ internal abstract class CacheBase : ICache
     {
         var data = await fetch.Invoke();
 
-        await _persist.SetAsync(key, data, freshSpan);
+        await GetPersist<T>().SetAsync(key, data, freshSpan);
         DropWhenStale<T>(key, freshSpan);
         await OnSetAsync(key, data);
 
@@ -81,7 +83,7 @@ internal abstract class CacheBase : ICache
     {
         key = BuildKey<T>(key);
 
-        var result = await _persist.GetAsync<T>(key);
+        var result = await GetPersist<T>().GetAsync<T>(key);
         if (result.IsValid())
         {
             var response = result.GetData<T>();
@@ -110,7 +112,7 @@ internal abstract class CacheBase : ICache
     {
         key = BuildKey<T>(key);
 
-        await _persist.SetAsync(key, data, freshSpan);
+        await GetPersist<T>().SetAsync(key, data, freshSpan);
         DropWhenStale<T>(key, freshSpan);
         await OnSetAsync(key, data);
     }
@@ -119,7 +121,7 @@ internal abstract class CacheBase : ICache
     {
         key = BuildKey<T>(key);
 
-        var item = await _persist.DropAsync<T>(key);
+        var item = await GetPersist<T>().DropAsync<T>(key);
         if (item.IsValid())
         {
             OnDrop<T>(key, item);
@@ -142,7 +144,7 @@ internal abstract class CacheBase : ICache
             Task.Run(async () =>
             {
                 await Task.Delay(freshSpan);
-                var item = await _persist.DropAsync<T>(key);
+                var item = await GetPersist<T>().DropAsync<T>(key);
                 if (item != null)
                 {
                     OnDrop<T>(key, item);
@@ -161,7 +163,7 @@ internal abstract class CacheBase : ICache
             switch (GetTypeOptions<T>().EvictionPolicy)
             {
                 case EvictionPolicy.FirstInFirstOut:
-                    var item = await _persist.DropFirst();
+                    var item = await GetPersist<T>().DropFirst();
                     OnDrop<T>(item.Key, item.Item);
                     break;
                 default:
@@ -183,5 +185,11 @@ internal abstract class CacheBase : ICache
     {
         DataDropEvent?.Invoke(this, new DataDropEventArgs(key, item.Data));
         _cacheMonitor.Drop(typeof(T), key);
+    }
+
+    private IPersist GetPersist<T>()
+    {
+        var persist = _persistLoader.GetPersist(_options.Get<T>());
+        return persist;
     }
 }

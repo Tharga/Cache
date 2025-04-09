@@ -2,8 +2,8 @@
 
 internal class TimeToIdleCache : TimeCacheBase, ITimeToIdleCache
 {
-    public TimeToIdleCache(IManagedCacheMonitor cacheMonitor, IPersist persist, Options options)
-        : base(cacheMonitor, persist, options)
+    public TimeToIdleCache(IManagedCacheMonitor cacheMonitor, IPersistLoader persistLoader, Options options)
+        : base(cacheMonitor, persistLoader, options)
     {
     }
 

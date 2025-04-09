@@ -1,21 +1,20 @@
 ﻿using StackExchange.Redis;
 using System.Collections.Concurrent;
-using System.Text.Json;
 
-namespace Tharga.Cache;
+namespace Tharga.Cache.Persist;
 
-internal class Redis : IPersist
+internal class Redis : IRedis
 {
     private readonly IDatabase _db;
 
-    public Redis(IConnectionMultiplexer redis)
+    public Redis(/*IConnectionMultiplexer redis*/)
     {
-        _db = redis.GetDatabase();
+        //_db = redis.GetDatabase();
     }
 
     public async Task<CacheItem> GetAsync<T>(Key key)
     {
-        var value = await _db.StringGetAsync((string)key);
+        //var value = await _db.StringGetAsync((string)key);
         //return value.HasValue
         //    ? JsonSerializer.Deserialize<T>(value!)
         //    : default;

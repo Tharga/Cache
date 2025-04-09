@@ -29,5 +29,11 @@ public record Options
         return _typeOptions.GetValueOrDefault(typeof(T)) ?? Default;
     }
 
-    internal TypeOptions Default => new() { StaleWhileRevalidate = false, MaxCount = 1000, MaxSize = 100 * Size.MB };
+    private TypeOptions Default => new()
+    {
+        StaleWhileRevalidate = false,
+        MaxCount = 1000,
+        MaxSize = 100 * Size.MB,
+        PersistType = PersistType.Memory
+    };
 }

@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using StackExchange.Redis;
 using Tharga.Cache.Core;
+using Tharga.Cache.Persist;
 
 namespace Tharga.Cache;
 
@@ -20,23 +21,6 @@ public static class CacheRegistrationExtensions
         };
         options?.Invoke(o);
 
-        serviceCollection.AddSingleton<IConnectionMultiplexer>(sp =>
-        {
-            var configuration = o.ConnectionStringLoader?.Invoke(sp);
-            if (configuration == "LOCAL")
-            {
-                throw new NotImplementedException();
-            }
-            else if (configuration == "DISABLED")
-            {
-                throw new NotImplementedException();
-            }
-            else
-            {
-                return ConnectionMultiplexer.Connect(configuration);
-            }
-        });
-
         serviceCollection.AddSingleton<ICacheMonitor>(s => s.GetService<IManagedCacheMonitor>());
         serviceCollection.AddSingleton<IManagedCacheMonitor>(s =>
         {
@@ -46,50 +30,70 @@ public static class CacheRegistrationExtensions
             return cacheMonitor;
         });
 
-        serviceCollection.AddSingleton<IPersist>(s =>
-        {
-            //TODO: Set configuration to pick correct type of persist.
-            return new Memory();
-        });
+        RegisterPersist(serviceCollection);
 
         serviceCollection.AddSingleton<ICache>(s =>
         {
             throw new NotImplementedException($"Direct use of {nameof(ICache)} has not yet been implemented.");
             var cacheMonitor = s.GetService<IManagedCacheMonitor>();
-            var persist = s.GetService<IPersist>();
-            return new GenericCache(cacheMonitor, persist, o);
+            var persistLoader = s.GetService<IPersistLoader>();
+            return new GenericCache(cacheMonitor, persistLoader, o);
         });
         serviceCollection.AddSingleton<ITimeCache>(s =>
         {
             throw new NotImplementedException($"Direct use of {nameof(ITimeCache)} has not yet been implemented.");
             var cacheMonitor = s.GetService<IManagedCacheMonitor>();
-            var persist = s.GetService<IPersist>();
-            return new GenericTimeCache(cacheMonitor, persist, o);
+            var persistLoader = s.GetService<IPersistLoader>();
+            return new GenericTimeCache(cacheMonitor, persistLoader, o);
         });
         serviceCollection.AddSingleton<IEternalCache>(s =>
         {
             var cacheMonitor = s.GetService<IManagedCacheMonitor>();
-            var persist = s.GetService<IPersist>();
-            return new EternalCache(cacheMonitor, persist, o);
+            var persistLoader = s.GetService<IPersistLoader>();
+            return new EternalCache(cacheMonitor, persistLoader, o);
         });
         serviceCollection.AddSingleton<ITimeToLiveCache>(s =>
         {
             var cacheMonitor = s.GetService<IManagedCacheMonitor>();
-            var persist = s.GetService<IPersist>();
-            return new TimeToLiveCache(cacheMonitor, persist, o);
+            var persistLoader = s.GetService<IPersistLoader>();
+            return new TimeToLiveCache(cacheMonitor, persistLoader, o);
         });
         serviceCollection.AddSingleton<ITimeToIdleCache>(s =>
         {
             var cacheMonitor = s.GetService<IManagedCacheMonitor>();
-            var persist = s.GetService<IPersist>();
-            return new TimeToIdleCache(cacheMonitor, persist, o);
+            var persistLoader = s.GetService<IPersistLoader>();
+            return new TimeToIdleCache(cacheMonitor, persistLoader, o);
         });
-
         serviceCollection.AddScoped<IScopeCache>(s =>
         {
             var cacheMonitor = s.GetService<IManagedCacheMonitor>();
-            var persist = s.GetService<IPersist>();
-            return new EternalCache(cacheMonitor, persist, o);
+            var persistLoader = s.GetService<IPersistLoader>();
+            return new EternalCache(cacheMonitor, persistLoader, o);
         });
+    }
+
+    private static void RegisterPersist(IServiceCollection serviceCollection)
+    {
+        serviceCollection.AddTransient<IPersistLoader, PersistLoader>();
+        serviceCollection.AddSingleton<IPersist>(_ => throw new InvalidOperationException($"Cannot inject {nameof(IPersist)} directly, use {nameof(IPersistLoader)} instead."));
+        serviceCollection.AddSingleton<IMemory, Memory>();
+        serviceCollection.AddSingleton<Persist.IRedis, Redis>();
+
+        //serviceCollection.AddSingleton<IConnectionMultiplexer>(sp =>
+        //{
+        //    var configuration = o.ConnectionStringLoader?.Invoke(sp);
+        //    if (configuration == "LOCAL")
+        //    {
+        //        throw new NotImplementedException();
+        //    }
+        //    else if (configuration == "DISABLED")
+        //    {
+        //        throw new NotImplementedException();
+        //    }
+        //    else
+        //    {
+        //        return ConnectionMultiplexer.Connect(configuration);
+        //    }
+        //});
     }
 }

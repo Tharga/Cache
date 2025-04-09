@@ -2,8 +2,8 @@
 
 internal class TimeToLiveCache : TimeCacheBase, ITimeToLiveCache
 {
-    public TimeToLiveCache(IManagedCacheMonitor cacheMonitor, IPersist persist, Options options)
-        : base(cacheMonitor, persist, options)
+    public TimeToLiveCache(IManagedCacheMonitor cacheMonitor, IPersistLoader persistLoader, Options options)
+        : base(cacheMonitor, persistLoader, options)
     {
     }
 

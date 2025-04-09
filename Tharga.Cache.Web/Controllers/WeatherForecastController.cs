@@ -28,12 +28,23 @@ public class WeatherForecastController : ControllerBase
     //    return Ok(r);
     //}
 
-    [HttpGet(Name = "GetWeatherForecast")]
-    public async Task<IActionResult> Get()
+    [HttpGet("cache_same")]
+    public async Task<IActionResult> GetSame()
+    {
+        return await GetDataAsync("Same");
+    }
+
+    [HttpGet("cache_new")]
+    public async Task<IActionResult> GetNew()
+    {
+        return await GetDataAsync(Guid.NewGuid().ToString());
+    }
+
+    private async Task<IActionResult> GetDataAsync(string cacheKey)
     {
         var sw = Stopwatch.StartNew();
 
-        var r = await _ttlCache.GetAsync(Guid.NewGuid().ToString(), () =>
+        var r = await _ttlCache.GetAsync(cacheKey, () =>
         {
             var x = Enumerable.Range(1, 5).Select(index => new WeatherForecast
                 {

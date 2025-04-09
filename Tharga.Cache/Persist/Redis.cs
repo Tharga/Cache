@@ -60,9 +60,29 @@ internal class Redis : IRedis
             await db.StringSetAsync((string)key, item, freshSpan);
     }
 
-    public Task<bool> BuyMoreTime(Key key)
+    public async Task<bool> BuyMoreTime<T>(Key key)
     {
-        throw new NotImplementedException();
+        var redisConnection = await GetConnection();
+        if (redisConnection == default) return default;
+
+        var db = redisConnection.Multiplexer.GetDatabase();
+        var data = await db.StringGetAsync((string)key);
+        if (!string.IsNullOrEmpty(data))
+        {
+            var cacheItem = JsonSerializer.Deserialize<CacheItem<T>>(data);
+            var updatedCacheItem = cacheItem with { UpdateTime = DateTime.UtcNow };
+            var item = JsonSerializer.Serialize(updatedCacheItem);
+            if (Debugger.IsAttached)
+            {
+                var convertedBack = JsonSerializer.Deserialize<CacheItem<T>>(item);
+                var itemAgain = JsonSerializer.Serialize(convertedBack);
+                if (itemAgain != item) throw new InvalidOperationException("Failed to serialize/deserialize back to same result.");
+            }
+            await db.StringSetAsync((string)key, item);
+            return true;
+        }
+
+        return false;
     }
 
     public async Task<bool> DropAsync<T>(Key key)

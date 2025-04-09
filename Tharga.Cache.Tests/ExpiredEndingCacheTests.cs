@@ -13,6 +13,7 @@ public class ExpiredEndingCacheTests
 
     [Theory]
     [ClassData(typeof(EndingCacheTypes))]
+    [Trait("Category", "TimeCritical")]
     public async Task GetValueAsync(Type type, EvictionPolicy? evictionPolicy, bool staleWhileRevalidate)
     {
         //Arrange

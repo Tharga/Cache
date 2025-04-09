@@ -101,4 +101,13 @@ internal class CacheMonitor : IManagedCacheMonitor
         if (_caches.TryGetValue(type, out var data)) return data.Items;
         return new Dictionary<string, CacheItemInfo>();
     }
+
+    public HealthDto GetHealthAsync()
+    {
+        return new HealthDto
+        {
+            Success = false,
+            Message = "Cache health has not yet been implemented."
+        };
+    }
 }

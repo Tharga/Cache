@@ -7,4 +7,5 @@ public interface ICacheMonitor
     IEnumerable<CacheTypeInfo> GetInfos();
     Dictionary<string, CacheItemInfo> GetByType<T>();
     Dictionary<string, CacheItemInfo> GetByType(Type type);
+    HealthDto GetHealthAsync();
 }

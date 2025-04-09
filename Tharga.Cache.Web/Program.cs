@@ -26,7 +26,8 @@ builder.Services.AddHostedService<CacheMonitorBackgroundService>();
 
 builder.Services.AddQuilt4NetApi(o =>
 {
-    o.ShowInOpenApi = !Debugger.IsAttached;
+    //o.ShowInOpenApi = !Debugger.IsAttached;
+    o.AddComponentService<ComponentService>();
 });
 
 var app = builder.Build();

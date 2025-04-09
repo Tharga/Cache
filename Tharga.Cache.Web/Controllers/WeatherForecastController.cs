@@ -7,6 +7,32 @@ namespace Tharga.Cache.Web.Controllers;
 [Route("[controller]")]
 public class WeatherForecastController : ControllerBase
 {
+    private readonly ITimeToLiveCache _ttlCache;
+
+    public WeatherForecastController(ITimeToLiveCache ttlCache)
+    {
+        _ttlCache = ttlCache;
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetSame()
+    {
+        var response = await _ttlCache.GetAsync("MyCacheKey", LoadWeatherData, TimeSpan.FromSeconds(30));
+        return Ok(response);
+    }
+
+    private static Task<WeatherForecast[]> LoadWeatherData()
+    {
+        var data = Enumerable.Range(1, 5).Select(index => new WeatherForecast { Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)), TemperatureC = Random.Shared.Next(-20, 55) }).ToArray();
+        return Task.FromResult(data);
+    }
+}
+
+
+[ApiController]
+[Route("[controller]")]
+public class WeatherForecast2Controller : ControllerBase
+{
     private static readonly string[] Summaries =
     [
         "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
@@ -15,7 +41,7 @@ public class WeatherForecastController : ControllerBase
     private readonly ITimeToLiveCache _ttlCache;
     private readonly ILogger<WeatherForecastController> _logger;
 
-    public WeatherForecastController(ITimeToLiveCache ttlCache, ILogger<WeatherForecastController> logger)
+    public WeatherForecast2Controller(ITimeToLiveCache ttlCache, ILogger<WeatherForecastController> logger)
     {
         _ttlCache = ttlCache;
         _logger = logger;

@@ -11,7 +11,7 @@ public class CacheMonitorBackgroundService : BackgroundService
         _cacheMonitor = cacheMonitor;
         _ttlCache = ttlCache;
         _logger = logger;
-        _ttlCache.DataDropEvent += (s, e) =>
+        _ttlCache.DataDropEvent += (_, e) =>
         {
             logger.LogInformation($"Data with key {e.Key} was dropped.");
         };

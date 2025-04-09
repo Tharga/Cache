@@ -42,14 +42,14 @@ internal abstract class CacheBase : ICache
 
         if (result.IsValid())
         {
-            OnGet<T>(key);
+            await OnGetAsync<T>(key);
             return result.GetData();
         }
 
         if (GetTypeOptions<T>().StaleWhileRevalidate && result != null)
         {
             var response = result.GetData();
-            OnGet<T>(key);
+            await OnGetAsync<T>(key);
 
             Task.Run(async () =>
             {
@@ -60,7 +60,7 @@ internal abstract class CacheBase : ICache
         }
 
         var loadResponse = await LoadData(key, fetch, fs);
-        OnGet<T>(key);
+        await OnGetAsync<T>(key);
         return loadResponse;
     }
 
@@ -70,7 +70,7 @@ internal abstract class CacheBase : ICache
         return options;
     }
 
-    public async Task<T> LoadData<T>(Key key, Func<Task<T>> fetch, TimeSpan? freshSpan)
+    private async Task<T> LoadData<T>(Key key, Func<Task<T>> fetch, TimeSpan? freshSpan)
     {
         var lazyTask = _inFlightFetches.GetOrAdd(key, _ =>
             new Lazy<Task<object>>(async () =>
@@ -107,7 +107,7 @@ internal abstract class CacheBase : ICache
         if (result.IsValid())
         {
             var response = result.GetData();
-            OnGet<T>(key);
+            await OnGetAsync<T>(key);
 
             return response;
         }
@@ -115,7 +115,7 @@ internal abstract class CacheBase : ICache
         if (GetTypeOptions<T>().StaleWhileRevalidate && result != null)
         {
             var response = result.GetData();
-            OnGet<T>(key);
+            await OnGetAsync<T>(key);
 
             return response;
         }
@@ -157,11 +157,16 @@ internal abstract class CacheBase : ICache
     {
         if (!GetTypeOptions<T>().StaleWhileRevalidate && freshSpan.HasValue && freshSpan != TimeSpan.MaxValue)
         {
+            //TODO: We want to cancel this task, if buy-more-time is called, since we do not want threads not needed.
             Task.Run(async () =>
             {
                 await Task.Delay(freshSpan.Value);
-                await GetPersist<T>().DropAsync<T>(key);
-                OnDrop<T>(key);
+                var current = await GetPersist<T>().GetAsync<T>(key);
+                if (!current.IsValid())
+                {
+                    await GetPersist<T>().DropAsync<T>(key);
+                    OnDrop<T>(key);
+                }
             });
         }
     }
@@ -172,6 +177,36 @@ internal abstract class CacheBase : ICache
 
         DataSetEvent?.Invoke(this, new DataSetEventArgs(key, data));
         _cacheMonitor.Set(typeof(T), key, data);
+    }
+
+    protected virtual Task OnGetAsync<T>(Key key)
+    {
+        return OnGetCoreAsync<T>(key, false);
+    }
+
+    protected async Task OnGetCoreAsync<T>(Key key, bool buyMoreTime)
+    {
+        DataGetEvent?.Invoke(this, new DataGetEventArgs(key));
+
+        var moreTimeBought = false;
+        if (buyMoreTime)
+        {
+            moreTimeBought = await GetPersist<T>().BuyMoreTime(key);
+        }
+
+        _cacheMonitor.Accessed(typeof(T), key, moreTimeBought);
+    }
+
+    private void OnDrop<T>(Key key)
+    {
+        DataDropEvent?.Invoke(this, new DataDropEventArgs(key));
+        _cacheMonitor.Drop(typeof(T), key);
+    }
+
+    private IPersist GetPersist<T>()
+    {
+        var persist = _persistLoader.GetPersist(_options.Get<T>().PersistType);
+        return persist;
     }
 
     private async Task EvictItems<T>(T data)
@@ -189,23 +224,5 @@ internal abstract class CacheBase : ICache
                 OnDrop<T>(keyToDrop);
             }
         }
-    }
-
-    private void OnGet<T>(Key key)
-    {
-        DataGetEvent?.Invoke(this, new DataGetEventArgs(key));
-        _cacheMonitor.Accessed(typeof(T), key);
-    }
-
-    private void OnDrop<T>(Key key)
-    {
-        DataDropEvent?.Invoke(this, new DataDropEventArgs(key));
-        _cacheMonitor.Drop(typeof(T), key);
-    }
-
-    private IPersist GetPersist<T>()
-    {
-        var persist = _persistLoader.GetPersist(_options.Get<T>().PersistType);
-        return persist;
     }
 }

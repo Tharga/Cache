@@ -60,6 +60,11 @@ internal class Redis : IRedis
             await db.StringSetAsync((string)key, item, freshSpan);
     }
 
+    public Task<bool> BuyMoreTime(Key key)
+    {
+        throw new NotImplementedException();
+    }
+
     public async Task<bool> DropAsync<T>(Key key)
     {
         var redisConnection = await GetConnection();

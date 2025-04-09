@@ -44,9 +44,9 @@ internal static class CacheTypeLoader
             case nameof(TimeToLiveCache):
                 cache = new TimeToLiveCache(cacheMonitor, persist, options);
                 break;
-            //case nameof(TimeToIdleCache):
-            //    cache = new TimeToIdleCache(cacheMonitor, persist, options);
-            //    break;
+            case nameof(TimeToIdleCache):
+                cache = new TimeToIdleCache(cacheMonitor, persist, options);
+                break;
             default:
                 throw new ArgumentOutOfRangeException($"Unknown cache type '{cacheType.Name}'.");
         }

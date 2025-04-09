@@ -58,12 +58,12 @@ public static class CacheRegistrationExtensions
             var persistLoader = s.GetService<IPersistLoader>();
             return new TimeToLiveCache(cacheMonitor, persistLoader, o);
         });
-        //serviceCollection.AddSingleton<ITimeToIdleCache>(s =>
-        //{
-        //    var cacheMonitor = s.GetService<IManagedCacheMonitor>();
-        //    var persistLoader = s.GetService<IPersistLoader>();
-        //    return new TimeToIdleCache(cacheMonitor, persistLoader, o);
-        //});
+        serviceCollection.AddSingleton<ITimeToIdleCache>(s =>
+        {
+            var cacheMonitor = s.GetService<IManagedCacheMonitor>();
+            var persistLoader = s.GetService<IPersistLoader>();
+            return new TimeToIdleCache(cacheMonitor, persistLoader, o);
+        });
         serviceCollection.AddScoped<IScopeCache>(s =>
         {
             var cacheMonitor = s.GetService<IManagedCacheMonitor>();

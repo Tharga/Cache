@@ -45,7 +45,7 @@ internal class CacheMonitor : IManagedCacheMonitor
         DataSetEvent?.Invoke(this, new DataSetEventArgs(key, data));
     }
 
-    public void Accessed(Type type, Key key)
+    public void Accessed(Type type, Key key, bool buyMoreTime)
     {
         if (_caches.TryGetValue(type, out var info))
         {

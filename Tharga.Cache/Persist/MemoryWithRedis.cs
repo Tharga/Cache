@@ -37,6 +37,11 @@ internal class MemoryWithRedis : IMemoryWithRedis, IAsyncDisposable, IDisposable
         await Task.WhenAll(memoryTask, redisTask);
     }
 
+    public Task<bool> BuyMoreTime(Key key)
+    {
+        throw new NotImplementedException();
+    }
+
     public async Task<bool> DropAsync<T>(Key key)
     {
         var memoryTask = _memory.DropAsync<T>(key);

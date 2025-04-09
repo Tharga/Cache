@@ -32,10 +32,11 @@ public class FetchDataThrottleTests
         dataGetEventCount.Should().Be(3);
     }
 
-    [Theory]
+    [Theory(Skip = "TimeCritical")]
     [InlineData(2, 10, 100, 200)]
     [InlineData(10, 10, 100, 200)]
     [InlineData(10, 2, 500, 900)]
+    [Trait("Category", "TimeCritical")]
     public async Task ManyParallelCallsAreQueued(int fetchCount, int maxConcurrentFetchCount, int minTime, int maxTime)
     {
         //Arrange

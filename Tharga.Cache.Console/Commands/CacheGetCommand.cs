@@ -1,4 +1,5 @@
-﻿using Tharga.Console.Commands.Base;
+﻿using System.Diagnostics;
+using Tharga.Console.Commands.Base;
 
 namespace Tharga.Cache.Console.Commands;
 

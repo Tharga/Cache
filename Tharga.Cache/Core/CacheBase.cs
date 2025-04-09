@@ -27,12 +27,12 @@ internal abstract class CacheBase : ICache
 
     protected abstract TimeSpan GetDefaultFreshSpan<T>();
 
-    public virtual Task<T> GetAsync<T>(Key key, Func<Task<T>> fetch)
+    public virtual async Task<T> GetAsync<T>(Key key, Func<Task<T>> fetch)
     {
-        return GetCoreAsync(key, fetch, GetDefaultFreshSpan<T>());
+        return (await GetCoreAsync(key, fetch, GetDefaultFreshSpan<T>())).Data;
     }
 
-    protected async Task<T> GetCoreAsync<T>(Key key, Func<Task<T>> fetch, TimeSpan freshSpan)
+    protected async Task<(T Data, bool Fresh)> GetCoreAsync<T>(Key key, Func<Task<T>> fetch, TimeSpan freshSpan, Func<T, Task> callback = default)
     {
         var fs = freshSpan == TimeSpan.MaxValue ? (TimeSpan?)null : freshSpan;
 
@@ -43,7 +43,7 @@ internal abstract class CacheBase : ICache
         if (result.IsValid())
         {
             await OnGetAsync<T>(key);
-            return result.GetData();
+            return (result.GetData(), true);
         }
 
         if (GetTypeOptions<T>().StaleWhileRevalidate && result != null)
@@ -53,15 +53,16 @@ internal abstract class CacheBase : ICache
 
             Task.Run(async () =>
             {
-                await LoadData(key, fetch, fs);
+                var data = await LoadData(key, fetch, fs);
+                callback?.Invoke(data);
             });
 
-            return response;
+            return (response, false);
         }
 
         var loadResponse = await LoadData(key, fetch, fs);
         await OnGetAsync<T>(key);
-        return loadResponse;
+        return (loadResponse, true);
     }
 
     protected CacheTypeOptions GetTypeOptions<T>()

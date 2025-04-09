@@ -1,5 +1,3 @@
 ﻿namespace Tharga.Cache;
 
-public interface ITimeToLiveCache : ITimeCache
-{
-}
+public interface ITimeToLiveCache : ITimeCache;

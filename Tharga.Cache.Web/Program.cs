@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Quilt4Net.Toolkit.Api;
 using Tharga.Cache;
 using Tharga.Cache.Web;
@@ -10,25 +11,25 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.RegisterCache(o =>
 {
-    //o.ConnectionStringLoader = _ => "FROM_CODE";
-
-    //TODO: This in combination with Peak will increase performance.
     o.RegisterType<WeatherForecast[]?>(s =>
     {
-        s.StaleWhileRevalidate = true;
-        //s.MaxCount = 3;
+        s.StaleWhileRevalidate = false;
+        s.MaxCount = 10;
         s.MaxSize = 2000;
         s.EvictionPolicy = EvictionPolicy.FirstInFirstOut;
-        s.PersistType = PersistType.Memory;
+        s.PersistType = PersistType.MemoryWithRedis;
+        s.DefaultFreshSpan = TimeSpan.FromSeconds(10);
     });
 });
 
 builder.Services.AddHostedService<CacheMonitorBackgroundService>();
 
-builder.Services.AddQuilt4NetApi();
+builder.Services.AddQuilt4NetApi(o =>
+{
+    o.ShowInOpenApi = !Debugger.IsAttached;
+});
 
 var app = builder.Build();
-
 
 if (app.Environment.IsDevelopment())
 {

@@ -112,7 +112,7 @@ public class SecondCallTests
         _dataGetEventCount.Should().Be(0);
         _dataDropEventCount.Should().Be(1);
         _monitorSetEventCount.Should().Be(0);
-        item.Should().Be(value);
+        item.Should().BeTrue();
         result.Monitor.GetInfos().SelectMany(x => x.Items).Sum(x => x.Value.Size).Should().Be(0);
     }
 }

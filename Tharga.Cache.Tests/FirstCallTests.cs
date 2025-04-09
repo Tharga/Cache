@@ -29,7 +29,7 @@ public class FirstCallTests
 
         //Assert
         _dataSetEventCount.Should().Be(1);
-        _dataGetEventCount.Should().Be(0);
+        _dataGetEventCount.Should().Be(1);
         _dataDropEventCount.Should().Be(0);
         _monitorSetEventCount.Should().Be(1);
         item.Should().Be(value);
@@ -106,7 +106,7 @@ public class FirstCallTests
         _dataGetEventCount.Should().Be(0);
         _dataDropEventCount.Should().Be(0);
         _monitorSetEventCount.Should().Be(0);
-        item.Should().BeNull();
+        item.Should().BeFalse();
         result.Monitor.GetInfos().SelectMany(x => x.Items).Sum(x => x.Value.Size).Should().Be(0);
     }
 }

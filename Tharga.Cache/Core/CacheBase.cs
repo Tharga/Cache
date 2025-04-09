@@ -17,19 +17,11 @@ internal abstract class CacheBase : ICache
     public event EventHandler<DataGetEventArgs> DataGetEvent;
     public event EventHandler<DataDropEventArgs> DataDropEvent;
 
-    protected abstract TimeSpan DefaultFreshSpan { get; }
-
-    public async IAsyncEnumerable<T> GetAsync<T>()
-    {
-        await foreach (var item in GetPersist<T>().GetAsync<T>())
-        {
-            yield return item.GetData<T>();
-        }
-    }
+    protected abstract TimeSpan GetDefaultFreshSpan<T>();
 
     public virtual Task<T> GetAsync<T>(Key key, Func<Task<T>> fetch)
     {
-        return GetCoreAsync(key, fetch, DefaultFreshSpan);
+        return GetCoreAsync(key, fetch, GetDefaultFreshSpan<T>());
     }
 
     protected async Task<T> GetCoreAsync<T>(Key key, Func<Task<T>> fetch, TimeSpan freshSpan)
@@ -43,12 +35,12 @@ internal abstract class CacheBase : ICache
         if (result.IsValid())
         {
             OnGet<T>(key);
-            return result.GetData<T>();
+            return result.GetData();
         }
 
         if (GetTypeOptions<T>().StaleWhileRevalidate && result != null)
         {
-            var response = result.GetData<T>();
+            var response = result.GetData();
             OnGet<T>(key);
 
             Task.Run(async () =>
@@ -59,10 +51,12 @@ internal abstract class CacheBase : ICache
             return response;
         }
 
-        return await LoadData(key, fetch, fs);
+        var loadResponse = await LoadData(key, fetch, fs);
+        OnGet<T>(key);
+        return loadResponse;
     }
 
-    private CacheTypeOptions GetTypeOptions<T>()
+    protected CacheTypeOptions GetTypeOptions<T>()
     {
         var options = _options.Get<T>();
         return options;
@@ -72,7 +66,7 @@ internal abstract class CacheBase : ICache
     {
         var data = await fetch.Invoke();
 
-        await GetPersist<T>().SetAsync(key, data, freshSpan);
+        await GetPersist<T>().SetAsync(key, data, freshSpan, GetTypeOptions<T>().StaleWhileRevalidate);
         DropWhenStale<T>(key, freshSpan);
         await OnSetAsync(key, data);
 
@@ -86,7 +80,7 @@ internal abstract class CacheBase : ICache
         var result = await GetPersist<T>().GetAsync<T>(key);
         if (result.IsValid())
         {
-            var response = result.GetData<T>();
+            var response = result.GetData();
             OnGet<T>(key);
 
             return response;
@@ -94,7 +88,7 @@ internal abstract class CacheBase : ICache
 
         if (GetTypeOptions<T>().StaleWhileRevalidate && result != null)
         {
-            var response = result.GetData<T>();
+            var response = result.GetData();
             OnGet<T>(key);
 
             return response;
@@ -105,7 +99,7 @@ internal abstract class CacheBase : ICache
 
     public virtual Task SetAsync<T>(Key key, T data)
     {
-        return SetCoreAsync(key, data, DefaultFreshSpan);
+        return SetCoreAsync(key, data, GetDefaultFreshSpan<T>());
     }
 
     protected async Task SetCoreAsync<T>(Key key, T data, TimeSpan freshSpan)
@@ -114,30 +108,24 @@ internal abstract class CacheBase : ICache
 
         key = KeyBuilder.BuildKey<T>(key);
 
-        await GetPersist<T>().SetAsync(key, data, fs);
+        await GetPersist<T>().SetAsync(key, data, fs, GetTypeOptions<T>().StaleWhileRevalidate);
         DropWhenStale<T>(key, fs);
         await OnSetAsync(key, data);
     }
 
-    public virtual async Task<T> DropAsync<T>(Key key)
+    public virtual async Task<bool> DropAsync<T>(Key key)
     {
         key = KeyBuilder.BuildKey<T>(key);
 
         var item = await GetPersist<T>().DropAsync<T>(key);
-        if (item.IsValid())
+        if (item)
         {
-            OnDrop(key, item);
-            return item.GetData<T>();
+            OnDrop<T>(key);
+            return true;
         }
 
-        return default;
+        return false;
     }
-
-    //protected string BuildKey<T>(string key)
-    //{
-    //    var k = $"{typeof(T).Name}.{key}";
-    //    return k;
-    //}
 
     private void DropWhenStale<T>(Key key, TimeSpan? freshSpan)
     {
@@ -146,11 +134,8 @@ internal abstract class CacheBase : ICache
             Task.Run(async () =>
             {
                 await Task.Delay(freshSpan.Value);
-                var item = await GetPersist<T>().DropAsync<T>(key);
-                if (item != null)
-                {
-                    OnDrop<T>(key, item);
-                }
+                await GetPersist<T>().DropAsync<T>(key);
+                OnDrop<T>(key);
             });
         }
     }
@@ -163,8 +148,8 @@ internal abstract class CacheBase : ICache
             || result?.Items.Sum(x => x.Value.Size) + data.ToSize() >= GetTypeOptions<T>().MaxSize)
         {
             var keyToDrop = _cacheMonitor.Get<T>(GetTypeOptions<T>().EvictionPolicy);
-            var droppedItem = await GetPersist<T>().DropAsync<T>(keyToDrop);
-            OnDrop<T>(keyToDrop, droppedItem);
+            await GetPersist<T>().DropAsync<T>(keyToDrop);
+            OnDrop<T>(keyToDrop);
         }
 
         DataSetEvent?.Invoke(this, new DataSetEventArgs(key, data));
@@ -177,9 +162,9 @@ internal abstract class CacheBase : ICache
         _cacheMonitor.Accessed(typeof(T), key);
     }
 
-    private void OnDrop<T>(Key key, CacheItem<T> item)
+    private void OnDrop<T>(Key key)
     {
-        DataDropEvent?.Invoke(this, new DataDropEventArgs(key, item.Data));
+        DataDropEvent?.Invoke(this, new DataDropEventArgs(key));
         _cacheMonitor.Drop(typeof(T), key);
     }
 

@@ -7,4 +7,5 @@ public record CacheTypeOptions
     public int MaxCount { get; set; }
     public EvictionPolicy EvictionPolicy { get; set; } = EvictionPolicy.FirstInFirstOut;
     public PersistType PersistType { get; set; } = PersistType.Memory;
+    public TimeSpan? DefaultFreshSpan { get; set; }
 }

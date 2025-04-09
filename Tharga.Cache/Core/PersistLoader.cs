@@ -20,6 +20,8 @@ internal class PersistLoader : IPersistLoader
                 return _serviceProvider.GetService<IMemory>();
             case PersistType.Redis:
                 return _serviceProvider.GetService<IRedis>();
+            case PersistType.MemoryWithRedis:
+                return _serviceProvider.GetService<IMemoryWithRedis>();
             default:
                 throw new ArgumentOutOfRangeException(nameof(PersistType), $"Unknown {nameof(PersistLoader)} {typeOptions.PersistType}.");
         }

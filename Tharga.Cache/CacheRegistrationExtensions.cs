@@ -59,12 +59,12 @@ public static class CacheRegistrationExtensions
             var persistLoader = s.GetService<IPersistLoader>();
             return new TimeToLiveCache(cacheMonitor, persistLoader, o);
         });
-        serviceCollection.AddSingleton<ITimeToIdleCache>(s =>
-        {
-            var cacheMonitor = s.GetService<IManagedCacheMonitor>();
-            var persistLoader = s.GetService<IPersistLoader>();
-            return new TimeToIdleCache(cacheMonitor, persistLoader, o);
-        });
+        //serviceCollection.AddSingleton<ITimeToIdleCache>(s =>
+        //{
+        //    var cacheMonitor = s.GetService<IManagedCacheMonitor>();
+        //    var persistLoader = s.GetService<IPersistLoader>();
+        //    return new TimeToIdleCache(cacheMonitor, persistLoader, o);
+        //});
         serviceCollection.AddScoped<IScopeCache>(s =>
         {
             var cacheMonitor = s.GetService<IManagedCacheMonitor>();
@@ -79,22 +79,6 @@ public static class CacheRegistrationExtensions
         serviceCollection.AddSingleton<IPersist>(_ => throw new InvalidOperationException($"Cannot inject {nameof(IPersist)} directly, use {nameof(IPersistLoader)} instead."));
         serviceCollection.AddSingleton<IMemory, Memory>();
         serviceCollection.AddSingleton<IRedis, Redis>();
-
-        //serviceCollection.AddSingleton<IConnectionMultiplexer>(sp =>
-        //{
-        //    var configuration = o.ConnectionStringLoader?.Invoke(sp);
-        //    if (configuration == "LOCAL")
-        //    {
-        //        throw new NotImplementedException();
-        //    }
-        //    else if (configuration == "DISABLED")
-        //    {
-        //        throw new NotImplementedException();
-        //    }
-        //    else
-        //    {
-        //        return ConnectionMultiplexer.Connect(configuration);
-        //    }
-        //});
+        serviceCollection.AddSingleton<IMemoryWithRedis, MemoryWithRedis>();
     }
 }

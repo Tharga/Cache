@@ -45,7 +45,7 @@ public class ExpiredEndingCacheTests
         else
         {
             _dataSetEventCount.Should().Be(1);
-            _dataGetEventCount.Should().Be(0);
+            _dataGetEventCount.Should().Be(1);
             _dataDropEventCount.Should().Be(1);
             _monitorSetEventCount.Should().Be(1);
             item.Should().Be("updated");

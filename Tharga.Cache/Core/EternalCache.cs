@@ -7,5 +7,5 @@ internal class EternalCache : CacheBase, IEternalCache, IScopeCache
     {
     }
 
-    protected override TimeSpan DefaultFreshSpan => TimeSpan.MaxValue;
+    protected override TimeSpan GetDefaultFreshSpan<T>() => TimeSpan.MaxValue;
 }

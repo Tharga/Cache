@@ -21,13 +21,6 @@ public class WeatherForecastController : ControllerBase
         _logger = logger;
     }
 
-    //[HttpGet("Get")]
-    //public async Task<IActionResult> JustGet()
-    //{
-    //    var r = await _ttlCache.PeekAsync<WeatherForecast[]?>("WW");
-    //    return Ok(r);
-    //}
-
     [HttpGet("cache_same")]
     public async Task<IActionResult> GetSame()
     {
@@ -54,7 +47,7 @@ public class WeatherForecastController : ControllerBase
                 })
                 .ToArray();
             return Task.FromResult(x);
-        }, TimeSpan.FromSeconds(100));
+        }, TimeSpan.FromSeconds(10));
 
         sw.Stop();
 

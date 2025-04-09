@@ -2,12 +2,10 @@
 
 public class DataDropEventArgs : EventArgs
 {
-    public DataDropEventArgs(Key key, object data)
+    public DataDropEventArgs(Key key)
     {
         Key = key;
-        Data = data;
     }
 
     public Key Key { get; }
-    public object Data { get; }
 }

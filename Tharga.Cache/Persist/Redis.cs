@@ -26,7 +26,7 @@ internal class Redis : IRedis
     public async Task<CacheItem<T>> GetAsync<T>(Key key)
     {
         var redisConnection = await GetConnection();
-        if (redisConnection == default) return default;
+        if (redisConnection.Multiplexer == default) return default;
 
         var db = redisConnection.Multiplexer.GetDatabase();
         var data = await db.StringGetAsync((string)key);
@@ -51,7 +51,7 @@ internal class Redis : IRedis
         }
 
         var redisConnection = await GetConnection();
-        if (redisConnection == default) return;
+        if (redisConnection.Multiplexer == default) return;
 
         var db = redisConnection.Multiplexer.GetDatabase();
         if (freshSpan == null || freshSpan == TimeSpan.MaxValue || staleWhileRevalidate)
@@ -63,7 +63,7 @@ internal class Redis : IRedis
     public async Task<bool> BuyMoreTime<T>(Key key)
     {
         var redisConnection = await GetConnection();
-        if (redisConnection == default) return default;
+        if (redisConnection.Multiplexer == default) return default;
 
         var db = redisConnection.Multiplexer.GetDatabase();
         var data = await db.StringGetAsync((string)key);
@@ -88,7 +88,7 @@ internal class Redis : IRedis
     public async Task<bool> DropAsync<T>(Key key)
     {
         var redisConnection = await GetConnection();
-        if (redisConnection == default) return default;
+        if (redisConnection.Multiplexer == default) return default;
 
         var db = redisConnection.Multiplexer.GetDatabase();
         return await db.KeyDeleteAsync((string)key);

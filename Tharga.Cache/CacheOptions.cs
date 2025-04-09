@@ -30,6 +30,8 @@ public record CacheOptions
         return _typeOptions.GetValueOrDefault(typeof(T)) ?? Default;
     }
 
+    internal IEnumerable<PersistType> GetConfiguredPersistTypes => _typeOptions.Values.Select(x => x.PersistType).Distinct();
+
     private CacheTypeOptions Default => new()
     {
         StaleWhileRevalidate = false,

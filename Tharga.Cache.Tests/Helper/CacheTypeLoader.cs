@@ -1,4 +1,5 @@
-﻿using Tharga.Cache.Core;
+﻿using Moq;
+using Tharga.Cache.Core;
 
 namespace Tharga.Cache.Tests.Helper;
 
@@ -12,9 +13,6 @@ internal static class CacheTypeLoader
 
     public static (ICache Cache, ICacheMonitor Monitor) GetCache(Type cacheType, EvictionPolicy? evictionPolicy, bool staleWhileRevalidate, TimeSpan? defaultFreshSpan = default, string connectionString = "LOCAL")
     {
-        var cacheMonitor = new CacheMonitor();
-        var persist = new MemoryPersistLoader();
-
         var options = new CacheOptions
         {
             ConnectionStringLoader = _ => connectionString
@@ -26,6 +24,10 @@ internal static class CacheTypeLoader
             s.DefaultFreshSpan = defaultFreshSpan ?? TimeSpan.FromSeconds(10);
             s.EvictionPolicy = evictionPolicy ?? EvictionPolicy.FirstInFirstOut;
         });
+
+        var persistLoader = new Mock<IPersistLoader>(MockBehavior.Strict);
+        var persist = new MemoryPersistLoader();
+        var cacheMonitor = new CacheMonitor(persistLoader.Object, options);
 
         ICache cache;
         switch (cacheType.Name)

@@ -170,7 +170,7 @@ internal abstract class CacheBase : ICache
 
     private IPersist GetPersist<T>()
     {
-        var persist = _persistLoader.GetPersist(_options.Get<T>());
+        var persist = _persistLoader.GetPersist(_options.Get<T>().PersistType);
         return persist;
     }
 }

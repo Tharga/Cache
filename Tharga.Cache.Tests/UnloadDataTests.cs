@@ -1,4 +1,5 @@
 ﻿using FluentAssertions;
+using Moq;
 using Tharga.Cache.Core;
 using Tharga.Cache.Tests.Helper;
 using Xunit;
@@ -7,6 +8,14 @@ namespace Tharga.Cache.Tests;
 
 public class UnloadDataTests
 {
+    private readonly Mock<IPersistLoader> _persistLoader = new(MockBehavior.Strict);
+    private readonly CacheMonitor _cacheMonitor;
+
+    public UnloadDataTests()
+    {
+        _cacheMonitor = new CacheMonitor(_persistLoader.Object, new CacheOptions());
+    }
+
     [Fact]
     public async Task FirstInFirstOut_MaxCount()
     {
@@ -18,8 +27,7 @@ public class UnloadDataTests
             o.MaxCount = 3;
             o.EvictionPolicy = EvictionPolicy.FirstInFirstOut;
         });
-        var cacheMonitor = new CacheMonitor();
-        var sut = new EternalCache(cacheMonitor, new MemoryPersistLoader(), options);
+        var sut = new EternalCache(_cacheMonitor, new MemoryPersistLoader(), options);
         sut.DataDropEvent += (_, _) => dataDropEventCount++;
         await sut.SetAsync("a", "aa");
         await sut.SetAsync("b", "bb");
@@ -30,10 +38,10 @@ public class UnloadDataTests
 
         //Assert
         dataDropEventCount.Should().Be(1);
-        cacheMonitor.GetInfos().Single().Items.Count.Should().Be(3);
-        cacheMonitor.GetInfos().Single().Items.Should().Contain(x => x.Key == KeyBuilder.BuildKey<string>("d"));
-        cacheMonitor.GetInfos().Single().Items.Should().NotContain(x => x.Key == KeyBuilder.BuildKey<string>("a"));
-        cacheMonitor.GetInfos().SelectMany(x => x.Items).Sum(x => x.Value.Size).Should().BeGreaterThan(0);
+        _cacheMonitor.GetInfos().Single().Items.Count.Should().Be(3);
+        _cacheMonitor.GetInfos().Single().Items.Should().Contain(x => x.Key == KeyBuilder.BuildKey<string>("d"));
+        _cacheMonitor.GetInfos().Single().Items.Should().NotContain(x => x.Key == KeyBuilder.BuildKey<string>("a"));
+        _cacheMonitor.GetInfos().SelectMany(x => x.Items).Sum(x => x.Value.Size).Should().BeGreaterThan(0);
     }
 
     [Fact]
@@ -47,8 +55,7 @@ public class UnloadDataTests
             o.MaxCount = 3;
             o.EvictionPolicy = EvictionPolicy.LeastRecentlyUsed;
         });
-        var cacheMonitor = new CacheMonitor();
-        var sut = new EternalCache(cacheMonitor, new MemoryPersistLoader(), options);
+        var sut = new EternalCache(_cacheMonitor, new MemoryPersistLoader(), options);
         sut.DataDropEvent += (_, _) => dataDropEventCount++;
         await sut.GetAsync("a", () => Task.FromResult("aa"));
         await sut.GetAsync("b", () => Task.FromResult("bb"));
@@ -60,10 +67,10 @@ public class UnloadDataTests
 
         //Assert
         dataDropEventCount.Should().Be(1);
-        cacheMonitor.GetInfos().Single().Items.Count.Should().Be(3);
-        cacheMonitor.GetInfos().Single().Items.Should().Contain(x => x.Key == KeyBuilder.BuildKey<string>("b"));
-        cacheMonitor.GetInfos().Single().Items.Should().NotContain(x => x.Key == KeyBuilder.BuildKey<string>("a"));
-        cacheMonitor.GetInfos().SelectMany(x => x.Items).Sum(x => x.Value.Size).Should().BeGreaterThan(0);
+        _cacheMonitor.GetInfos().Single().Items.Count.Should().Be(3);
+        _cacheMonitor.GetInfos().Single().Items.Should().Contain(x => x.Key == KeyBuilder.BuildKey<string>("b"));
+        _cacheMonitor.GetInfos().Single().Items.Should().NotContain(x => x.Key == KeyBuilder.BuildKey<string>("a"));
+        _cacheMonitor.GetInfos().SelectMany(x => x.Items).Sum(x => x.Value.Size).Should().BeGreaterThan(0);
     }
 
     [Fact]
@@ -77,8 +84,7 @@ public class UnloadDataTests
             o.MaxCount = 3;
             o.EvictionPolicy = EvictionPolicy.RandomReplacement;
         });
-        var cacheMonitor = new CacheMonitor();
-        var sut = new EternalCache(cacheMonitor, new MemoryPersistLoader(), options);
+        var sut = new EternalCache(_cacheMonitor, new MemoryPersistLoader(), options);
         sut.DataDropEvent += (_, _) => dataDropEventCount++;
         await sut.SetAsync("a", "aa");
         await sut.SetAsync("b", "bb");
@@ -89,8 +95,8 @@ public class UnloadDataTests
 
         //Assert
         dataDropEventCount.Should().Be(1);
-        cacheMonitor.GetInfos().Single().Items.Count.Should().Be(3);
-        cacheMonitor.GetInfos().Single().Items.Should().Contain(x => x.Key == KeyBuilder.BuildKey<string>("d"));
-        cacheMonitor.GetInfos().SelectMany(x => x.Items).Sum(x => x.Value.Size).Should().BeGreaterThan(0);
+        _cacheMonitor.GetInfos().Single().Items.Count.Should().Be(3);
+        _cacheMonitor.GetInfos().Single().Items.Should().Contain(x => x.Key == KeyBuilder.BuildKey<string>("d"));
+        _cacheMonitor.GetInfos().SelectMany(x => x.Items).Sum(x => x.Value.Size).Should().BeGreaterThan(0);
     }
 }

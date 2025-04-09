@@ -25,9 +25,8 @@ public static class CacheRegistrationExtensions
         serviceCollection.AddSingleton<ICacheMonitor>(s => s.GetService<IManagedCacheMonitor>());
         serviceCollection.AddSingleton<IManagedCacheMonitor>(s =>
         {
-            //var hostEnvironment = s.GetService<IHostEnvironment>();
-            var cacheMonitor = new CacheMonitor(); //s, hostEnvironment, o);
-            //cacheMonitor.Set();
+            var persistLoader = s.GetService<IPersistLoader>();
+            var cacheMonitor = new CacheMonitor(persistLoader, o);
             return cacheMonitor;
         });
 

@@ -1,10 +1,19 @@
 ﻿using System.Collections.Concurrent;
+using Tharga.Cache.Persist;
 
 namespace Tharga.Cache.Core;
 
 internal class CacheMonitor : IManagedCacheMonitor
 {
+    private readonly IPersistLoader _persistLoader;
+    private readonly CacheOptions _cacheOptions;
     private readonly ConcurrentDictionary<Type, CacheTypeInfo> _caches = new();
+
+    public CacheMonitor(IPersistLoader persistLoader, CacheOptions cacheOptions)
+    {
+        _persistLoader = persistLoader;
+        _cacheOptions = cacheOptions;
+    }
 
     public void Set(Type type, Key key, object data)
     {
@@ -102,12 +111,23 @@ internal class CacheMonitor : IManagedCacheMonitor
         return new Dictionary<string, CacheItemInfo>();
     }
 
-    public HealthDto GetHealthAsync()
+    public async Task<HealthDto> GetHealthAsync()
     {
+        (bool Success, string Message) result = (true, null);
+        var hasRedis = _cacheOptions.GetConfiguredPersistTypes.Any(x => x == PersistType.Redis || x == PersistType.MemoryWithRedis);
+        if (hasRedis)
+        {
+            var redis = (IRedis)_persistLoader.GetPersist(PersistType.Redis);
+            result = await redis.CanConnectAsync();
+        }
+
+        var totalSize = _caches.Values.Sum(x => x.Items.Sum(y => y.Value.Size));
+        var totalCount = _caches.Values.Sum(x => x.Items.Count);
+
         return new HealthDto
         {
-            Success = false,
-            Message = "Cache health has not yet been implemented."
+            Message = $"There are {totalCount} items cached with a size of {totalSize} bytes. {result.Message}".TrimEnd(),
+            Success = result.Success,
         };
     }
 }

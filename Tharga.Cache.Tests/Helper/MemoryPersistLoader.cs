@@ -7,7 +7,7 @@ internal class MemoryPersistLoader : IPersistLoader
 {
     private Memory _memory;
 
-    public IPersist GetPersist(CacheTypeOptions options)
+    public IPersist GetPersist(PersistType persistType)
     {
         return _memory ??= new Memory();
     }

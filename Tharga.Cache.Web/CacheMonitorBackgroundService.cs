@@ -1,6 +1,3 @@
-using Quilt4Net.Toolkit;
-using Quilt4Net.Toolkit.Features.Health;
-
 namespace Tharga.Cache.Web;
 
 public class CacheMonitorBackgroundService : BackgroundService
@@ -34,33 +31,5 @@ public class CacheMonitorBackgroundService : BackgroundService
 
             await Task.Delay(1000, stoppingToken);
         }
-    }
-}
-
-internal class ComponentService : IComponentService
-{
-    private readonly ICacheMonitor _cacheMonitor;
-
-    public ComponentService(ICacheMonitor cacheMonitor)
-    {
-        _cacheMonitor = cacheMonitor;
-    }
-
-    public IEnumerable<Component> GetComponents()
-    {
-        yield return new Component
-        {
-            Name = "DistributedCache",
-            Essential = false,
-            CheckAsync = _ =>
-            {
-                var result = _cacheMonitor.GetHealthAsync();
-                return Task.FromResult(new CheckResult
-                {
-                    Success = result.Success,
-                    Message = result.Message
-                });
-            }
-        };
     }
 }

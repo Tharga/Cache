@@ -6,12 +6,12 @@ using Xunit;
 
 namespace Tharga.Cache.Tests;
 
-public class TTICacheTests
+public class TimeToLiveCacheTests
 {
     private readonly Mock<IPersistLoader> _persistLoader = new(MockBehavior.Strict);
     private readonly CacheMonitor _cacheMonitor;
 
-    public TTICacheTests()
+    public TimeToLiveCacheTests()
     {
         _cacheMonitor = new CacheMonitor(_persistLoader.Object, new CacheOptions());
         _persistLoader.Setup(x => x.GetPersist(It.IsAny<PersistType>())).Returns(new Memory(_cacheMonitor));
@@ -20,7 +20,7 @@ public class TTICacheTests
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public async Task KeepIfUsed(bool keep)
+    public async Task DropEvenIfUsed(bool keep)
     {
         //Arrange
         var options = new CacheOptions();
@@ -29,7 +29,7 @@ public class TTICacheTests
         var monitorSetEventCount = 0;
         var monitorGetEventCount = 0;
         var monitorDropEventCount = 0;
-        var sut = new TimeToIdleCache(_cacheMonitor, _persistLoader.Object, options);
+        var sut = new TimeToLiveCache(_cacheMonitor, _persistLoader.Object, options);
         sut.DataSetEvent += (_, _) => dataSetEventCount++;
         sut.DataGetEvent += (_, _) => dataGetEventCount++;
         _cacheMonitor.DataSetEvent += (_, _) => { monitorSetEventCount++; };
@@ -46,10 +46,10 @@ public class TTICacheTests
         var result = await sut.GetAsync("a", () => Task.FromResult("a4"), TimeSpan.FromMilliseconds(200));
 
         //Assert
-        result.Should().Be(keep ? "a1" : "a4");
-        dataSetEventCount.Should().Be(keep ? 1 : 2);
+        result.Should().Be(keep ? "a3" : "a4");
+        dataSetEventCount.Should().Be(2);
         dataGetEventCount.Should().Be(keep ? 4 : 3);
-        monitorSetEventCount.Should().Be(keep ? 1 : 2);
+        monitorSetEventCount.Should().Be(2);
         monitorGetEventCount.Should().Be(keep ? 4 : 3);
         monitorDropEventCount.Should().Be(0);
     }

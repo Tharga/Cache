@@ -4,7 +4,7 @@ internal static class DictionaryExtensions
 {
     private static readonly Lazy<System.Random> _random = new(() => new System.Random());
 
-    public static KeyValuePair<TKey, TValue> TakeRandom<TKey, TValue>(this Dictionary<TKey, TValue> dictionary)
+    public static KeyValuePair<TKey, TValue> TakeRandom<TKey, TValue>(this IDictionary<TKey, TValue> dictionary)
     {
         if (dictionary == null || dictionary.Count == 0) return default;
 

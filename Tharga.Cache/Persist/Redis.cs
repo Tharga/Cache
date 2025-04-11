@@ -12,22 +12,21 @@ internal class Redis : IRedis
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly IHostEnvironment _hostEnvironment;
-    private readonly ILogger<Redis> _logger;
     private readonly CacheOptions _options;
     private ConnectionMultiplexer _redisConnection;
+    private readonly ILogger<Redis> _logger;
 
     public Redis(IServiceProvider serviceProvider, IHostEnvironment hostEnvironment, IManagedCacheMonitor cacheMonitor, IOptions<CacheOptions> options, ILogger<Redis> logger)
     {
         _serviceProvider = serviceProvider;
         _hostEnvironment = hostEnvironment;
-        _logger = logger;
         _options = options.Value;
+        _logger = logger;
 
-        cacheMonitor.RequestEvictEvent += (s, e) =>
+        cacheMonitor.RequestEvictEvent += async (_, e) =>
         {
-            //TODO: Implement
-            Debugger.Break();
-            throw new NotImplementedException();
+            await DropAsync(e.Type, e.Key);
+            cacheMonitor.Drop(e.Type, e.Key);
         };
     }
 
@@ -103,13 +102,19 @@ internal class Redis : IRedis
         return false;
     }
 
-    public async Task<bool> DropAsync<T>(Key key)
+    public Task<bool> DropAsync<T>(Key key)
+    {
+        return DropAsync(typeof(T), key);
+    }
+
+    internal async Task<bool> DropAsync(Type type, Key key)
     {
         var redisConnection = await GetConnection();
         if (redisConnection.Multiplexer == default) return default;
 
         var db = redisConnection.Multiplexer.GetDatabase();
-        return await db.KeyDeleteAsync((string)key);
+        var result = await db.KeyDeleteAsync((string)key);
+        return result;
     }
 
     public void Dispose()

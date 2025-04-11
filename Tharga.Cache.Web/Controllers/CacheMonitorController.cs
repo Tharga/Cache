@@ -1,3 +1,4 @@
+using System.Reflection;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Tharga.Cache.Web.Controllers;
@@ -33,6 +34,7 @@ public class CacheMonitorController : ControllerBase
         //TODO: Make it possible to provide a type.
         //var t = Type.GetType(type);
         //if (t == null) return BadRequest($"Cannot find type {type}.");
+        var t1 = Type.GetType(type);
         var t = typeof(WeatherForecast[]);
 
         var datas = _cacheMonitor.GetByType(t);

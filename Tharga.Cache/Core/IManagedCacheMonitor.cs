@@ -8,5 +8,5 @@ internal interface IManagedCacheMonitor : ICacheMonitor
     void Accessed(Type type, Key key, bool buyMoreTime);
     void Drop(Type type, Key key);
     Key Get<T>(EvictionPolicy evictionPolicy);
-    Func<int> QueueCountLoader { get; set; }
+    void AddFetchCount(Func<int> func);
 }

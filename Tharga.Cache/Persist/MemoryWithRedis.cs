@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using Tharga.Cache.Core;
+﻿using Tharga.Cache.Core;
 
 namespace Tharga.Cache.Persist;
 
@@ -13,11 +12,10 @@ internal class MemoryWithRedis : IMemoryWithRedis, IAsyncDisposable, IDisposable
         _memory = memory;
         _redis = redis;
 
-        cacheMonitor.RequestEvictEvent += (s, e) =>
+        cacheMonitor.RequestEvictEvent += async (s, e) =>
         {
-            //TODO: Implement
-            Debugger.Break();
-            throw new NotImplementedException();
+            await DropAsync(e.Type, e.Key);
+            cacheMonitor.Drop(e.Type, e.Key);
         };
     }
 
@@ -64,12 +62,18 @@ internal class MemoryWithRedis : IMemoryWithRedis, IAsyncDisposable, IDisposable
         return memoryTask.Result || redisTask.Result;
     }
 
-    public async Task<bool> DropAsync<T>(Key key)
+    public Task<bool> DropAsync<T>(Key key)
     {
-        var memoryTask = _memory.DropAsync<T>(key);
-        var redisTask = _redis.DropAsync<T>(key);
+        return DropAsync(typeof(T), key);
+    }
+
+    private async Task<bool> DropAsync(Type type, Key key)
+    {
+        var memoryTask = ((Memory)_memory).DropAsync(type, key);
+        var redisTask = ((Redis)_redis).DropAsync(type, key);
 
         await Task.WhenAll(memoryTask, redisTask);
+        //_cacheMonitor.Drop(type, key);
         return memoryTask.Result || redisTask.Result;
     }
 }

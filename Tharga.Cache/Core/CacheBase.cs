@@ -19,7 +19,7 @@ internal abstract class CacheBase : ICache
         _persistLoader = persistLoader;
         _options = options;
         _globalSemaphore = new(options.MaxConcurrentFetchCount, options.MaxConcurrentFetchCount);
-        _cacheMonitor.QueueCountLoader = () => _inFlightFetches.Count; //TODO: This will over-write other loader functions. Do an add instead.
+        _cacheMonitor.AddFetchCount(() => _inFlightFetches.Count);
     }
 
     public event EventHandler<DataSetEventArgs> DataSetEvent;
@@ -134,7 +134,7 @@ internal abstract class CacheBase : ICache
 
     protected async Task SetCoreAsync<T>(Key key, T data, TimeSpan freshSpan)
     {
-        var fs = freshSpan == TimeSpan.MaxValue ? (TimeSpan?)null : freshSpan;
+        //var fs = freshSpan == TimeSpan.MaxValue ? (TimeSpan?)null : freshSpan;
 
         key = KeyBuilder.BuildKey<T>(key);
 
@@ -221,23 +221,4 @@ internal abstract class CacheBase : ICache
             }
         }
     }
-
-    //private void DropWhenStale<T>(Key key, TimeSpan? freshSpan)
-    //{
-    //    if (!GetTypeOptions<T>().StaleWhileRevalidate && freshSpan.HasValue && freshSpan != TimeSpan.MaxValue)
-    //    {
-    //        //TODO: We want to cancel this task, if buy-more-time is called, since we do not want threads not needed.
-    //        //TODO: Use a watchdog instead of background-tasks
-    //        Task.Run(async () =>
-    //        {
-    //            await Task.Delay(freshSpan.Value);
-    //            var current = await GetPersist<T>().GetAsync<T>(key);
-    //            if (!current.IsValid())
-    //            {
-    //                await GetPersist<T>().DropAsync<T>(key);
-    //                OnDrop<T>(key);
-    //            }
-    //        });
-    //    }
-    //}
 }

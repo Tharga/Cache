@@ -60,7 +60,6 @@ public class FetchDataThrottleTests
         var persistLoader = new Mock<IPersistLoader>(MockBehavior.Strict);
         var cacheMonitor = new CacheMonitor(persistLoader.Object, options);
         persistLoader.Setup(x => x.GetPersist(options.Get<string>().PersistType)).Returns(new Memory(cacheMonitor));
-        var persist = persistLoader;
         var sut = new TimeToLiveCache(cacheMonitor, persistLoader.Object, options);
         sut.DataGetEvent += (_, _) => dataGetEventCount++;
         sut.DataSetEvent += (_, _) => dataSetEventCount++;
@@ -113,12 +112,12 @@ public class FetchDataThrottleTests
         var stopwatch = Stopwatch.StartNew();
 
         //Act
-        var intTasks = Enumerable.Range(0, fetchCount / 2).Select(_ => sut.GetAsync<int>(Guid.NewGuid().ToString(), async () =>
+        var intTasks = Enumerable.Range(0, fetchCount / 2).Select(_ => sut.GetAsync(Guid.NewGuid().ToString(), async () =>
         {
             await Task.Delay(100);
             return 1;
         }, TimeSpan.FromSeconds(1))).ToArray();
-        var stringTasks = Enumerable.Range(0, fetchCount / 2).Select(_ => sut.GetAsync<string>(Guid.NewGuid().ToString(), async () =>
+        var stringTasks = Enumerable.Range(0, fetchCount / 2).Select(_ => sut.GetAsync(Guid.NewGuid().ToString(), async () =>
         {
             await Task.Delay(100);
             return Guid.NewGuid().ToString();

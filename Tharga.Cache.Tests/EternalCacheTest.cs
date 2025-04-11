@@ -1,19 +1,18 @@
 ﻿using FluentAssertions;
+using Moq;
 using Tharga.Cache.Core;
-using Tharga.Cache.Tests.Helper;
 using Xunit;
 
 namespace Tharga.Cache.Tests;
 
 public class EternalCacheTest
 {
-    private readonly MemoryPersistLoader _memoryPersistLoader;
+    private readonly Mock<IPersistLoader> _persistLoader = new(MockBehavior.Strict);
     private readonly CacheMonitor _cacheMonitor;
 
     public EternalCacheTest()
     {
-        _memoryPersistLoader = new MemoryPersistLoader();
-        _cacheMonitor = new CacheMonitor(_memoryPersistLoader, new CacheOptions());
+        _cacheMonitor = new CacheMonitor(_persistLoader.Object, new CacheOptions());
     }
 
     [Theory]
@@ -25,7 +24,7 @@ public class EternalCacheTest
         var options = new CacheOptions();
         var dataSetEventCount = 0;
         var dataGetEventCount = 0;
-        var sut = new EternalCache(_cacheMonitor, _memoryPersistLoader, options);
+        var sut = new EternalCache(_cacheMonitor, _persistLoader.Object, options);
         sut.DataSetEvent += (_, _) => dataSetEventCount++;
         sut.DataGetEvent += (_, _) => dataGetEventCount++;
 

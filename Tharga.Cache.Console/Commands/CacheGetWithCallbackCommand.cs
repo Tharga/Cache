@@ -14,7 +14,7 @@ internal class CacheGetWithCallbackCommand : AsyncActionCommandBase
 
     public override async Task InvokeAsync(string[] param)
     {
-        var item = await _timeToLiveCache.GetWithCallbackAsync("key2", async () =>
+        var item = await _timeToLiveCache.GetWithCallbackAsync("key", async () =>
         {
             await Task.Delay(3000);
             return $"qwerty {Guid.NewGuid()}";
@@ -22,7 +22,7 @@ internal class CacheGetWithCallbackCommand : AsyncActionCommandBase
         {
             OutputInformation($"Fresh data arrived: {fresh}");
             return Task.CompletedTask;
-        }, TimeSpan.FromSeconds(10));
+        });
         OutputInformation($"{item.Data} (Fresh: {item.Fresh})");
     }
 }

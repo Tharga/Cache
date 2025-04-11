@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using FluentAssertions;
+using Moq;
 using Tharga.Cache.Core;
 using Tharga.Cache.Tests.Helper;
 using Xunit;
@@ -15,9 +16,9 @@ public class FetchDataThrottleTests
         var options = new CacheOptions();
         var dataGetEventCount = 0;
         var dataSetEventCount = 0;
-        var persistLoader = new MemoryPersistLoader();
-        var cacheMonitor = new CacheMonitor(persistLoader, options);
-        var sut = new TimeToLiveCache(cacheMonitor, persistLoader, options);
+        var persistLoader = new Mock<IPersistLoader>(MockBehavior.Strict);
+        var cacheMonitor = new CacheMonitor(persistLoader.Object, options);
+        var sut = new TimeToLiveCache(cacheMonitor, persistLoader.Object, options);
         sut.DataGetEvent += (_, _) => dataGetEventCount++;
         sut.DataSetEvent += (_, _) => dataSetEventCount++;
 
@@ -43,9 +44,9 @@ public class FetchDataThrottleTests
         var options = new CacheOptions{ MaxConcurrentFetchCount = maxConcurrentFetchCount };
         var dataGetEventCount = 0;
         var dataSetEventCount = 0;
-        var persistLoader = new MemoryPersistLoader();
-        var cacheMonitor = new CacheMonitor(persistLoader, options);
-        var sut = new TimeToLiveCache(cacheMonitor, persistLoader, options);
+        var persistLoader = new Mock<IPersistLoader>(MockBehavior.Strict);
+        var cacheMonitor = new CacheMonitor(persistLoader.Object, options);
+        var sut = new TimeToLiveCache(cacheMonitor, persistLoader.Object, options);
         sut.DataGetEvent += (_, _) => dataGetEventCount++;
         sut.DataSetEvent += (_, _) => dataSetEventCount++;
         var stopwatch = Stopwatch.StartNew();
@@ -76,9 +77,9 @@ public class FetchDataThrottleTests
         var options = new CacheOptions { MaxConcurrentFetchCount = maxConcurrentFetchCount };
         var dataGetEventCount = 0;
         var dataSetEventCount = 0;
-        var persistLoader = new MemoryPersistLoader();
-        var cacheMonitor = new CacheMonitor(persistLoader, options);
-        var sut = new TimeToLiveCache(cacheMonitor, persistLoader, options);
+        var persistLoader = new Mock<IPersistLoader>(MockBehavior.Strict);
+        var cacheMonitor = new CacheMonitor(persistLoader.Object, options);
+        var sut = new TimeToLiveCache(cacheMonitor, persistLoader.Object, options);
         sut.DataGetEvent += (_, _) => dataGetEventCount++;
         sut.DataSetEvent += (_, _) => dataSetEventCount++;
         var stopwatch = Stopwatch.StartNew();

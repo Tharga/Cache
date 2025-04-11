@@ -2,13 +2,14 @@
 
 public interface ICacheMonitor
 {
-    public event EventHandler<DataGetEventArgs> DataGetEvent;
-    public event EventHandler<DataSetEventArgs> DataSetEvent;
-    public event EventHandler<DataDropEventArgs> DataDropEvent;
+    event EventHandler<DataGetEventArgs> DataGetEvent;
+    event EventHandler<DataSetEventArgs> DataSetEvent;
+    event EventHandler<DataDropEventArgs> DataDropEvent;
 
     IEnumerable<CacheTypeInfo> GetInfos();
-    Dictionary<string, CacheItemInfo> GetByType<T>();
-    Dictionary<string, CacheItemInfo> GetByType(Type type);
+    IDictionary<string, CacheItemInfo> GetByType<T>();
+    IDictionary<string, CacheItemInfo> GetByType(Type type);
     Task<HealthDto> GetHealthAsync();
     int GetFetchQueueCount();
+    void CleanSale();
 }

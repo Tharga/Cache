@@ -1,4 +1,6 @@
 ﻿using System.Collections.Concurrent;
+using System.Diagnostics;
+using Tharga.Cache.Core;
 
 namespace Tharga.Cache.Persist;
 
@@ -6,14 +8,23 @@ internal class Memory : IMemory
 {
     private readonly ConcurrentDictionary<string, CacheItem> _datas = new();
 
+    public Memory(IManagedCacheMonitor cacheMonitor)
+    {
+        cacheMonitor.RequestEvictEvent += (s, e) =>
+        {
+            //TODO: Implement
+            Debugger.Break();
+            throw new NotImplementedException();
+        };
+    }
+
     public Task<CacheItem<T>> GetAsync<T>(Key key)
     {
         return Task.FromResult((CacheItem<T>)_datas.GetValueOrDefault(key));
     }
 
-    public Task SetAsync<T>(Key key, T data, TimeSpan? freshSpan, bool staleWhileRevalidate)
+    public Task SetAsync<T>(Key key, CacheItem<T> item, bool staleWhileRevalidate)
     {
-        var item = CacheItemBuilder.BuildCacheItem(data, freshSpan);
         _datas.AddOrUpdate(key, item, (_, _) => item);
         return Task.CompletedTask;
     }

@@ -18,9 +18,9 @@ internal class CacheListCommand : AsyncActionCommandBase
         {
             $"{x.Type}",
             $"{x.Items.Sum(y => y.Value.Size)}",
-            $"{x.Items.Count}"
-            //TODO: Add count
+            $"{x.Items.Count}",
+            $"{x.Items.Count(y => y.Value.IsStale)}"
         });
-        OutputTable(["Type", "Size", "Count"], items);
+        OutputTable(["Type", "Size", "Count", "StaleCount"], items);
     }
 }

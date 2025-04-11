@@ -26,6 +26,7 @@ public class ExpiredEndingCacheTests
         sut.DataDropEvent += (_, _) => { _dataDropEventCount++; };
         result.Monitor.DataSetEvent += (_, _) => { _monitorSetEventCount++; };
         await Task.Delay(500);
+        result.Monitor.CleanSale();
 
         //Act
         var item = await sut.GetAsync("Key", async () =>

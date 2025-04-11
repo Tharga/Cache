@@ -26,26 +26,26 @@ internal static class CacheTypeLoader
         });
 
         var persistLoader = new Mock<IPersistLoader>(MockBehavior.Strict);
-        var persist = new MemoryPersistLoader();
         var cacheMonitor = new CacheMonitor(persistLoader.Object, options);
+        //var persist = new MemoryPersistLoader(cacheMonitor);
 
         ICache cache;
         switch (cacheType.Name)
         {
             case nameof(GenericCache):
-                cache = new GenericCache(cacheMonitor, persist, options);
+                cache = new GenericCache(cacheMonitor, persistLoader.Object, options);
                 break;
             case nameof(GenericTimeCache):
-                cache = new GenericTimeCache(cacheMonitor, persist, options);
+                cache = new GenericTimeCache(cacheMonitor, persistLoader.Object, options);
                 break;
             case nameof(EternalCache):
-                cache = new EternalCache(cacheMonitor, persist, options);
+                cache = new EternalCache(cacheMonitor, persistLoader.Object, options);
                 break;
             case nameof(TimeToLiveCache):
-                cache = new TimeToLiveCache(cacheMonitor, persist, options);
+                cache = new TimeToLiveCache(cacheMonitor, persistLoader.Object, options);
                 break;
             case nameof(TimeToIdleCache):
-                cache = new TimeToIdleCache(cacheMonitor, persist, options);
+                cache = new TimeToIdleCache(cacheMonitor, persistLoader.Object, options);
                 break;
             default:
                 throw new ArgumentOutOfRangeException($"Unknown cache type '{cacheType.Name}'.");

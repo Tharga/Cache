@@ -49,11 +49,7 @@ internal class CacheMonitor : IManagedCacheMonitor
     {
         if (_caches.TryGetValue(type, out var info))
         {
-            info.Items.FirstOrDefault(x => x.Key.Equals(key)).Value.SetAccess();
-        }
-        else
-        {
-            throw new NotImplementedException();
+            info.Items.FirstOrDefault(x => key.Equals(x.Key)).Value?.SetAccess();
         }
     }
 
@@ -85,9 +81,9 @@ internal class CacheMonitor : IManagedCacheMonitor
         switch (evictionPolicy)
         {
             case EvictionPolicy.LeastRecentlyUsed:
-                return val.Items.OrderByDescending(x => x.Value.LastAccessTime ?? DateTime.MinValue).FirstOrDefault().Key;
+                return val.Items.OrderByDescending(x => x.Value?.LastAccessTime ?? DateTime.MinValue).FirstOrDefault().Key;
             case EvictionPolicy.FirstInFirstOut:
-                return val.Items.OrderBy(x => x.Value.CreateTime).FirstOrDefault().Key;
+                return val.Items.OrderBy(x => x.Value?.CreateTime).FirstOrDefault().Key;
             case EvictionPolicy.RandomReplacement:
                 return val.Items.TakeRandom().Key;
             default:
@@ -95,7 +91,9 @@ internal class CacheMonitor : IManagedCacheMonitor
         }
     }
 
+    public event EventHandler<DataGetEventArgs> DataGetEvent;
     public event EventHandler<DataSetEventArgs> DataSetEvent;
+    public event EventHandler<DataDropEventArgs> DataDropEvent;
 
     public IEnumerable<CacheTypeInfo> GetInfos()
     {
@@ -123,7 +121,7 @@ internal class CacheMonitor : IManagedCacheMonitor
             result = await redis.CanConnectAsync();
         }
 
-        var totalSize = _caches.Values.Sum(x => x.Items.Sum(y => y.Value.Size));
+        var totalSize = _caches.Values.Sum(x => x.Items.Sum(y => y.Value?.Size ?? 0));
         var totalCount = _caches.Values.Sum(x => x.Items.Count);
 
         return new HealthDto

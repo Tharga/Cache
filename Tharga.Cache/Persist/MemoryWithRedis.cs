@@ -46,6 +46,15 @@ internal class MemoryWithRedis : IMemoryWithRedis, IAsyncDisposable, IDisposable
         return memoryTask.Result || redisTask.Result;
     }
 
+    public async Task<bool> Invalidate<T>(Key key)
+    {
+        var memoryTask = _memory.Invalidate<T>(key);
+        var redisTask = _redis.Invalidate<T>(key);
+
+        await Task.WhenAll(memoryTask, redisTask);
+        return memoryTask.Result || redisTask.Result;
+    }
+
     public async Task<bool> DropAsync<T>(Key key)
     {
         var memoryTask = _memory.DropAsync<T>(key);

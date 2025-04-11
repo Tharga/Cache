@@ -52,8 +52,7 @@ internal class MemoryWithRedis : IMemoryWithRedis, IAsyncDisposable, IDisposable
         var redisTask = _redis.BuyMoreTime<T>(key);
 
         await Task.WhenAll(memoryTask, redisTask);
-        if (memoryTask.Result != redisTask.Result) Debugger.Break();
-        return memoryTask.Result && redisTask.Result;
+        return memoryTask.Result || redisTask.Result;
     }
 
     public async Task<bool> Invalidate<T>(Key key)
@@ -62,8 +61,7 @@ internal class MemoryWithRedis : IMemoryWithRedis, IAsyncDisposable, IDisposable
         var redisTask = _redis.Invalidate<T>(key);
 
         await Task.WhenAll(memoryTask, redisTask);
-        if (memoryTask.Result != redisTask.Result) Debugger.Break();
-        return memoryTask.Result && redisTask.Result;
+        return memoryTask.Result || redisTask.Result;
     }
 
     public async Task<bool> DropAsync<T>(Key key)
@@ -72,7 +70,6 @@ internal class MemoryWithRedis : IMemoryWithRedis, IAsyncDisposable, IDisposable
         var redisTask = _redis.DropAsync<T>(key);
 
         await Task.WhenAll(memoryTask, redisTask);
-        if (memoryTask.Result != redisTask.Result) Debugger.Break();
-        return memoryTask.Result && redisTask.Result;
+        return memoryTask.Result || redisTask.Result;
     }
 }

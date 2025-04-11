@@ -17,32 +17,44 @@ internal class CacheMonitor : IManagedCacheMonitor
 
     public Func<int> QueueCountLoader { get; set; }
 
-    public void Set(Type type, Key key, object data)
+    public event EventHandler<RequestEvictEventArgs> RequestEvictEvent;
+    public event EventHandler<DataGetEventArgs> DataGetEvent;
+    public event EventHandler<DataSetEventArgs> DataSetEvent;
+    public event EventHandler<DataDropEventArgs> DataDropEvent;
+
+    public void Set<T>(Type type, Key key, CacheItem<T> item, bool staleWhileRevalidate)
     {
-        var size = data.ToSize();
+        var size = item.Data.ToSize();
 
         _caches.AddOrUpdate(type, new CacheTypeInfo
         {
             Type = type,
-            Items = new Dictionary<string, CacheItemInfo>
+            StaleWhileRevalidate = staleWhileRevalidate,
+            Items = new ConcurrentDictionary<string, CacheItemInfo>(new Dictionary<string, CacheItemInfo>
             {
                 {
-                    key, new CacheItemInfo
+                    key, new CacheItemInfo(item.CreateTime)
                     {
                         Size = size,
+                        FreshSpan = item.FreshSpan
                     }
                 }
-            }
+            })
         }, (_, b) =>
         {
-            b.Items.TryAdd(key, new CacheItemInfo
+            b.Items.AddOrUpdate(key, new CacheItemInfo(item.CreateTime)
             {
-                Size = size
+                Size = size,
+                FreshSpan = item.FreshSpan
+            }, (_, c) =>
+            {
+                c.SetUpdated(item.CreateTime, item.UpdateTime);
+                return c;
             });
             return b;
         });
 
-        DataSetEvent?.Invoke(this, new DataSetEventArgs(key, data));
+        DataSetEvent?.Invoke(this, new DataSetEventArgs(key, item.Data));
     }
 
     public void Accessed(Type type, Key key, bool buyMoreTime)
@@ -57,13 +69,8 @@ internal class CacheMonitor : IManagedCacheMonitor
     {
         if (_caches.TryGetValue(type, out var info))
         {
-            var redused = info.Items.Where(x => !x.Key.Equals(key)).ToDictionary();
-            if (redused.Any())
-            {
-                var updated = info with { Items = redused };
-                _caches.TryUpdate(type, updated, info);
-            }
-            else
+            info.Items.TryRemove(key, out _);
+            if (!info.Items.Any())
             {
                 _caches.TryRemove(type, out _);
             }
@@ -85,27 +92,23 @@ internal class CacheMonitor : IManagedCacheMonitor
             case EvictionPolicy.FirstInFirstOut:
                 return val.Items.OrderBy(x => x.Value?.CreateTime).FirstOrDefault().Key;
             case EvictionPolicy.RandomReplacement:
-                return val.Items.TakeRandom().Key;
+                return val.Items.ToDictionary().TakeRandom().Key; //TODO: Implement TakeRandom on the interface
             default:
                 throw new ArgumentOutOfRangeException(nameof(EvictionPolicy), $"Unknown {nameof(EvictionPolicy)} {evictionPolicy}.");
         }
     }
-
-    public event EventHandler<DataGetEventArgs> DataGetEvent;
-    public event EventHandler<DataSetEventArgs> DataSetEvent;
-    public event EventHandler<DataDropEventArgs> DataDropEvent;
 
     public IEnumerable<CacheTypeInfo> GetInfos()
     {
         return _caches.Values;
     }
 
-    public Dictionary<string, CacheItemInfo> GetByType<T>()
+    public IDictionary<string, CacheItemInfo> GetByType<T>()
     {
         return GetByType(typeof(T));
     }
 
-    public Dictionary<string, CacheItemInfo> GetByType(Type type)
+    public IDictionary<string, CacheItemInfo> GetByType(Type type)
     {
         if (_caches.TryGetValue(type, out var data)) return data.Items;
         return new Dictionary<string, CacheItemInfo>();
@@ -134,5 +137,17 @@ internal class CacheMonitor : IManagedCacheMonitor
     public int GetFetchQueueCount()
     {
         return QueueCountLoader?.Invoke() ?? -1;
+    }
+
+    public void CleanSale()
+    {
+        var infos = GetInfos().Where(x => !x.StaleWhileRevalidate).ToArray();
+        foreach (var info in infos)
+        {
+            foreach (var item in info.Items.Where(x => x.Value.IsStale))
+            {
+                RequestEvictEvent?.Invoke(this, new RequestEvictEventArgs());
+            }
+        }
     }
 }

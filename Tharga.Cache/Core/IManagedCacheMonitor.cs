@@ -2,7 +2,9 @@
 
 internal interface IManagedCacheMonitor : ICacheMonitor
 {
-    void Set(Type type, Key key, object data);
+    event EventHandler<RequestEvictEventArgs> RequestEvictEvent;
+
+    void Set<T>(Type type, Key key, CacheItem<T> item, bool staleWhileRevalidate);
     void Accessed(Type type, Key key, bool buyMoreTime);
     void Drop(Type type, Key key);
     Key Get<T>(EvictionPolicy evictionPolicy);

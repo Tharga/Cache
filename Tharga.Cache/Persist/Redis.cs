@@ -4,6 +4,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
+using Tharga.Cache.Core;
 
 namespace Tharga.Cache.Persist;
 
@@ -15,12 +16,19 @@ internal class Redis : IRedis
     private readonly CacheOptions _options;
     private ConnectionMultiplexer _redisConnection;
 
-    public Redis(IServiceProvider serviceProvider, IHostEnvironment hostEnvironment, IOptions<CacheOptions> options, ILogger<Redis> logger)
+    public Redis(IServiceProvider serviceProvider, IHostEnvironment hostEnvironment, IManagedCacheMonitor cacheMonitor, IOptions<CacheOptions> options, ILogger<Redis> logger)
     {
         _serviceProvider = serviceProvider;
         _hostEnvironment = hostEnvironment;
         _logger = logger;
         _options = options.Value;
+
+        cacheMonitor.RequestEvictEvent += (s, e) =>
+        {
+            //TODO: Implement
+            Debugger.Break();
+            throw new NotImplementedException();
+        };
     }
 
     public async Task<CacheItem<T>> GetAsync<T>(Key key)
@@ -39,9 +47,9 @@ internal class Redis : IRedis
         return default;
     }
 
-    public async Task SetAsync<T>(Key key, T data, TimeSpan? freshSpan, bool staleWhileRevalidate)
+    public async Task SetAsync<T>(Key key, CacheItem<T> cacheItem, bool staleWhileRevalidate)
     {
-        var cacheItem = CacheItemBuilder.BuildCacheItem(data, freshSpan);
+        //var cacheItem = CacheItemBuilder.BuildCacheItem(data, freshSpan);
         var item = JsonSerializer.Serialize(cacheItem);
         if (Debugger.IsAttached)
         {
@@ -54,10 +62,10 @@ internal class Redis : IRedis
         if (redisConnection.Multiplexer == default) return;
 
         var db = redisConnection.Multiplexer.GetDatabase();
-        if (freshSpan == null || freshSpan == TimeSpan.MaxValue || staleWhileRevalidate)
+        if (cacheItem.FreshSpan == null || cacheItem.FreshSpan == TimeSpan.MaxValue || staleWhileRevalidate)
             await db.StringSetAsync((string)key, item);
         else
-            await db.StringSetAsync((string)key, item, freshSpan);
+            await db.StringSetAsync((string)key, item, cacheItem.FreshSpan);
     }
 
     public async Task<bool> BuyMoreTime<T>(Key key)

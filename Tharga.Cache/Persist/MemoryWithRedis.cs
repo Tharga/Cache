@@ -1,14 +1,24 @@
-﻿namespace Tharga.Cache.Persist;
+﻿using System.Diagnostics;
+using Tharga.Cache.Core;
+
+namespace Tharga.Cache.Persist;
 
 internal class MemoryWithRedis : IMemoryWithRedis, IAsyncDisposable, IDisposable
 {
     private readonly IMemory _memory;
     private readonly IRedis _redis;
 
-    public MemoryWithRedis(IMemory memory, IRedis redis)
+    public MemoryWithRedis(IMemory memory, IRedis redis, IManagedCacheMonitor cacheMonitor)
     {
         _memory = memory;
         _redis = redis;
+
+        cacheMonitor.RequestEvictEvent += (s, e) =>
+        {
+            //TODO: Implement
+            Debugger.Break();
+            throw new NotImplementedException();
+        };
     }
 
     public void Dispose()
@@ -29,13 +39,22 @@ internal class MemoryWithRedis : IMemoryWithRedis, IAsyncDisposable, IDisposable
         return await _redis.GetAsync<T>(key);
     }
 
-    public async Task SetAsync<T>(Key key, T data, TimeSpan? freshSpan, bool staleWhileRevalidate)
+    public Task SetAsync<T>(Key key, CacheItem<T> item, bool staleWhileRevalidate)
     {
-        var memoryTask = _memory.SetAsync(key, data, freshSpan, staleWhileRevalidate);
-        var redisTask = _redis.SetAsync(key, data, freshSpan, staleWhileRevalidate);
-
-        await Task.WhenAll(memoryTask, redisTask);
+        var memoryTask = _memory.SetAsync(key, item, staleWhileRevalidate);
+        var redisTask = _redis.SetAsync(key, item, staleWhileRevalidate);
+        return Task.WhenAll(memoryTask, redisTask);
     }
+
+    //public async Task<CacheItem<T>> SetAsync<T>(Key key, T data, TimeSpan? freshSpan, bool staleWhileRevalidate)
+    //{
+    //    var memoryTask = _memory.SetAsync(key, data, freshSpan, staleWhileRevalidate);
+    //    var redisTask = _redis.SetAsync(key, data, freshSpan, staleWhileRevalidate);
+    //
+    //    //TODO: The memoryTask and redisTask will have different date-time information.
+    //    await Task.WhenAll(memoryTask, redisTask);
+    //    return memoryTask.Result;
+    //}
 
     public async Task<bool> BuyMoreTime<T>(Key key)
     {

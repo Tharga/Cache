@@ -1,19 +1,18 @@
 ﻿using FluentAssertions;
+using Moq;
 using Tharga.Cache.Core;
-using Tharga.Cache.Tests.Helper;
 using Xunit;
 
 namespace Tharga.Cache.Tests;
 
 public class UnloadDataTests
 {
-    private readonly MemoryPersistLoader _memoryPersistLoader;
+    private readonly Mock<IPersistLoader> _persistLoader = new(MockBehavior.Strict);
     private readonly CacheMonitor _cacheMonitor;
 
     public UnloadDataTests()
     {
-        _memoryPersistLoader = new MemoryPersistLoader();
-        _cacheMonitor = new CacheMonitor(_memoryPersistLoader, new CacheOptions());
+        _cacheMonitor = new CacheMonitor(_persistLoader.Object, new CacheOptions());
     }
 
     [Fact]
@@ -27,7 +26,7 @@ public class UnloadDataTests
             o.MaxCount = 3;
             o.EvictionPolicy = EvictionPolicy.FirstInFirstOut;
         });
-        var sut = new EternalCache(_cacheMonitor, _memoryPersistLoader, options);
+        var sut = new EternalCache(_cacheMonitor, _persistLoader.Object, options);
         sut.DataDropEvent += (_, _) => dataDropEventCount++;
         await sut.SetAsync("a", "aa");
         await sut.SetAsync("b", "bb");
@@ -55,7 +54,7 @@ public class UnloadDataTests
             o.MaxCount = 3;
             o.EvictionPolicy = EvictionPolicy.LeastRecentlyUsed;
         });
-        var sut = new EternalCache(_cacheMonitor, _memoryPersistLoader, options);
+        var sut = new EternalCache(_cacheMonitor, _persistLoader.Object, options);
         sut.DataDropEvent += (_, _) => dataDropEventCount++;
         await sut.GetAsync("a", () => Task.FromResult("aa"));
         await sut.GetAsync("b", () => Task.FromResult("bb"));
@@ -84,7 +83,7 @@ public class UnloadDataTests
             o.MaxCount = 3;
             o.EvictionPolicy = EvictionPolicy.RandomReplacement;
         });
-        var sut = new EternalCache(_cacheMonitor, _memoryPersistLoader, options);
+        var sut = new EternalCache(_cacheMonitor, _persistLoader.Object, options);
         sut.DataDropEvent += (_, _) => dataDropEventCount++;
         await sut.SetAsync("a", "aa");
         await sut.SetAsync("b", "bb");

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using Tharga.Cache.Persist;
 
 namespace Tharga.Cache.Core;
 
@@ -81,9 +82,11 @@ internal abstract class CacheBase : ICache
                 {
                     var result = await fetch();
 
-                    await GetPersist<T>().SetAsync(key, result, freshSpan, GetTypeOptions<T>().StaleWhileRevalidate);
-                    DropWhenStale<T>(key, freshSpan);
-                    await OnSetAsync(key, result);
+                    var staleWhileRevalidate = GetTypeOptions<T>().StaleWhileRevalidate;
+                    var item = CacheItemBuilder.BuildCacheItem(result, freshSpan);
+                    await GetPersist<T>().SetAsync(key, item, staleWhileRevalidate);
+                    //DropWhenStale<T>(key, freshSpan);
+                    await OnSetAsync(key, item, staleWhileRevalidate);
 
                     return result!;
                 }
@@ -135,9 +138,11 @@ internal abstract class CacheBase : ICache
 
         key = KeyBuilder.BuildKey<T>(key);
 
-        await GetPersist<T>().SetAsync(key, data, fs, GetTypeOptions<T>().StaleWhileRevalidate);
-        DropWhenStale<T>(key, fs);
-        await OnSetAsync(key, data);
+        var staleWhileRevalidate = GetTypeOptions<T>().StaleWhileRevalidate;
+        var item = CacheItemBuilder.BuildCacheItem(data, freshSpan);
+        await GetPersist<T>().SetAsync(key, item, staleWhileRevalidate);
+        //DropWhenStale<T>(key, fs);
+        await OnSetAsync(key, item, staleWhileRevalidate);
     }
 
     public virtual async Task<bool> DropAsync<T>(Key key)
@@ -154,37 +159,20 @@ internal abstract class CacheBase : ICache
         return false;
     }
 
-    public async Task InvalidateAsync<T>(Key key)
+    public async Task<bool> InvalidateAsync<T>(Key key)
     {
-        if (!GetTypeOptions<T>().StaleWhileRevalidate) await DropAsync<T>(key);
-        await GetPersist<T>().Invalidate<T>(key);
+        key = KeyBuilder.BuildKey<T>(key);
+
+        if (!GetTypeOptions<T>().StaleWhileRevalidate) return await DropAsync<T>(key);
+        return await GetPersist<T>().Invalidate<T>(key);
     }
 
-    private void DropWhenStale<T>(Key key, TimeSpan? freshSpan)
+    private async Task OnSetAsync<T>(Key key, CacheItem<T> item, bool staleWhileRevalidate)
     {
-        if (!GetTypeOptions<T>().StaleWhileRevalidate && freshSpan.HasValue && freshSpan != TimeSpan.MaxValue)
-        {
-            //TODO: We want to cancel this task, if buy-more-time is called, since we do not want threads not needed.
-            //TODO: Use a watchdog instead of background-tasks
-            Task.Run(async () =>
-            {
-                await Task.Delay(freshSpan.Value);
-                var current = await GetPersist<T>().GetAsync<T>(key);
-                if (!current.IsValid())
-                {
-                    await GetPersist<T>().DropAsync<T>(key);
-                    OnDrop<T>(key);
-                }
-            });
-        }
-    }
+        await EvictItems(item.Data);
 
-    private async Task OnSetAsync<T>(Key key, T data)
-    {
-        await EvictItems(data);
-
-        DataSetEvent?.Invoke(this, new DataSetEventArgs(key, data));
-        _cacheMonitor.Set(typeof(T), key, data);
+        DataSetEvent?.Invoke(this, new DataSetEventArgs(key, item.Data));
+        _cacheMonitor.Set(typeof(T), key, item, staleWhileRevalidate);
     }
 
     protected virtual Task OnGetAsync<T>(Key key)

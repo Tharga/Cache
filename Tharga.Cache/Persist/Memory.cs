@@ -20,14 +20,12 @@ internal class Memory : IMemory
 
     public Task<bool> BuyMoreTime<T>(Key key)
     {
-        if (_datas.TryGetValue(key, out var item))
-        {
-            var updatedItem = item with { UpdateTime = DateTime.UtcNow };
-            var r = _datas.TryUpdate(key, updatedItem, item);
-            return Task.FromResult(r);
-        }
+        return SetUpdateTimeAsync(key, DateTime.UtcNow);
+    }
 
-        return Task.FromResult(false);
+    public Task<bool> Invalidate<T>(Key key)
+    {
+        return SetUpdateTimeAsync(key, DateTime.MinValue);
     }
 
     public Task<bool> DropAsync<T>(Key key)
@@ -35,10 +33,15 @@ internal class Memory : IMemory
         return Task.FromResult(_datas.TryRemove(key, out _));
     }
 
-    public Task<(Key Key, CacheItem<T> Item)> DropFirst<T>()
+    private Task<bool> SetUpdateTimeAsync(Key key, DateTime updateTime)
     {
-        var item = _datas.OrderBy(x => x.Value.CreateTime).First();
-        _datas.TryRemove(item.Key, out var removed);
-        return Task.FromResult<(Key Key, CacheItem<T> Item)>((item.Key, (CacheItem<T>)removed));
+        if (_datas.TryGetValue(key, out var item))
+        {
+            var updatedItem = item with { UpdateTime = updateTime };
+            var r = _datas.TryUpdate(key, updatedItem, item);
+            return Task.FromResult(r);
+        }
+
+        return Task.FromResult(false);
     }
 }

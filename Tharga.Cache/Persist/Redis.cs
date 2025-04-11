@@ -62,6 +62,16 @@ internal class Redis : IRedis
 
     public async Task<bool> BuyMoreTime<T>(Key key)
     {
+        return await SetUpdateTime<T>(key, DateTime.UtcNow);
+    }
+
+    public async Task<bool> Invalidate<T>(Key key)
+    {
+        return await SetUpdateTime<T>(key, DateTime.MinValue);
+    }
+
+    private async Task<bool> SetUpdateTime<T>(Key key, DateTime updateTime)
+    {
         var redisConnection = await GetConnection();
         if (redisConnection.Multiplexer == default) return default;
 
@@ -70,7 +80,7 @@ internal class Redis : IRedis
         if (!string.IsNullOrEmpty(data))
         {
             var cacheItem = JsonSerializer.Deserialize<CacheItem<T>>(data);
-            var updatedCacheItem = cacheItem with { UpdateTime = DateTime.UtcNow };
+            var updatedCacheItem = cacheItem with { UpdateTime = updateTime };
             var item = JsonSerializer.Serialize(updatedCacheItem);
             if (Debugger.IsAttached)
             {

@@ -154,11 +154,18 @@ internal abstract class CacheBase : ICache
         return false;
     }
 
+    public async Task InvalidateAsync<T>(Key key)
+    {
+        if (!GetTypeOptions<T>().StaleWhileRevalidate) await DropAsync<T>(key);
+        await GetPersist<T>().Invalidate<T>(key);
+    }
+
     private void DropWhenStale<T>(Key key, TimeSpan? freshSpan)
     {
         if (!GetTypeOptions<T>().StaleWhileRevalidate && freshSpan.HasValue && freshSpan != TimeSpan.MaxValue)
         {
             //TODO: We want to cancel this task, if buy-more-time is called, since we do not want threads not needed.
+            //TODO: Use a watchdog instead of background-tasks
             Task.Run(async () =>
             {
                 await Task.Delay(freshSpan.Value);

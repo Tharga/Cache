@@ -62,6 +62,7 @@ internal class CacheMonitor : IManagedCacheMonitor
         if (_caches.TryGetValue(type, out var info))
         {
             info.Items.FirstOrDefault(x => key.Equals(x.Key)).Value?.SetAccess();
+            DataGetEvent?.Invoke(this, new DataGetEventArgs(key));
         }
     }
 
@@ -74,6 +75,7 @@ internal class CacheMonitor : IManagedCacheMonitor
             {
                 _caches.TryRemove(type, out _);
             }
+            DataDropEvent?.Invoke(this, new DataDropEventArgs(key));
         }
         else
         {
@@ -146,7 +148,7 @@ internal class CacheMonitor : IManagedCacheMonitor
         {
             foreach (var item in info.Items.Where(x => x.Value.IsStale))
             {
-                RequestEvictEvent?.Invoke(this, new RequestEvictEventArgs());
+                RequestEvictEvent?.Invoke(this, new RequestEvictEventArgs(info.Type, item.Key));
             }
         }
     }

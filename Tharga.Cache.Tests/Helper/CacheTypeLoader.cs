@@ -1,5 +1,6 @@
 ﻿using Moq;
 using Tharga.Cache.Core;
+using Tharga.Cache.Persist;
 
 namespace Tharga.Cache.Tests.Helper;
 
@@ -27,7 +28,7 @@ internal static class CacheTypeLoader
 
         var persistLoader = new Mock<IPersistLoader>(MockBehavior.Strict);
         var cacheMonitor = new CacheMonitor(persistLoader.Object, options);
-        //var persist = new MemoryPersistLoader(cacheMonitor);
+        persistLoader.Setup(x => x.GetPersist(It.IsAny<PersistType>())).Returns(new Memory(cacheMonitor));
 
         ICache cache;
         switch (cacheType.Name)

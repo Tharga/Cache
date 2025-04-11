@@ -2,7 +2,7 @@
 using FluentAssertions;
 using Moq;
 using Tharga.Cache.Core;
-using Tharga.Cache.Tests.Helper;
+using Tharga.Cache.Persist;
 using Xunit;
 
 namespace Tharga.Cache.Tests;
@@ -16,11 +16,18 @@ public class FetchDataThrottleTests
         var options = new CacheOptions();
         var dataGetEventCount = 0;
         var dataSetEventCount = 0;
+        var monitorSetEventCount = 0;
+        var monitorGetEventCount = 0;
+        var monitorDropEventCount = 0;
         var persistLoader = new Mock<IPersistLoader>(MockBehavior.Strict);
         var cacheMonitor = new CacheMonitor(persistLoader.Object, options);
+        persistLoader.Setup(x => x.GetPersist(It.IsAny<PersistType>())).Returns(new Memory(cacheMonitor));
         var sut = new TimeToLiveCache(cacheMonitor, persistLoader.Object, options);
         sut.DataGetEvent += (_, _) => dataGetEventCount++;
         sut.DataSetEvent += (_, _) => dataSetEventCount++;
+        cacheMonitor.DataSetEvent += (_, _) => monitorSetEventCount++;
+        cacheMonitor.DataGetEvent += (_, _) => monitorGetEventCount++;
+        cacheMonitor.DataDropEvent += (_, _) => monitorDropEventCount++;
 
         //Act
         var task1 = sut.GetAsync("a", async () => { await Task.Delay(400); return "a"; }, TimeSpan.FromSeconds(1));
@@ -31,9 +38,12 @@ public class FetchDataThrottleTests
         //Assert
         dataSetEventCount.Should().Be(1);
         dataGetEventCount.Should().Be(3);
+        monitorSetEventCount.Should().Be(1);
+        monitorGetEventCount.Should().Be(3);
+        monitorDropEventCount.Should().Be(0);
     }
 
-    [Theory(Skip = "TimeCritical")]
+    [Theory]
     [InlineData(2, 10, 100, 200)]
     [InlineData(10, 10, 100, 200)]
     [InlineData(10, 2, 500, 900)]
@@ -44,11 +54,19 @@ public class FetchDataThrottleTests
         var options = new CacheOptions{ MaxConcurrentFetchCount = maxConcurrentFetchCount };
         var dataGetEventCount = 0;
         var dataSetEventCount = 0;
+        var monitorSetEventCount = 0;
+        var monitorGetEventCount = 0;
+        var monitorDropEventCount = 0;
         var persistLoader = new Mock<IPersistLoader>(MockBehavior.Strict);
         var cacheMonitor = new CacheMonitor(persistLoader.Object, options);
+        persistLoader.Setup(x => x.GetPersist(options.Get<string>().PersistType)).Returns(new Memory(cacheMonitor));
+        var persist = persistLoader;
         var sut = new TimeToLiveCache(cacheMonitor, persistLoader.Object, options);
         sut.DataGetEvent += (_, _) => dataGetEventCount++;
         sut.DataSetEvent += (_, _) => dataSetEventCount++;
+        cacheMonitor.DataSetEvent += (_, _) => monitorSetEventCount++;
+        cacheMonitor.DataGetEvent += (_, _) => monitorGetEventCount++;
+        cacheMonitor.DataDropEvent += (_, _) => monitorDropEventCount++;
         var stopwatch = Stopwatch.StartNew();
 
         //Act
@@ -62,14 +80,17 @@ public class FetchDataThrottleTests
         //Assert
         dataSetEventCount.Should().Be(fetchCount);
         dataGetEventCount.Should().Be(fetchCount);
+        monitorSetEventCount.Should().Be(fetchCount);
+        monitorGetEventCount.Should().Be(fetchCount);
+        monitorDropEventCount.Should().Be(0);
         stopwatch.Elapsed.TotalMilliseconds.Should().BeGreaterThan(minTime);
         stopwatch.Elapsed.TotalMilliseconds.Should().BeLessThan(maxTime);
     }
 
-    [Theory(Skip = "TimeCritical")]
+    [Theory]
     [InlineData(2, 10, 100, 200)]
     [InlineData(10, 10, 100, 200)]
-    [InlineData(10, 2, 500, 900)]
+    [InlineData(10, 2, 500, 1200)]
     [Trait("Category", "TimeCritical")]
     public async Task ManyParallelCallsAreQueuedForDifferentTypes(int fetchCount, int maxConcurrentFetchCount, int minTime, int maxTime)
     {
@@ -77,11 +98,18 @@ public class FetchDataThrottleTests
         var options = new CacheOptions { MaxConcurrentFetchCount = maxConcurrentFetchCount };
         var dataGetEventCount = 0;
         var dataSetEventCount = 0;
+        var monitorSetEventCount = 0;
+        var monitorGetEventCount = 0;
+        var monitorDropEventCount = 0;
         var persistLoader = new Mock<IPersistLoader>(MockBehavior.Strict);
         var cacheMonitor = new CacheMonitor(persistLoader.Object, options);
+        persistLoader.Setup(x => x.GetPersist(options.Get<string>().PersistType)).Returns(new Memory(cacheMonitor));
         var sut = new TimeToLiveCache(cacheMonitor, persistLoader.Object, options);
         sut.DataGetEvent += (_, _) => dataGetEventCount++;
         sut.DataSetEvent += (_, _) => dataSetEventCount++;
+        cacheMonitor.DataSetEvent += (_, _) => monitorSetEventCount++;
+        cacheMonitor.DataGetEvent += (_, _) => monitorGetEventCount++;
+        cacheMonitor.DataDropEvent += (_, _) => monitorDropEventCount++;
         var stopwatch = Stopwatch.StartNew();
 
         //Act
@@ -101,6 +129,9 @@ public class FetchDataThrottleTests
         //Assert
         dataSetEventCount.Should().Be(fetchCount);
         dataGetEventCount.Should().Be(fetchCount);
+        monitorSetEventCount.Should().Be(fetchCount);
+        monitorGetEventCount.Should().Be(fetchCount);
+        monitorDropEventCount.Should().Be(0);
         stopwatch.Elapsed.TotalMilliseconds.Should().BeGreaterThan(minTime);
         stopwatch.Elapsed.TotalMilliseconds.Should().BeLessThan(maxTime);
     }

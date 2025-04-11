@@ -10,6 +10,8 @@ public class SecondCallTests
     private int _dataGetEventCount;
     private int _dataDropEventCount;
     private int _monitorSetEventCount;
+    private int _monitorGetEventCount;
+    private int _monitorDropEventCount;
 
     [Theory]
     [ClassData(typeof(AllTypes))]
@@ -24,6 +26,8 @@ public class SecondCallTests
         sut.DataGetEvent += (_, _) => { _dataGetEventCount++; };
         sut.DataDropEvent += (_, _) => { _dataDropEventCount++; };
         result.Monitor.DataSetEvent += (_, _) => { _monitorSetEventCount++; };
+        result.Monitor.DataGetEvent += (_, _) => { _monitorGetEventCount++; };
+        result.Monitor.DataDropEvent += (_, _) => { _monitorDropEventCount++; };
 
         //Act
         var item = await sut.GetAsync("Key", () => Task.FromResult(value));
@@ -33,6 +37,8 @@ public class SecondCallTests
         _dataGetEventCount.Should().Be(1);
         _dataDropEventCount.Should().Be(0);
         _monitorSetEventCount.Should().Be(0);
+        _monitorGetEventCount.Should().Be(1);
+        _monitorDropEventCount.Should().Be(0);
         item.Should().Be(value);
         result.Monitor.GetInfos().SelectMany(x => x.Items).Sum(x => x.Value.Size).Should().BeGreaterThan(0);
     }
@@ -50,6 +56,8 @@ public class SecondCallTests
         sut.DataGetEvent += (_, _) => { _dataGetEventCount++; };
         sut.DataDropEvent += (_, _) => { _dataDropEventCount++; };
         result.Monitor.DataSetEvent += (_, _) => { _monitorSetEventCount++; };
+        result.Monitor.DataGetEvent += (_, _) => { _monitorGetEventCount++; };
+        result.Monitor.DataDropEvent += (_, _) => { _monitorDropEventCount++; };
 
         //Act
         var item = await sut.PeekAsync<string>("Key");
@@ -59,6 +67,8 @@ public class SecondCallTests
         _dataGetEventCount.Should().Be(1);
         _dataDropEventCount.Should().Be(0);
         _monitorSetEventCount.Should().Be(0);
+        _monitorGetEventCount.Should().Be(1);
+        _monitorDropEventCount.Should().Be(0);
         item.Should().Be(value);
         result.Monitor.GetInfos().SelectMany(x => x.Items).Sum(x => x.Value.Size).Should().BeGreaterThan(0);
     }
@@ -76,6 +86,8 @@ public class SecondCallTests
         sut.DataGetEvent += (_, _) => { _dataGetEventCount++; };
         sut.DataDropEvent += (_, _) => { _dataDropEventCount++; };
         result.Monitor.DataSetEvent += (_, _) => { _monitorSetEventCount++; };
+        result.Monitor.DataGetEvent += (_, _) => { _monitorGetEventCount++; };
+        result.Monitor.DataDropEvent += (_, _) => { _monitorDropEventCount++; };
 
         //Act
         await sut.SetAsync("Key", value);
@@ -85,6 +97,8 @@ public class SecondCallTests
         _dataGetEventCount.Should().Be(0);
         _dataDropEventCount.Should().Be(0);
         _monitorSetEventCount.Should().Be(1);
+        _monitorGetEventCount.Should().Be(0);
+        _monitorDropEventCount.Should().Be(0);
         var item = await sut.GetAsync("Key", () => Task.FromResult("crap"));
         item.Should().Be(value);
         result.Monitor.GetInfos().SelectMany(x => x.Items).Sum(x => x.Value.Size).Should().BeGreaterThan(0);
@@ -103,6 +117,8 @@ public class SecondCallTests
         sut.DataGetEvent += (_, _) => { _dataGetEventCount++; };
         sut.DataDropEvent += (_, _) => { _dataDropEventCount++; };
         result.Monitor.DataSetEvent += (_, _) => { _monitorSetEventCount++; };
+        result.Monitor.DataGetEvent += (_, _) => { _monitorGetEventCount++; };
+        result.Monitor.DataDropEvent += (_, _) => { _monitorDropEventCount++; };
 
         //Act
         var item = await sut.DropAsync<string>("Key");
@@ -112,6 +128,8 @@ public class SecondCallTests
         _dataGetEventCount.Should().Be(0);
         _dataDropEventCount.Should().Be(1);
         _monitorSetEventCount.Should().Be(0);
+        _monitorGetEventCount.Should().Be(0);
+        _monitorDropEventCount.Should().Be(1);
         item.Should().BeTrue();
         result.Monitor.GetInfos().SelectMany(x => x.Items).Sum(x => x.Value.Size).Should().Be(0);
     }

@@ -1,5 +1,4 @@
 ﻿using System.Collections.Concurrent;
-using System.Diagnostics;
 using Tharga.Cache.Core;
 
 namespace Tharga.Cache.Persist;
@@ -12,9 +11,8 @@ internal class Memory : IMemory
     {
         cacheMonitor.RequestEvictEvent += (s, e) =>
         {
-            //TODO: Implement
-            Debugger.Break();
-            throw new NotImplementedException();
+            _datas.TryRemove(e.Key, out _);
+            cacheMonitor.Drop(e.Type, e.Key);
         };
     }
 

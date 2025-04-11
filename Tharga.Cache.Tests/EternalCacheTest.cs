@@ -1,6 +1,7 @@
 ﻿using FluentAssertions;
 using Moq;
 using Tharga.Cache.Core;
+using Tharga.Cache.Persist;
 using Xunit;
 
 namespace Tharga.Cache.Tests;
@@ -13,6 +14,7 @@ public class EternalCacheTest
     public EternalCacheTest()
     {
         _cacheMonitor = new CacheMonitor(_persistLoader.Object, new CacheOptions());
+        _persistLoader.Setup(x => x.GetPersist(It.IsAny<PersistType>())).Returns(new Memory(_cacheMonitor));
     }
 
     [Theory]
@@ -24,10 +26,11 @@ public class EternalCacheTest
         var options = new CacheOptions();
         var dataSetEventCount = 0;
         var dataGetEventCount = 0;
+        var monitorDataSetEventCount = 0;
         var sut = new EternalCache(_cacheMonitor, _persistLoader.Object, options);
         sut.DataSetEvent += (_, _) => dataSetEventCount++;
         sut.DataGetEvent += (_, _) => dataGetEventCount++;
-
+        _cacheMonitor.DataSetEvent += (_, _) => monitorDataSetEventCount++;
         //Act
         _ = await sut.GetAsync("a", () => Task.FromResult("a1"));
         await Task.Delay(100);
@@ -41,5 +44,6 @@ public class EternalCacheTest
         result.Should().Be("a1");
         dataSetEventCount.Should().Be(1);
         dataGetEventCount.Should().Be(keep ? 4 : 3);
+        monitorDataSetEventCount.Should().Be(1);
     }
 }

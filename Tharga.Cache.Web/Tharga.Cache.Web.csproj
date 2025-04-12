@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Quilt4Net.Toolkit.Api" Version="0.0.40" />
+    <PackageReference Include="Quilt4Net.Toolkit.Api" Version="0.0.42" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="8.1.1" />
   </ItemGroup>
 

@@ -19,7 +19,7 @@ internal abstract class CacheBase : ICache
         _persistLoader = persistLoader;
         _options = options;
         _globalSemaphore = new(options.MaxConcurrentFetchCount, options.MaxConcurrentFetchCount);
-        _cacheMonitor.QueueCountLoader = () => _inFlightFetches.Count; //TODO: This will over-write other loader functions. Do an add instead.
+        _cacheMonitor.AddFetchCount(() => _inFlightFetches.Count);
     }
 
     public event EventHandler<DataSetEventArgs> DataSetEvent;
@@ -134,7 +134,7 @@ internal abstract class CacheBase : ICache
 
     protected async Task SetCoreAsync<T>(Key key, T data, TimeSpan freshSpan)
     {
-        var fs = freshSpan == TimeSpan.MaxValue ? (TimeSpan?)null : freshSpan;
+        //var fs = freshSpan == TimeSpan.MaxValue ? (TimeSpan?)null : freshSpan;
 
         key = KeyBuilder.BuildKey<T>(key);
 

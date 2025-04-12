@@ -1,6 +1,7 @@
 ﻿using FluentAssertions;
 using Moq;
 using Tharga.Cache.Core;
+using Tharga.Cache.Persist;
 using Xunit;
 
 namespace Tharga.Cache.Tests;
@@ -13,6 +14,7 @@ public class UnloadDataTests
     public UnloadDataTests()
     {
         _cacheMonitor = new CacheMonitor(_persistLoader.Object, new CacheOptions());
+        _persistLoader.Setup(x => x.GetPersist(It.IsAny<PersistType>())).Returns(new Memory(_cacheMonitor));
     }
 
     [Fact]
@@ -20,6 +22,9 @@ public class UnloadDataTests
     {
         //Arrange
         var dataDropEventCount = 0;
+        var monitorSetEventCount = 0;
+        var monitorGetEventCount = 0;
+        var monitorDropEventCount = 0;
         var options = new CacheOptions();
         options.RegisterType<string>(o =>
         {
@@ -28,6 +33,9 @@ public class UnloadDataTests
         });
         var sut = new EternalCache(_cacheMonitor, _persistLoader.Object, options);
         sut.DataDropEvent += (_, _) => dataDropEventCount++;
+        _cacheMonitor.DataSetEvent += (_, _) => { monitorSetEventCount++; };
+        _cacheMonitor.DataGetEvent += (_, _) => { monitorGetEventCount++; };
+        _cacheMonitor.DataDropEvent += (_, _) => { monitorDropEventCount++; };
         await sut.SetAsync("a", "aa");
         await sut.SetAsync("b", "bb");
         await sut.SetAsync("c", "cc");
@@ -37,6 +45,9 @@ public class UnloadDataTests
 
         //Assert
         dataDropEventCount.Should().Be(1);
+        monitorSetEventCount.Should().Be(4);
+        monitorGetEventCount.Should().Be(0);
+        monitorDropEventCount.Should().Be(1);
         _cacheMonitor.GetInfos().Single().Items.Count.Should().Be(3);
         _cacheMonitor.GetInfos().Single().Items.Should().Contain(x => x.Key == KeyBuilder.BuildKey<string>("d"));
         _cacheMonitor.GetInfos().Single().Items.Should().NotContain(x => x.Key == KeyBuilder.BuildKey<string>("a"));
@@ -48,6 +59,9 @@ public class UnloadDataTests
     {
         //Arrange
         var dataDropEventCount = 0;
+        var monitorSetEventCount = 0;
+        var monitorGetEventCount = 0;
+        var monitorDropEventCount = 0;
         var options = new CacheOptions();
         options.RegisterType<string>(o =>
         {
@@ -56,6 +70,9 @@ public class UnloadDataTests
         });
         var sut = new EternalCache(_cacheMonitor, _persistLoader.Object, options);
         sut.DataDropEvent += (_, _) => dataDropEventCount++;
+        _cacheMonitor.DataSetEvent += (_, _) => { monitorSetEventCount++; };
+        _cacheMonitor.DataGetEvent += (_, _) => { monitorGetEventCount++; };
+        _cacheMonitor.DataDropEvent += (_, _) => { monitorDropEventCount++; };
         await sut.GetAsync("a", () => Task.FromResult("aa"));
         await sut.GetAsync("b", () => Task.FromResult("bb"));
         await sut.GetAsync("c", () => Task.FromResult("cc"));
@@ -66,6 +83,9 @@ public class UnloadDataTests
 
         //Assert
         dataDropEventCount.Should().Be(1);
+        monitorSetEventCount.Should().Be(4);
+        monitorGetEventCount.Should().Be(4);
+        monitorDropEventCount.Should().Be(1);
         _cacheMonitor.GetInfos().Single().Items.Count.Should().Be(3);
         _cacheMonitor.GetInfos().Single().Items.Should().Contain(x => x.Key == KeyBuilder.BuildKey<string>("b"));
         _cacheMonitor.GetInfos().Single().Items.Should().NotContain(x => x.Key == KeyBuilder.BuildKey<string>("a"));
@@ -77,6 +97,9 @@ public class UnloadDataTests
     {
         //Arrange
         var dataDropEventCount = 0;
+        var monitorSetEventCount = 0;
+        var monitorGetEventCount = 0;
+        var monitorDropEventCount = 0;
         var options = new CacheOptions();
         options.RegisterType<string>(o =>
         {
@@ -85,6 +108,9 @@ public class UnloadDataTests
         });
         var sut = new EternalCache(_cacheMonitor, _persistLoader.Object, options);
         sut.DataDropEvent += (_, _) => dataDropEventCount++;
+        _cacheMonitor.DataSetEvent += (_, _) => { monitorSetEventCount++; };
+        _cacheMonitor.DataGetEvent += (_, _) => { monitorGetEventCount++; };
+        _cacheMonitor.DataDropEvent += (_, _) => { monitorDropEventCount++; };
         await sut.SetAsync("a", "aa");
         await sut.SetAsync("b", "bb");
         await sut.SetAsync("c", "cc");
@@ -94,6 +120,9 @@ public class UnloadDataTests
 
         //Assert
         dataDropEventCount.Should().Be(1);
+        monitorSetEventCount.Should().Be(4);
+        monitorGetEventCount.Should().Be(0);
+        monitorDropEventCount.Should().Be(1);
         _cacheMonitor.GetInfos().Single().Items.Count.Should().Be(3);
         _cacheMonitor.GetInfos().Single().Items.Should().Contain(x => x.Key == KeyBuilder.BuildKey<string>("d"));
         _cacheMonitor.GetInfos().SelectMany(x => x.Items).Sum(x => x.Value.Size).Should().BeGreaterThan(0);

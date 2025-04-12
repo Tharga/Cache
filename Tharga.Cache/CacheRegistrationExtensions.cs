@@ -21,7 +21,7 @@ public static class CacheRegistrationExtensions
         };
         options?.Invoke(o);
 
-        serviceCollection.AddSingleton<IOptions<CacheOptions>>(Options.Create(o));
+        serviceCollection.AddSingleton(Options.Create(o));
         serviceCollection.AddSingleton<ICacheMonitor>(s => s.GetService<IManagedCacheMonitor>());
         serviceCollection.AddSingleton<IManagedCacheMonitor>(s =>
         {
@@ -84,26 +84,3 @@ public static class CacheRegistrationExtensions
         serviceCollection.AddSingleton<IMemoryWithRedis, MemoryWithRedis>();
     }
 }
-
-//internal class WatchDogService : BackgroundService
-//{
-//    private readonly ICacheMonitor _cacheMonitor;
-
-//    public WatchDogService(ICacheMonitor cacheMonitor)
-//    {
-//        _cacheMonitor = cacheMonitor;
-//    }
-
-//    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-//    {
-//        //TODO: This code should run on an interval
-//        var infos = _cacheMonitor.GetInfos().Where(x => !x.StaleWhileRevalidate).ToArray();
-//        foreach (var info in infos)
-//        {
-//            foreach (var item in info.Items.Where(x => x.Value.IsStale))
-//            {
-//                //DO SOME WORK
-//            }
-//        }
-//    }
-//}

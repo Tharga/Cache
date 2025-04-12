@@ -1,14 +1,8 @@
-﻿using System.Text.Json;
-using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Tharga.Cache.Core;
-
-public interface IWatchDogService
-{
-    void Start(CancellationToken cancellationToken = default);
-}
 
 internal class WatchDogService : BackgroundService, IWatchDogService
 {
@@ -29,7 +23,6 @@ internal class WatchDogService : BackgroundService, IWatchDogService
         {
             try
             {
-                //await RunOnceAsync(stoppingToken);
                 _cacheMonitor.CleanSale();
             }
             catch (Exception ex)
@@ -47,22 +40,6 @@ internal class WatchDogService : BackgroundService, IWatchDogService
             }
         }
     }
-
-    //private Task RunOnceAsync(CancellationToken cancellationToken)
-    //{
-    //    _cacheMonitor.CleanSale();
-
-    //    var infos = _cacheMonitor.GetInfos().Where(x => !x.StaleWhileRevalidate).ToArray();
-    //    foreach (var info in infos)
-    //    {
-    //        foreach (var item in info.Items.Where(x => x.Value.IsStale))
-    //        {
-    //            _cacheMonitor.CleanSale();
-    //        }
-    //    }
-
-    //    return Task.CompletedTask;
-    //}
 
     public void Start(CancellationToken cancellationToken)
     {

@@ -8,14 +8,13 @@ internal class CacheMonitor : IManagedCacheMonitor
     private readonly IPersistLoader _persistLoader;
     private readonly CacheOptions _cacheOptions;
     private readonly ConcurrentDictionary<Type, CacheTypeInfo> _caches = new();
+    private readonly List<Func<int>> _fetchCount = new();
 
     public CacheMonitor(IPersistLoader persistLoader, CacheOptions cacheOptions)
     {
         _persistLoader = persistLoader;
         _cacheOptions = cacheOptions;
     }
-
-    public Func<int> QueueCountLoader { get; set; }
 
     public event EventHandler<RequestEvictEventArgs> RequestEvictEvent;
     public event EventHandler<DataGetEventArgs> DataGetEvent;
@@ -62,6 +61,7 @@ internal class CacheMonitor : IManagedCacheMonitor
         if (_caches.TryGetValue(type, out var info))
         {
             info.Items.FirstOrDefault(x => key.Equals(x.Key)).Value?.SetAccess();
+            DataGetEvent?.Invoke(this, new DataGetEventArgs(key));
         }
     }
 
@@ -74,6 +74,7 @@ internal class CacheMonitor : IManagedCacheMonitor
             {
                 _caches.TryRemove(type, out _);
             }
+            DataDropEvent?.Invoke(this, new DataDropEventArgs(key));
         }
         else
         {
@@ -92,10 +93,15 @@ internal class CacheMonitor : IManagedCacheMonitor
             case EvictionPolicy.FirstInFirstOut:
                 return val.Items.OrderBy(x => x.Value?.CreateTime).FirstOrDefault().Key;
             case EvictionPolicy.RandomReplacement:
-                return val.Items.ToDictionary().TakeRandom().Key; //TODO: Implement TakeRandom on the interface
+                return val.Items.TakeRandom().Key;
             default:
                 throw new ArgumentOutOfRangeException(nameof(EvictionPolicy), $"Unknown {nameof(EvictionPolicy)} {evictionPolicy}.");
         }
+    }
+
+    public void AddFetchCount(Func<int> func)
+    {
+        _fetchCount.Add(func);
     }
 
     public IEnumerable<CacheTypeInfo> GetInfos()
@@ -136,7 +142,7 @@ internal class CacheMonitor : IManagedCacheMonitor
 
     public int GetFetchQueueCount()
     {
-        return QueueCountLoader?.Invoke() ?? -1;
+        return _fetchCount.Select(x => x.Invoke()).Sum(x => x);
     }
 
     public void CleanSale()
@@ -146,7 +152,7 @@ internal class CacheMonitor : IManagedCacheMonitor
         {
             foreach (var item in info.Items.Where(x => x.Value.IsStale))
             {
-                RequestEvictEvent?.Invoke(this, new RequestEvictEventArgs());
+                RequestEvictEvent?.Invoke(this, new RequestEvictEventArgs(info.Type, item.Key));
             }
         }
     }

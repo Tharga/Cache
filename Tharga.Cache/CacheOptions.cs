@@ -6,7 +6,7 @@ public record CacheOptions
 
     public int MaxConcurrentFetchCount { get; set; } = 10;
     public Func<IServiceProvider, string> ConnectionStringLoader { get; set; }
-    public TimeSpan WatchDogInterval { get; set; } = TimeSpan.FromSeconds(10);
+    public TimeSpan WatchDogInterval { get; set; } = TimeSpan.FromSeconds(60);
 
     public void RegisterType<T>(Action<CacheTypeOptions> options = null)
     {

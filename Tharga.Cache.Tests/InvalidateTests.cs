@@ -10,6 +10,8 @@ public class InvalidateTests
     private int _dataGetEventCount;
     private int _dataDropEventCount;
     private int _monitorSetEventCount;
+    private int _monitorGetEventCount;
+    private int _monitorDropEventCount;
 
     [Theory]
     [ClassData(typeof(AllTypes))]
@@ -24,6 +26,8 @@ public class InvalidateTests
         sut.DataGetEvent += (_, _) => { _dataGetEventCount++; };
         sut.DataDropEvent += (_, _) => { _dataDropEventCount++; };
         result.Monitor.DataSetEvent += (_, _) => { _monitorSetEventCount++; };
+        result.Monitor.DataGetEvent += (_, _) => { _monitorGetEventCount++; };
+        result.Monitor.DataDropEvent += (_, _) => { _monitorDropEventCount++; };
         await sut.InvalidateAsync<string>("Key");
 
         //Act
@@ -34,6 +38,8 @@ public class InvalidateTests
         _dataGetEventCount.Should().Be(1);
         _dataDropEventCount.Should().Be(staleWhileRevalidate ? 0 : 1);
         _monitorSetEventCount.Should().Be(staleWhileRevalidate ? 0 : 1);
+        _monitorGetEventCount.Should().Be(1);
+        _monitorDropEventCount.Should().Be(staleWhileRevalidate ? 0 : 1);
         item.Should().Be(value);
         result.Monitor.GetInfos().SelectMany(x => x.Items).Sum(x => x.Value.Size).Should().BeGreaterThan(0);
     }
@@ -51,6 +57,8 @@ public class InvalidateTests
         sut.DataGetEvent += (_, _) => { _dataGetEventCount++; };
         sut.DataDropEvent += (_, _) => { _dataDropEventCount++; };
         result.Monitor.DataSetEvent += (_, _) => { _monitorSetEventCount++; };
+        result.Monitor.DataGetEvent += (_, _) => { _monitorGetEventCount++; };
+        result.Monitor.DataDropEvent += (_, _) => { _monitorDropEventCount++; };
         await sut.InvalidateAsync<string>("Key");
 
         //Act
@@ -61,6 +69,8 @@ public class InvalidateTests
         _dataGetEventCount.Should().Be(staleWhileRevalidate ? 1 : 0);
         _dataDropEventCount.Should().Be(staleWhileRevalidate ? 0 : 1);
         _monitorSetEventCount.Should().Be(0);
+        _monitorGetEventCount.Should().Be(staleWhileRevalidate ? 1 : 0);
+        _monitorDropEventCount.Should().Be(staleWhileRevalidate ? 0 : 1);
         if (staleWhileRevalidate)
         {
             item.Should().Be(value);

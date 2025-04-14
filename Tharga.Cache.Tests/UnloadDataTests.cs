@@ -9,13 +9,15 @@ namespace Tharga.Cache.Tests;
 public class UnloadDataTests
 {
     private readonly Mock<IPersistLoader> _persistLoader = new(MockBehavior.Strict);
-    private readonly Mock<IFetchQueue> _fetchQueue = new(MockBehavior.Strict);
+    private readonly IFetchQueue _fetchQueue;
     private readonly CacheMonitor _cacheMonitor;
 
     public UnloadDataTests()
     {
-        _cacheMonitor = new CacheMonitor(_persistLoader.Object, new CacheOptions());
+        var options = new CacheOptions();
+        _cacheMonitor = new CacheMonitor(_persistLoader.Object, options);
         _persistLoader.Setup(x => x.GetPersist(It.IsAny<PersistType>())).Returns(new Memory(_cacheMonitor));
+        _fetchQueue = new FetchQueue(_cacheMonitor, options, default);
     }
 
     [Fact]
@@ -32,7 +34,7 @@ public class UnloadDataTests
             o.MaxCount = 3;
             o.EvictionPolicy = EvictionPolicy.FirstInFirstOut;
         });
-        var sut = new EternalCache(_cacheMonitor, _persistLoader.Object, _fetchQueue.Object, options);
+        var sut = new EternalCache(_cacheMonitor, _persistLoader.Object, _fetchQueue, options);
         sut.DataDropEvent += (_, _) => dataDropEventCount++;
         _cacheMonitor.DataSetEvent += (_, _) => { monitorSetEventCount++; };
         _cacheMonitor.DataGetEvent += (_, _) => { monitorGetEventCount++; };
@@ -69,7 +71,7 @@ public class UnloadDataTests
             o.MaxCount = 3;
             o.EvictionPolicy = EvictionPolicy.LeastRecentlyUsed;
         });
-        var sut = new EternalCache(_cacheMonitor, _persistLoader.Object, _fetchQueue.Object, options);
+        var sut = new EternalCache(_cacheMonitor, _persistLoader.Object, _fetchQueue, options);
         sut.DataDropEvent += (_, _) => dataDropEventCount++;
         _cacheMonitor.DataSetEvent += (_, _) => { monitorSetEventCount++; };
         _cacheMonitor.DataGetEvent += (_, _) => { monitorGetEventCount++; };
@@ -107,7 +109,7 @@ public class UnloadDataTests
             o.MaxCount = 3;
             o.EvictionPolicy = EvictionPolicy.RandomReplacement;
         });
-        var sut = new EternalCache(_cacheMonitor, _persistLoader.Object, _fetchQueue.Object, options);
+        var sut = new EternalCache(_cacheMonitor, _persistLoader.Object, _fetchQueue, options);
         sut.DataDropEvent += (_, _) => dataDropEventCount++;
         _cacheMonitor.DataSetEvent += (_, _) => { monitorSetEventCount++; };
         _cacheMonitor.DataGetEvent += (_, _) => { monitorGetEventCount++; };

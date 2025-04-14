@@ -9,7 +9,14 @@ namespace Tharga.Cache.Tests;
 
 public class FetchDataThrottleTests
 {
-    private Mock<IFetchQueue> _fetchQueue = new(MockBehavior.Strict);
+    //private readonly IFetchQueue _fetchQueue;
+    private readonly Mock<IPersistLoader> _persistLoader;
+    //private readonly CacheMonitor _cacheMonitor;
+
+    public FetchDataThrottleTests()
+    {
+        _persistLoader = new Mock<IPersistLoader>(MockBehavior.Strict);
+    }
 
     [Fact]
     public async Task DualCallsWithSameKey()
@@ -21,10 +28,10 @@ public class FetchDataThrottleTests
         var monitorSetEventCount = 0;
         var monitorGetEventCount = 0;
         var monitorDropEventCount = 0;
-        var persistLoader = new Mock<IPersistLoader>(MockBehavior.Strict);
-        var cacheMonitor = new CacheMonitor(persistLoader.Object, options);
-        persistLoader.Setup(x => x.GetPersist(It.IsAny<PersistType>())).Returns(new Memory(cacheMonitor));
-        var sut = new TimeToLiveCache(cacheMonitor, persistLoader.Object, _fetchQueue.Object, options);
+        var cacheMonitor = new CacheMonitor(_persistLoader.Object, options);
+        var fetchQueue = new FetchQueue(cacheMonitor, options, default);
+        _persistLoader.Setup(x => x.GetPersist(options.Get<string>().PersistType)).Returns(new Memory(cacheMonitor));
+        var sut = new TimeToLiveCache(cacheMonitor, _persistLoader.Object, fetchQueue, options);
         sut.DataGetEvent += (_, _) => dataGetEventCount++;
         sut.DataSetEvent += (_, _) => dataSetEventCount++;
         cacheMonitor.DataSetEvent += (_, _) => monitorSetEventCount++;
@@ -59,11 +66,10 @@ public class FetchDataThrottleTests
         var monitorSetEventCount = 0;
         var monitorGetEventCount = 0;
         var monitorDropEventCount = 0;
-        var persistLoader = new Mock<IPersistLoader>(MockBehavior.Strict);
-        var cacheMonitor = new CacheMonitor(persistLoader.Object, options);
-        persistLoader.Setup(x => x.GetPersist(options.Get<string>().PersistType)).Returns(new Memory(cacheMonitor));
-        _fetchQueue = new Mock<IFetchQueue>(MockBehavior.Strict);
-        var sut = new TimeToLiveCache(cacheMonitor, persistLoader.Object, _fetchQueue.Object, options);
+        var cacheMonitor = new CacheMonitor(_persistLoader.Object, options);
+        var fetchQueue = new FetchQueue(cacheMonitor, options, default);
+        _persistLoader.Setup(x => x.GetPersist(options.Get<string>().PersistType)).Returns(new Memory(cacheMonitor));
+        var sut = new TimeToLiveCache(cacheMonitor, _persistLoader.Object, fetchQueue, options);
         sut.DataGetEvent += (_, _) => dataGetEventCount++;
         sut.DataSetEvent += (_, _) => dataSetEventCount++;
         cacheMonitor.DataSetEvent += (_, _) => monitorSetEventCount++;
@@ -103,10 +109,10 @@ public class FetchDataThrottleTests
         var monitorSetEventCount = 0;
         var monitorGetEventCount = 0;
         var monitorDropEventCount = 0;
-        var persistLoader = new Mock<IPersistLoader>(MockBehavior.Strict);
-        var cacheMonitor = new CacheMonitor(persistLoader.Object, options);
-        persistLoader.Setup(x => x.GetPersist(options.Get<string>().PersistType)).Returns(new Memory(cacheMonitor));
-        var sut = new TimeToLiveCache(cacheMonitor, persistLoader.Object, _fetchQueue.Object, options);
+        var cacheMonitor = new CacheMonitor(_persistLoader.Object, options);
+        var fetchQueue = new FetchQueue(cacheMonitor, options, default);
+        _persistLoader.Setup(x => x.GetPersist(options.Get<string>().PersistType)).Returns(new Memory(cacheMonitor));
+        var sut = new TimeToLiveCache(cacheMonitor, _persistLoader.Object, fetchQueue, options);
         sut.DataGetEvent += (_, _) => dataGetEventCount++;
         sut.DataSetEvent += (_, _) => dataSetEventCount++;
         cacheMonitor.DataSetEvent += (_, _) => monitorSetEventCount++;

@@ -29,25 +29,26 @@ internal static class CacheTypeLoader
         var persistLoader = new Mock<IPersistLoader>(MockBehavior.Strict);
         var cacheMonitor = new CacheMonitor(persistLoader.Object, options);
         persistLoader.Setup(x => x.GetPersist(It.IsAny<PersistType>())).Returns(new Memory(cacheMonitor));
-        var fetchQueue = new Mock<IFetchQueue>(MockBehavior.Strict);
+        //var fetchQueue = new Mock<IFetchQueue>(MockBehavior.Strict);
+        var fetchQueue = new FetchQueue(cacheMonitor, options, default);
 
         ICache cache;
         switch (cacheType.Name)
         {
             case nameof(GenericCache):
-                cache = new GenericCache(cacheMonitor, persistLoader.Object, fetchQueue.Object, options);
+                cache = new GenericCache(cacheMonitor, persistLoader.Object, fetchQueue, options);
                 break;
             case nameof(GenericTimeCache):
-                cache = new GenericTimeCache(cacheMonitor, persistLoader.Object, fetchQueue.Object, options);
+                cache = new GenericTimeCache(cacheMonitor, persistLoader.Object, fetchQueue, options);
                 break;
             case nameof(EternalCache):
-                cache = new EternalCache(cacheMonitor, persistLoader.Object, fetchQueue.Object, options);
+                cache = new EternalCache(cacheMonitor, persistLoader.Object, fetchQueue, options);
                 break;
             case nameof(TimeToLiveCache):
-                cache = new TimeToLiveCache(cacheMonitor, persistLoader.Object, fetchQueue.Object, options);
+                cache = new TimeToLiveCache(cacheMonitor, persistLoader.Object, fetchQueue, options);
                 break;
             case nameof(TimeToIdleCache):
-                cache = new TimeToIdleCache(cacheMonitor, persistLoader.Object, fetchQueue.Object, options);
+                cache = new TimeToIdleCache(cacheMonitor, persistLoader.Object, fetchQueue, options);
                 break;
             default:
                 throw new ArgumentOutOfRangeException($"Unknown cache type '{cacheType.Name}'.");

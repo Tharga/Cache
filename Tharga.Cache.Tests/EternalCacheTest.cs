@@ -9,13 +9,15 @@ namespace Tharga.Cache.Tests;
 public class EternalCacheTest
 {
     private readonly Mock<IPersistLoader> _persistLoader = new(MockBehavior.Strict);
-    private readonly Mock<IFetchQueue> _fetchQueue = new(MockBehavior.Strict);
     private readonly CacheMonitor _cacheMonitor;
+    private readonly IFetchQueue _fetchQueue;
 
     public EternalCacheTest()
     {
-        _cacheMonitor = new CacheMonitor(_persistLoader.Object, new CacheOptions());
+        var options = new CacheOptions();
+        _cacheMonitor = new CacheMonitor(_persistLoader.Object, options);
         _persistLoader.Setup(x => x.GetPersist(It.IsAny<PersistType>())).Returns(new Memory(_cacheMonitor));
+        _fetchQueue = new FetchQueue(_cacheMonitor, options, default);
     }
 
     [Theory]
@@ -28,7 +30,7 @@ public class EternalCacheTest
         var dataSetEventCount = 0;
         var dataGetEventCount = 0;
         var monitorDataSetEventCount = 0;
-        var sut = new EternalCache(_cacheMonitor, _persistLoader.Object, _fetchQueue.Object, options);
+        var sut = new EternalCache(_cacheMonitor, _persistLoader.Object, _fetchQueue, options);
         sut.DataSetEvent += (_, _) => dataSetEventCount++;
         sut.DataGetEvent += (_, _) => dataGetEventCount++;
         _cacheMonitor.DataSetEvent += (_, _) => monitorDataSetEventCount++;

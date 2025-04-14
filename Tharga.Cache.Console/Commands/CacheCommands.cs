@@ -19,5 +19,6 @@ internal class CacheCommands : ContainerCommandBase
         RegisterCommand<CacheSetCommand>();
         RegisterCommand<CacheDropCommand>();
         RegisterCommand<CacheInvalidateCommand>();
+        RegisterCommand<CacheFecthQueueCommand>();
     }
 }

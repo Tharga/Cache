@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Tharga.Cache.Core;
 using Tharga.Cache.Persist;
@@ -23,6 +24,13 @@ public static class CacheRegistrationExtensions
 
         serviceCollection.AddSingleton(Options.Create(o));
         serviceCollection.AddSingleton<ICacheMonitor>(s => s.GetService<IManagedCacheMonitor>());
+        serviceCollection.AddSingleton<IFetchQueue>(s =>
+        {
+            var cacheMonitor = s.GetService<IManagedCacheMonitor>();
+            var loggerFactory = s.GetService<ILoggerFactory>();
+            var logger = loggerFactory?.CreateLogger<FetchQueue>();
+            return new FetchQueue(cacheMonitor, o, logger);
+        });
         serviceCollection.AddSingleton<IManagedCacheMonitor>(s =>
         {
             var persistLoader = s.GetService<IPersistLoader>();
@@ -37,38 +45,44 @@ public static class CacheRegistrationExtensions
             throw new NotImplementedException($"Direct use of {nameof(ICache)} has not yet been implemented.");
             var cacheMonitor = s.GetService<IManagedCacheMonitor>();
             var persistLoader = s.GetService<IPersistLoader>();
-            return new GenericCache(cacheMonitor, persistLoader, o);
+            var fetchQueue = s.GetService<IFetchQueue>();
+            return new GenericCache(cacheMonitor, persistLoader, fetchQueue, o);
         });
         serviceCollection.AddSingleton<ITimeCache>(s =>
         {
             throw new NotImplementedException($"Direct use of {nameof(ITimeCache)} has not yet been implemented.");
             var cacheMonitor = s.GetService<IManagedCacheMonitor>();
             var persistLoader = s.GetService<IPersistLoader>();
-            return new GenericTimeCache(cacheMonitor, persistLoader, o);
+            var fetchQueue = s.GetService<IFetchQueue>();
+            return new GenericTimeCache(cacheMonitor, persistLoader, fetchQueue, o);
         });
         serviceCollection.AddSingleton<IEternalCache>(s =>
         {
             var cacheMonitor = s.GetService<IManagedCacheMonitor>();
             var persistLoader = s.GetService<IPersistLoader>();
-            return new EternalCache(cacheMonitor, persistLoader, o);
+            var fetchQueue = s.GetService<IFetchQueue>();
+            return new EternalCache(cacheMonitor, persistLoader, fetchQueue, o);
         });
         serviceCollection.AddSingleton<ITimeToLiveCache>(s =>
         {
             var cacheMonitor = s.GetService<IManagedCacheMonitor>();
             var persistLoader = s.GetService<IPersistLoader>();
-            return new TimeToLiveCache(cacheMonitor, persistLoader, o);
+            var fetchQueue = s.GetService<IFetchQueue>();
+            return new TimeToLiveCache(cacheMonitor, persistLoader, fetchQueue, o);
         });
         serviceCollection.AddSingleton<ITimeToIdleCache>(s =>
         {
             var cacheMonitor = s.GetService<IManagedCacheMonitor>();
             var persistLoader = s.GetService<IPersistLoader>();
-            return new TimeToIdleCache(cacheMonitor, persistLoader, o);
+            var fetchQueue = s.GetService<IFetchQueue>();
+            return new TimeToIdleCache(cacheMonitor, persistLoader, fetchQueue, o);
         });
         serviceCollection.AddScoped<IScopeCache>(s =>
         {
             var cacheMonitor = s.GetService<IManagedCacheMonitor>();
             var persistLoader = s.GetService<IPersistLoader>();
-            return new EternalCache(cacheMonitor, persistLoader, o);
+            var fetchQueue = s.GetService<IFetchQueue>();
+            return new EternalCache(cacheMonitor, persistLoader, fetchQueue, o);
         });
 
         serviceCollection.AddSingleton<IWatchDogService, WatchDogService>();

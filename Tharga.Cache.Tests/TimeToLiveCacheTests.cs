@@ -9,6 +9,7 @@ namespace Tharga.Cache.Tests;
 public class TimeToLiveCacheTests
 {
     private readonly Mock<IPersistLoader> _persistLoader = new(MockBehavior.Strict);
+    private readonly Mock<IFetchQueue> _fetchQueue = new(MockBehavior.Strict);
     private readonly CacheMonitor _cacheMonitor;
 
     public TimeToLiveCacheTests()
@@ -29,7 +30,7 @@ public class TimeToLiveCacheTests
         var monitorSetEventCount = 0;
         var monitorGetEventCount = 0;
         var monitorDropEventCount = 0;
-        var sut = new TimeToLiveCache(_cacheMonitor, _persistLoader.Object, options);
+        var sut = new TimeToLiveCache(_cacheMonitor, _persistLoader.Object, _fetchQueue.Object, options);
         sut.DataSetEvent += (_, _) => dataSetEventCount++;
         sut.DataGetEvent += (_, _) => dataGetEventCount++;
         _cacheMonitor.DataSetEvent += (_, _) => { monitorSetEventCount++; };

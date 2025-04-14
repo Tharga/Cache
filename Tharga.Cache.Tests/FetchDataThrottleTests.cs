@@ -9,6 +9,8 @@ namespace Tharga.Cache.Tests;
 
 public class FetchDataThrottleTests
 {
+    private Mock<IFetchQueue> _fetchQueue = new(MockBehavior.Strict);
+
     [Fact]
     public async Task DualCallsWithSameKey()
     {
@@ -22,7 +24,7 @@ public class FetchDataThrottleTests
         var persistLoader = new Mock<IPersistLoader>(MockBehavior.Strict);
         var cacheMonitor = new CacheMonitor(persistLoader.Object, options);
         persistLoader.Setup(x => x.GetPersist(It.IsAny<PersistType>())).Returns(new Memory(cacheMonitor));
-        var sut = new TimeToLiveCache(cacheMonitor, persistLoader.Object, options);
+        var sut = new TimeToLiveCache(cacheMonitor, persistLoader.Object, _fetchQueue.Object, options);
         sut.DataGetEvent += (_, _) => dataGetEventCount++;
         sut.DataSetEvent += (_, _) => dataSetEventCount++;
         cacheMonitor.DataSetEvent += (_, _) => monitorSetEventCount++;
@@ -60,7 +62,8 @@ public class FetchDataThrottleTests
         var persistLoader = new Mock<IPersistLoader>(MockBehavior.Strict);
         var cacheMonitor = new CacheMonitor(persistLoader.Object, options);
         persistLoader.Setup(x => x.GetPersist(options.Get<string>().PersistType)).Returns(new Memory(cacheMonitor));
-        var sut = new TimeToLiveCache(cacheMonitor, persistLoader.Object, options);
+        _fetchQueue = new Mock<IFetchQueue>(MockBehavior.Strict);
+        var sut = new TimeToLiveCache(cacheMonitor, persistLoader.Object, _fetchQueue.Object, options);
         sut.DataGetEvent += (_, _) => dataGetEventCount++;
         sut.DataSetEvent += (_, _) => dataSetEventCount++;
         cacheMonitor.DataSetEvent += (_, _) => monitorSetEventCount++;
@@ -103,7 +106,7 @@ public class FetchDataThrottleTests
         var persistLoader = new Mock<IPersistLoader>(MockBehavior.Strict);
         var cacheMonitor = new CacheMonitor(persistLoader.Object, options);
         persistLoader.Setup(x => x.GetPersist(options.Get<string>().PersistType)).Returns(new Memory(cacheMonitor));
-        var sut = new TimeToLiveCache(cacheMonitor, persistLoader.Object, options);
+        var sut = new TimeToLiveCache(cacheMonitor, persistLoader.Object, _fetchQueue.Object, options);
         sut.DataGetEvent += (_, _) => dataGetEventCount++;
         sut.DataSetEvent += (_, _) => dataSetEventCount++;
         cacheMonitor.DataSetEvent += (_, _) => monitorSetEventCount++;

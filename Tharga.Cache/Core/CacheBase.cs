@@ -1,5 +1,4 @@
-﻿using System.Collections.Concurrent;
-using Tharga.Cache.Persist;
+﻿using Tharga.Cache.Persist;
 
 namespace Tharga.Cache.Core;
 
@@ -7,19 +6,17 @@ internal abstract class CacheBase : ICache
 {
     private readonly IManagedCacheMonitor _cacheMonitor;
     private readonly IPersistLoader _persistLoader;
+    private readonly IFetchQueue _fetchQueue;
     private readonly CacheOptions _options;
-    private readonly SemaphoreSlim _globalSemaphore;
-    private readonly ConcurrentDictionary<Key, Lazy<Task<object>>> _inFlightFetches = new();
 
-    protected CacheBase(IManagedCacheMonitor cacheMonitor, IPersistLoader persistLoader, CacheOptions options)
+    protected CacheBase(IManagedCacheMonitor cacheMonitor, IPersistLoader persistLoader, IFetchQueue fetchQueue, CacheOptions options)
     {
         if (options.MaxConcurrentFetchCount <= 0) throw new InvalidOperationException($"Min value for {nameof(options.MaxConcurrentFetchCount)} is 1.");
 
         _cacheMonitor = cacheMonitor;
         _persistLoader = persistLoader;
+        _fetchQueue = fetchQueue;
         _options = options;
-        _globalSemaphore = new(options.MaxConcurrentFetchCount, options.MaxConcurrentFetchCount);
-        _cacheMonitor.AddFetchCount(() => _inFlightFetches.Count);
     }
 
     public event EventHandler<DataSetEventArgs> DataSetEvent;
@@ -54,53 +51,28 @@ internal abstract class CacheBase : ICache
 
             Task.Run(async () =>
             {
-                var data = await LoadData(key, fetch, fs);
+                var data = await _fetchQueue.LoadData(key, fetch, fs, FetchCallback);
                 callback?.Invoke(data);
             });
 
             return (response, false);
         }
 
-        var loadResponse = await LoadData(key, fetch, fs);
+        var loadResponse = await _fetchQueue.LoadData(key, fetch, fs, FetchCallback);
         await OnGetAsync<T>(key);
         return (loadResponse, true);
+    }
+
+    private async Task FetchCallback<T>(Key key, CacheItem<T> item, bool staleWhileRevalidate)
+    {
+        await GetPersist<T>().SetAsync(key, item, staleWhileRevalidate);
+        await OnSetAsync(key, item, staleWhileRevalidate);
     }
 
     protected CacheTypeOptions GetTypeOptions<T>()
     {
         var options = _options.Get<T>();
         return options;
-    }
-
-    private async Task<T> LoadData<T>(Key key, Func<Task<T>> fetch, TimeSpan? freshSpan)
-    {
-        var lazyTask = _inFlightFetches.GetOrAdd(key, _ =>
-            new Lazy<Task<object>>(async () =>
-            {
-                await _globalSemaphore.WaitAsync();
-                try
-                {
-                    var result = await fetch();
-
-                    var staleWhileRevalidate = GetTypeOptions<T>().StaleWhileRevalidate;
-                    var item = CacheItemBuilder.BuildCacheItem(result, freshSpan);
-                    await GetPersist<T>().SetAsync(key, item, staleWhileRevalidate);
-                    //DropWhenStale<T>(key, freshSpan);
-                    await OnSetAsync(key, item, staleWhileRevalidate);
-
-                    return result!;
-                }
-                finally
-                {
-                    _globalSemaphore.Release();
-                    _inFlightFetches.TryRemove(key, out var _);
-                }
-            }, LazyThreadSafetyMode.ExecutionAndPublication)
-        );
-
-        var result = await lazyTask.Value;
-
-        return (T)result!;
     }
 
     public virtual async Task<T> PeekAsync<T>(Key key)

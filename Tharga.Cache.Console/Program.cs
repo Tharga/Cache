@@ -11,14 +11,15 @@ var serviceCollection = new ServiceCollection();
 _ = AssemblyService.GetTypes<ICommand>().Where(x => !x.IsInterface && !x.IsAbstract).Select(serviceCollection.AddTransient).ToArray();
 serviceCollection.RegisterCache(o =>
 {
+    o.MaxConcurrentFetchCount = 1;
+
     o.RegisterType<string>(s =>
     {
         s.DefaultFreshSpan = TimeSpan.FromSeconds(10);
-        //s.StaleWhileRevalidate = true;
+        s.StaleWhileRevalidate = true;
         s.MaxSize = 100;
         s.MaxCount = 10;
     });
-
 });
 var serviceProvider = serviceCollection.BuildServiceProvider();
 serviceProvider.GetService<IWatchDogService>().Start();

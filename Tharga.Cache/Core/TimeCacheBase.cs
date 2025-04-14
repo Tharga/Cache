@@ -2,8 +2,8 @@
 
 internal abstract class TimeCacheBase : CacheBase, ITimeCache
 {
-    protected TimeCacheBase(IManagedCacheMonitor cacheMonitor, IPersistLoader persistLoader, CacheOptions options)
-        : base(cacheMonitor, persistLoader, options)
+    protected TimeCacheBase(IManagedCacheMonitor cacheMonitor, IPersistLoader persistLoader, IFetchQueue fetchQueue, CacheOptions options)
+        : base(cacheMonitor, persistLoader, fetchQueue, options)
     {
     }
 

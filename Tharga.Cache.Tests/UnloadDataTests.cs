@@ -9,6 +9,7 @@ namespace Tharga.Cache.Tests;
 public class UnloadDataTests
 {
     private readonly Mock<IPersistLoader> _persistLoader = new(MockBehavior.Strict);
+    private readonly Mock<IFetchQueue> _fetchQueue = new(MockBehavior.Strict);
     private readonly CacheMonitor _cacheMonitor;
 
     public UnloadDataTests()
@@ -31,7 +32,7 @@ public class UnloadDataTests
             o.MaxCount = 3;
             o.EvictionPolicy = EvictionPolicy.FirstInFirstOut;
         });
-        var sut = new EternalCache(_cacheMonitor, _persistLoader.Object, options);
+        var sut = new EternalCache(_cacheMonitor, _persistLoader.Object, _fetchQueue.Object, options);
         sut.DataDropEvent += (_, _) => dataDropEventCount++;
         _cacheMonitor.DataSetEvent += (_, _) => { monitorSetEventCount++; };
         _cacheMonitor.DataGetEvent += (_, _) => { monitorGetEventCount++; };
@@ -68,7 +69,7 @@ public class UnloadDataTests
             o.MaxCount = 3;
             o.EvictionPolicy = EvictionPolicy.LeastRecentlyUsed;
         });
-        var sut = new EternalCache(_cacheMonitor, _persistLoader.Object, options);
+        var sut = new EternalCache(_cacheMonitor, _persistLoader.Object, _fetchQueue.Object, options);
         sut.DataDropEvent += (_, _) => dataDropEventCount++;
         _cacheMonitor.DataSetEvent += (_, _) => { monitorSetEventCount++; };
         _cacheMonitor.DataGetEvent += (_, _) => { monitorGetEventCount++; };
@@ -106,7 +107,7 @@ public class UnloadDataTests
             o.MaxCount = 3;
             o.EvictionPolicy = EvictionPolicy.RandomReplacement;
         });
-        var sut = new EternalCache(_cacheMonitor, _persistLoader.Object, options);
+        var sut = new EternalCache(_cacheMonitor, _persistLoader.Object, _fetchQueue.Object, options);
         sut.DataDropEvent += (_, _) => dataDropEventCount++;
         _cacheMonitor.DataSetEvent += (_, _) => { monitorSetEventCount++; };
         _cacheMonitor.DataGetEvent += (_, _) => { monitorGetEventCount++; };

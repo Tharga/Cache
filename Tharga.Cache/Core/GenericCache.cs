@@ -2,8 +2,8 @@
 
 internal class GenericCache : CacheBase
 {
-    public GenericCache(IManagedCacheMonitor cacheMonitor, IPersistLoader persistLoader, CacheOptions options)
-        : base(cacheMonitor, persistLoader, options)
+    public GenericCache(IManagedCacheMonitor cacheMonitor, IPersistLoader persistLoader, IFetchQueue fetchQueue, CacheOptions options)
+        : base(cacheMonitor, persistLoader, fetchQueue, options)
     {
     }
 

@@ -11,7 +11,7 @@ internal class Memory : IMemory
     {
         cacheMonitor.RequestEvictEvent += async (_, e) =>
         {
-            await DropAsync(e.Type, e.Key);
+            await DropAsync(e.Key);
             cacheMonitor.Drop(e.Type, e.Key);
         };
     }
@@ -37,12 +37,7 @@ internal class Memory : IMemory
         return SetUpdateTimeAsync(key, DateTime.MinValue);
     }
 
-    public Task<bool> DropAsync<T>(Key key)
-    {
-        return DropAsync(typeof(T), key);
-    }
-
-    internal Task<bool> DropAsync(Type type, Key key)
+    public Task<bool> DropAsync(Key key)
     {
         var result = _datas.TryRemove(key, out _);
         return Task.FromResult(result);

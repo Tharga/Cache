@@ -12,21 +12,11 @@ internal class MemoryWithRedis : IMemoryWithRedis, IAsyncDisposable, IDisposable
         _memory = memory;
         _redis = redis;
 
-        cacheMonitor.RequestEvictEvent += async (s, e) =>
+        cacheMonitor.RequestEvictEvent += async (_, e) =>
         {
-            await DropAsync(e.Type, e.Key);
+            await DropAsync(e.Key);
             cacheMonitor.Drop(e.Type, e.Key);
         };
-    }
-
-    public void Dispose()
-    {
-        _redis?.Dispose();
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        if (_redis != null) await _redis.DisposeAsync();
     }
 
     public async Task<CacheItem<T>> GetAsync<T>(Key key)
@@ -62,18 +52,22 @@ internal class MemoryWithRedis : IMemoryWithRedis, IAsyncDisposable, IDisposable
         return memoryTask.Result || redisTask.Result;
     }
 
-    public Task<bool> DropAsync<T>(Key key)
+    public async Task<bool> DropAsync(Key key)
     {
-        return DropAsync(typeof(T), key);
-    }
-
-    private async Task<bool> DropAsync(Type type, Key key)
-    {
-        var memoryTask = ((Memory)_memory).DropAsync(type, key);
-        var redisTask = ((Redis)_redis).DropAsync(type, key);
+        var memoryTask = ((Memory)_memory).DropAsync(key);
+        var redisTask = ((Redis)_redis).DropAsync(key);
 
         await Task.WhenAll(memoryTask, redisTask);
-        //_cacheMonitor.Drop(type, key);
         return memoryTask.Result || redisTask.Result;
+    }
+
+    public void Dispose()
+    {
+        _redis?.Dispose();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_redis != null) await _redis.DisposeAsync();
     }
 }

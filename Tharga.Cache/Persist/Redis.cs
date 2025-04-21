@@ -5,6 +5,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 using Tharga.Cache.Core;
+using Polly;
+using Polly.Retry;
+using System.Net.Sockets;
 
 namespace Tharga.Cache.Persist;
 
@@ -15,6 +18,7 @@ internal class Redis : IRedis
     private readonly CacheOptions _options;
     private ConnectionMultiplexer _redisConnection;
     private readonly ILogger<Redis> _logger;
+    private readonly AsyncRetryPolicy _retryPolicy;
 
     public Redis(IServiceProvider serviceProvider, IHostEnvironment hostEnvironment, IManagedCacheMonitor cacheMonitor, IOptions<CacheOptions> options, ILogger<Redis> logger)
     {
@@ -22,59 +26,99 @@ internal class Redis : IRedis
         _hostEnvironment = hostEnvironment;
         _options = options.Value;
         _logger = logger;
+        _retryPolicy = Policy
+            .Handle<RedisException>()
+            .Or<TimeoutException>()
+            .Or<SocketException>()
+            .WaitAndRetryAsync(
+                retryCount: 3,
+                sleepDurationProvider: attempt => TimeSpan.FromMilliseconds(200 * Math.Pow(2, attempt)),
+                onRetry: (exception, timeSpan, retryCount, _) =>
+                {
+                    _logger.LogWarning($"Retry {retryCount} after {timeSpan.TotalMilliseconds}ms due to: {exception.Message}");
+                });
 
         cacheMonitor.RequestEvictEvent += async (_, e) =>
         {
-            await DropAsync(e.Type, e.Key);
+            await DropAsync(e.Key);
             cacheMonitor.Drop(e.Type, e.Key);
         };
     }
 
     public async Task<CacheItem<T>> GetAsync<T>(Key key)
     {
-        var redisConnection = await GetConnection();
-        if (redisConnection.Multiplexer == default) return default;
-
-        var db = redisConnection.Multiplexer.GetDatabase();
-        var data = await db.StringGetAsync((string)key);
-        if (!string.IsNullOrEmpty(data))
+        return await _retryPolicy.ExecuteAsync(async () =>
         {
-            var cacheItem = JsonSerializer.Deserialize<CacheItem<T>>(data);
-            return cacheItem;
-        }
+            var redisConnection = await GetConnection();
+            if (redisConnection.Multiplexer == default) return default;
 
-        return default;
+            var db = redisConnection.Multiplexer.GetDatabase();
+            var data = await db.StringGetAsync((string)key);
+            if (!string.IsNullOrEmpty(data))
+            {
+                var cacheItem = JsonSerializer.Deserialize<CacheItem<T>>(data);
+                return cacheItem;
+            }
+
+            return default;
+        });
     }
 
     public async Task SetAsync<T>(Key key, CacheItem<T> cacheItem, bool staleWhileRevalidate)
     {
-        //var cacheItem = CacheItemBuilder.BuildCacheItem(data, freshSpan);
-        var item = JsonSerializer.Serialize(cacheItem);
-        if (Debugger.IsAttached)
+        await _retryPolicy.ExecuteAsync(async () =>
         {
-            var convertedBack = JsonSerializer.Deserialize<CacheItem<T>>(item);
-            var itemAgain = JsonSerializer.Serialize(convertedBack);
-            if (itemAgain != item) throw new InvalidOperationException("Failed to serialize/deserialize back to same result.");
-        }
+            var item = JsonSerializer.Serialize(cacheItem);
+            if (Debugger.IsAttached)
+            {
+                var convertedBack = JsonSerializer.Deserialize<CacheItem<T>>(item);
+                var itemAgain = JsonSerializer.Serialize(convertedBack);
+                if (itemAgain != item) throw new InvalidOperationException("Failed to serialize/deserialize back to same result.");
+            }
 
-        var redisConnection = await GetConnection();
-        if (redisConnection.Multiplexer == default) return;
+            var redisConnection = await GetConnection();
+            if (redisConnection.Multiplexer == default) return;
 
-        var db = redisConnection.Multiplexer.GetDatabase();
-        if (cacheItem.FreshSpan == null || cacheItem.FreshSpan == TimeSpan.MaxValue || staleWhileRevalidate)
-            await db.StringSetAsync((string)key, item);
-        else
-            await db.StringSetAsync((string)key, item, cacheItem.FreshSpan);
+            var db = redisConnection.Multiplexer.GetDatabase();
+            if (cacheItem.FreshSpan == null || cacheItem.FreshSpan == TimeSpan.MaxValue || staleWhileRevalidate)
+                await db.StringSetAsync((string)key, item);
+            else
+                await db.StringSetAsync((string)key, item, cacheItem.FreshSpan);
+        });
     }
 
     public async Task<bool> BuyMoreTime<T>(Key key)
     {
-        return await SetUpdateTime<T>(key, DateTime.UtcNow);
+        return await _retryPolicy.ExecuteAsync(async () => await SetUpdateTime<T>(key, DateTime.UtcNow));
     }
 
     public async Task<bool> Invalidate<T>(Key key)
     {
-        return await SetUpdateTime<T>(key, DateTime.MinValue);
+        return await _retryPolicy.ExecuteAsync(async () => await SetUpdateTime<T>(key, DateTime.MinValue));
+    }
+
+    public async Task<bool> DropAsync(Key key)
+    {
+        return await _retryPolicy.ExecuteAsync(async () =>
+        {
+            var redisConnection = await GetConnection();
+            if (redisConnection.Multiplexer == default) return default;
+
+            var db = redisConnection.Multiplexer.GetDatabase();
+            var result = await db.KeyDeleteAsync((string)key);
+            return result;
+        });
+    }
+
+    public async Task<(bool Success, string Message)> CanConnectAsync()
+    {
+        return await _retryPolicy.ExecuteAsync(async () =>
+        {
+            var redisConnection = await GetConnection();
+            if (redisConnection.Multiplexer == default) return (false, redisConnection.Message);
+
+            return (redisConnection.Multiplexer.IsConnected, redisConnection.Message);
+        });
     }
 
     private async Task<bool> SetUpdateTime<T>(Key key, DateTime updateTime)
@@ -102,39 +146,6 @@ internal class Redis : IRedis
         return false;
     }
 
-    public Task<bool> DropAsync<T>(Key key)
-    {
-        return DropAsync(typeof(T), key);
-    }
-
-    internal async Task<bool> DropAsync(Type type, Key key)
-    {
-        var redisConnection = await GetConnection();
-        if (redisConnection.Multiplexer == default) return default;
-
-        var db = redisConnection.Multiplexer.GetDatabase();
-        var result = await db.KeyDeleteAsync((string)key);
-        return result;
-    }
-
-    public void Dispose()
-    {
-        _redisConnection?.Dispose();
-    }
-
-    public async Task<(bool Success, string Message)> CanConnectAsync()
-    {
-        var redisConnection = await GetConnection();
-        if (redisConnection.Multiplexer == default) return (false, redisConnection.Message);
-
-        return (redisConnection.Multiplexer.IsConnected, redisConnection.Message);
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        if (_redisConnection != null) await _redisConnection.DisposeAsync();
-    }
-
     private async Task<(ConnectionMultiplexer Multiplexer, string Message)> GetConnection()
     {
         if (_redisConnection?.IsConnected ?? false) return (_redisConnection, "Connected (Cached).");
@@ -159,5 +170,15 @@ internal class Redis : IRedis
             _redisConnection = null;
             return (default, e.Message);
         }
+    }
+
+    public void Dispose()
+    {
+        _redisConnection?.Dispose();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_redisConnection != null) await _redisConnection.DisposeAsync();
     }
 }

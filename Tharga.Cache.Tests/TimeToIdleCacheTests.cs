@@ -1,5 +1,4 @@
 ﻿using FluentAssertions;
-using Microsoft.Extensions.Options;
 using Moq;
 using Tharga.Cache.Core;
 using Tharga.Cache.Persist;

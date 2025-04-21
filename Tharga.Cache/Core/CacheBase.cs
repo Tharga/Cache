@@ -48,12 +48,7 @@ internal abstract class CacheBase : ICache
         {
             var response = result.GetData();
             await OnGetAsync<T>(key);
-
-            Task.Run(async () =>
-            {
-                var data = await _fetchQueue.LoadData(key, fetch, fs, FetchCallback);
-                callback?.Invoke(data);
-            });
+            BackgroundLoad(key, fetch, callback, fs);
 
             return (response, false);
         }
@@ -61,6 +56,15 @@ internal abstract class CacheBase : ICache
         var loadResponse = await _fetchQueue.LoadData(key, fetch, fs, FetchCallback);
         await OnGetAsync<T>(key);
         return (loadResponse, true);
+    }
+
+    private void BackgroundLoad<T>(Key key, Func<Task<T>> fetch, Func<T, Task> callback, TimeSpan? fs)
+    {
+        Task.Run(async () =>
+        {
+            var data = await _fetchQueue.LoadData(key, fetch, fs, FetchCallback);
+            callback?.Invoke(data);
+        });
     }
 
     private async Task FetchCallback<T>(Key key, CacheItem<T> item, bool staleWhileRevalidate)
@@ -121,7 +125,7 @@ internal abstract class CacheBase : ICache
     {
         key = KeyBuilder.BuildKey<T>(key);
 
-        var item = await GetPersist<T>().DropAsync<T>(key);
+        var item = await GetPersist<T>().DropAsync(key);
         if (item)
         {
             OnDrop<T>(key);
@@ -188,7 +192,7 @@ internal abstract class CacheBase : ICache
             if (maxCount <= result?.Items.Count || maxSize <= result?.Items.Sum(x => x.Value.Size) + data.ToSize())
             {
                 var keyToDrop = _cacheMonitor.Get<T>(GetTypeOptions<T>().EvictionPolicy);
-                await GetPersist<T>().DropAsync<T>(keyToDrop);
+                await GetPersist<T>().DropAsync(keyToDrop);
                 OnDrop<T>(keyToDrop);
             }
         }

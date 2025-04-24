@@ -76,10 +76,6 @@ internal class CacheMonitor : IManagedCacheMonitor
             }
             DataDropEvent?.Invoke(this, new DataDropEventArgs(key));
         }
-        else
-        {
-            throw new NotImplementedException();
-        }
     }
 
     public Key Get<T>(EvictionPolicy evictionPolicy)

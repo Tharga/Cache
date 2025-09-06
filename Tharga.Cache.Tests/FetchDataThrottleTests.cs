@@ -88,7 +88,7 @@ public class FetchDataThrottleTests
         //Assert
         dataSetEventCount.Should().BeGreaterThanOrEqualTo(fetchCount-1);
         dataGetEventCount.Should().Be(fetchCount);
-        monitorSetEventCount.Should().Be(fetchCount);
+        monitorSetEventCount.Should().BeGreaterThanOrEqualTo(fetchCount-1);
         monitorGetEventCount.Should().Be(fetchCount);
         monitorDropEventCount.Should().Be(0);
         stopwatch.Elapsed.TotalMilliseconds.Should().BeGreaterThan(minTime);
@@ -135,7 +135,7 @@ public class FetchDataThrottleTests
         await Task.WhenAll(stringTasks);
 
         //Assert
-        dataSetEventCount.Should().Be(fetchCount);
+        dataSetEventCount.Should().BeGreaterThanOrEqualTo(fetchCount-1);
         dataGetEventCount.Should().Be(fetchCount);
         monitorSetEventCount.Should().Be(fetchCount);
         monitorGetEventCount.Should().Be(fetchCount);

@@ -9,7 +9,13 @@ namespace Tharga.Cache;
 
 public static class CacheRegistrationExtensions
 {
+    [Obsolete($"Use {nameof(AddCache)} instead.")]
     public static void RegisterCache(this IServiceCollection serviceCollection, Action<CacheOptions> options = null)
+    {
+        AddCache(serviceCollection, options);
+    }
+
+    public static void AddCache(this IServiceCollection serviceCollection, Action<CacheOptions> options = null)
     {
         var o = new CacheOptions
         {

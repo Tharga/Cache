@@ -14,19 +14,23 @@ internal class ComponentService : IComponentService
 
     public IEnumerable<Component> GetComponents()
     {
-        yield return new Component
+        var healthTypes = _cacheMonitor.GetHealthTypesAsync();
+        foreach (var healthType in healthTypes)
         {
-            Name = "DistributedCache",
-            Essential = false,
-            CheckAsync = async _ =>
+            yield return new Component
             {
-                var result = await _cacheMonitor.GetHealthAsync();
-                return new CheckResult
+                Name = $"Cache.{healthType.Type}",
+                Essential = false,
+                CheckAsync = async _ =>
                 {
-                    Success = result.Success,
-                    Message = result.Message
-                };
-            }
-        };
+                    var result = await healthType.GetHealthAsync();
+                    return new CheckResult
+                    {
+                        Success = result.Success,
+                        Message = result.Message
+                    };
+                }
+            };
+        }
     }
 }

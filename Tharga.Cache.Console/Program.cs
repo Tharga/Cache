@@ -2,6 +2,7 @@
 using Tharga.Cache;
 using Tharga.Cache.Console.Commands;
 using Tharga.Cache.Core;
+using Tharga.Cache.Persist;
 using Tharga.Console;
 using Tharga.Console.Commands;
 using Tharga.Console.Consoles;
@@ -12,7 +13,7 @@ _ = AssemblyService.GetTypes<ICommand>().Where(x => !x.IsInterface && !x.IsAbstr
 serviceCollection.AddCache(o =>
 {
     o.MaxConcurrentFetchCount = 1;
-    o.RegisterType<string>(s =>
+    o.RegisterType<string, IMemory>(s =>
     {
         s.DefaultFreshSpan = TimeSpan.FromSeconds(10);
         s.StaleWhileRevalidate = true;

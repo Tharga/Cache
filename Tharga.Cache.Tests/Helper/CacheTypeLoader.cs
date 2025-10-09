@@ -14,12 +14,9 @@ internal static class CacheTypeLoader
 
     public static (ICache Cache, ICacheMonitor Monitor) GetCache(Type cacheType, EvictionPolicy? evictionPolicy, bool staleWhileRevalidate, TimeSpan? defaultFreshSpan = default, string connectionString = "LOCAL")
     {
-        var options = new CacheOptions
-        {
-            //ConnectionStringLoader = (_, _) => connectionString
-        };
+        var options = new CacheOptions();
 
-        options.RegisterType<string>(s =>
+        options.RegisterType<string, IMemory>(s =>
         {
             s.StaleWhileRevalidate = staleWhileRevalidate;
             s.DefaultFreshSpan = defaultFreshSpan ?? TimeSpan.FromSeconds(10);

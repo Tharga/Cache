@@ -1,32 +1,30 @@
-﻿using System.Diagnostics;
-using System.Text.Json;
+﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Diagnostics;
+using System.Text.Json;
+using MongoDB.Driver;
 using Tharga.MongoDB;
 
 namespace Tharga.Cache.MongoDB;
 
 internal class MongoDB : IMongoDB
 {
+    private readonly ILogger<MongoDB> _logger;
     private readonly ICollectionProvider _collectionProvider;
     private readonly MongoDBCacheOptions _options;
 
-    public MongoDB(ICollectionProvider collectionProvider, IOptions<MongoDBCacheOptions> options)
+    public MongoDB(ICollectionProvider collectionProvider, IOptions<MongoDBCacheOptions> options, ILogger<MongoDB> logger)
     {
         _collectionProvider = collectionProvider;
+        _logger = logger;
         _options = options.Value;
-    }
-
-    public Task<(bool Success, string Message)> CanConnectAsync()
-    {
-        throw new NotImplementedException();
     }
 
     public async Task<CacheItem<T>> GetAsync<T>(Key key)
     {
         var collection = GetCollection();
 
-        OneOption<CacheEntity> option = OneOption<CacheEntity>.SingleOrDefault;
-        var item = await collection.GetOneAsync(x => x.Id == key.Value, option); //TODO: Should be possible to provide option with ID (not predicate).
+        var item = await collection.GetOneAsync(x => x.Id == key.Value, OneOption<CacheEntity>.SingleOrDefault); //TODO: Should be possible to provide option with ID (not predicate).
         if (item != null)
         {
             if (!item.StaleWhileRevalidate && item.FreshSpan.HasValue && item.CreateTime.Add(item.FreshSpan.Value) < DateTime.UtcNow)
@@ -72,6 +70,46 @@ internal class MongoDB : IMongoDB
         await collection.AddOrReplaceAsync(entity);
     }
 
+    public Task<bool> BuyMoreTime<T>(Key key)
+    {
+        return SetUpdateTime(key, DateTime.UtcNow);
+    }
+
+    public Task<bool> Invalidate<T>(Key key)
+    {
+        return SetUpdateTime(key, DateTime.MinValue);
+    }
+
+    private async Task<bool> SetUpdateTime(Key key, DateTime updateTime)
+    {
+        var collection = GetCollection();
+        var update = new UpdateDefinitionBuilder<CacheEntity>().Set(x => x.UpdateTime, updateTime);
+        var result = await collection.UpdateOneAsync(key.Value, update, OneOption<CacheEntity>.SingleOrDefault);
+        return result.Before != null;
+    }
+
+    public async Task<bool> DropAsync(Key key)
+    {
+        var collection = GetCollection();
+        var item = await collection.DeleteOneAsync(x => x.Id == key.Value, OneOption<CacheEntity>.SingleOrDefault); //TODO: Here we should not need a predicate
+        return item != null;
+    }
+
+    public async Task<(bool Success, string Message)> CanConnectAsync()
+    {
+        try
+        {
+            var collection = GetCollection();
+            var cnt = await collection.CountAsync(x => true);
+            return (true, $"There {(cnt == 1 ? "is" : "are")} {cnt} record{(cnt == 1 ? "" : "s")} cached.");
+        }
+        catch (Exception e)
+        {
+            _logger?.LogError(e, e.Message);
+            return (false, e.Message);
+        }
+    }
+
     private ICacheRepositoryCollection GetCollection()
     {
         var databaseContext = new DatabaseContext
@@ -83,26 +121,12 @@ internal class MongoDB : IMongoDB
         return collection;
     }
 
-    public Task<bool> BuyMoreTime<T>(Key key)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<bool> Invalidate<T>(Key key)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<bool> DropAsync(Key key)
-    {
-        throw new NotImplementedException();
-    }
-
     public void Dispose()
     {
     }
 
-    public async ValueTask DisposeAsync()
+    public ValueTask DisposeAsync()
     {
+        return ValueTask.CompletedTask;
     }
 }

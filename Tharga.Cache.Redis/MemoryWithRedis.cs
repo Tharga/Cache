@@ -62,6 +62,11 @@ internal class MemoryWithRedis : IMemoryWithRedis, IAsyncDisposable, IDisposable
         return memoryTask.Result || redisTask.Result;
     }
 
+    public Task<(bool Success, string Message)> CanConnectAsync()
+    {
+        return _redis.CanConnectAsync();
+    }
+
     public void Dispose()
     {
         _redis?.Dispose();

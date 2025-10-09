@@ -11,17 +11,18 @@ public record CacheOptions
     public int MaxConcurrentFetchCount { get; set; } = 10;
     public TimeSpan WatchDogInterval { get; set; } = TimeSpan.FromSeconds(60);
 
-    public void RegisterType<TCache>(Action<CacheTypeOptions> options = null)
-    {
-        RegisterType<TCache, IMemory>(options);
-    }
+    //TODO: Enable this method in fugure version, so that memory will be default.
+    //public void RegisterType<TCache>(Action<CacheTypeOptions> options = null)
+    //{
+    //    RegisterType<TCache, IMemory>(options);
+    //}
 
     public void RegisterType<TCache, TPersist>(Action<CacheTypeOptions> options = null) where TPersist : IPersist
     {
         var typeOptions = Default with { };
         typeOptions.PersistType = typeof(TPersist);
         options?.Invoke(typeOptions);
-        _typeOptions.TryAdd(typeof(TCache), typeOptions);
+        if (!_typeOptions.TryAdd(typeof(TCache), typeOptions)) throw new InvalidOperationException($"The type '{typeof(TCache).Name}' has already been registered.");
     }
 
     internal CacheTypeOptions Get<T>()
@@ -34,6 +35,8 @@ public record CacheOptions
         StaleWhileRevalidate = false,
         PersistType = typeof(IMemory)
     };
+
+    internal IEnumerable<Type> GetConfiguredPersistTypes => _typeOptions.Values.Select(x => x.PersistType).Distinct();
 
     internal void RegisterConfigurations(IServiceCollection serviceCollection)
     {

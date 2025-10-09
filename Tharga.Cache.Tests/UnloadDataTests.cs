@@ -17,7 +17,7 @@ public class UnloadDataTests
         var options = new CacheOptions();
         _cacheMonitor = new CacheMonitor(_persistLoader.Object, options);
         _persistLoader.Setup(x => x.GetPersist(It.IsAny<Type>())).Returns(new Memory(_cacheMonitor));
-        _fetchQueue = new FetchQueue(_cacheMonitor, options, default);
+        _fetchQueue = new FetchQueue(_cacheMonitor, options, null);
     }
 
     [Fact]
@@ -29,7 +29,7 @@ public class UnloadDataTests
         var monitorGetEventCount = 0;
         var monitorDropEventCount = 0;
         var options = new CacheOptions();
-        options.RegisterType<string>(o =>
+        options.RegisterType<string, IMemory>(o =>
         {
             o.MaxCount = 3;
             o.EvictionPolicy = EvictionPolicy.FirstInFirstOut;
@@ -66,7 +66,7 @@ public class UnloadDataTests
         var monitorGetEventCount = 0;
         var monitorDropEventCount = 0;
         var options = new CacheOptions();
-        options.RegisterType<string>(o =>
+        options.RegisterType<string, IMemory>(o =>
         {
             o.MaxCount = 3;
             o.EvictionPolicy = EvictionPolicy.LeastRecentlyUsed;
@@ -104,7 +104,7 @@ public class UnloadDataTests
         var monitorGetEventCount = 0;
         var monitorDropEventCount = 0;
         var options = new CacheOptions();
-        options.RegisterType<string>(o =>
+        options.RegisterType<string, IMemory>(o =>
         {
             o.MaxCount = 3;
             o.EvictionPolicy = EvictionPolicy.RandomReplacement;

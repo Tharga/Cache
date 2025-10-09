@@ -1,5 +1,4 @@
 ﻿using FluentAssertions;
-using Tharga.Cache.Core;
 using Xunit;
 
 namespace Tharga.Cache.Tests;

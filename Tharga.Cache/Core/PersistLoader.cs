@@ -12,18 +12,18 @@ internal class PersistLoader : IPersistLoader
         _serviceProvider = serviceProvider;
     }
 
-    public IPersist GetPersist(PersistType persistType)
+    public IPersist GetPersist(Type persistType)
     {
         switch (persistType)
         {
-            case PersistType.Memory:
-                return _serviceProvider.GetService<IMemory>();
-            case PersistType.Redis:
-                return _serviceProvider.GetService<IRedis>();
-            case PersistType.MemoryWithRedis:
-                return _serviceProvider.GetService<IMemoryWithRedis>();
+            //case PersistType.Memory:
+            //    return _serviceProvider.GetService<IMemory>();
+            //case PersistType.Redis:
+            //    return _serviceProvider.GetService<IRedis>();
+            //case PersistType.MemoryWithRedis:
+            //    return _serviceProvider.GetService<IMemoryWithRedis>();
             default:
-                throw new ArgumentOutOfRangeException(nameof(PersistType), $"Unknown {nameof(PersistLoader)} {persistType}.");
+                throw new ArgumentOutOfRangeException(nameof(persistType), $"Unknown {nameof(PersistLoader)} {persistType}.");
         }
     }
 }

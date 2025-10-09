@@ -7,7 +7,7 @@
 		<Authors>Daniel Bohlin</Authors>
 		<Company>Thargelion AB</Company>
 		<Product>Tharga Cache</Product>
-		<Description>Memory cache features.</Description>
+		<Description>Memory and Redis cache features.</Description>
 		<PackageIconUrl>http://thargelion.se/wp-content/uploads/2019/11/Thargelion-White-Icon-150.png</PackageIconUrl>
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
 		<PackageProjectUrl>https://github.com/Tharga/Cache</PackageProjectUrl>
@@ -26,15 +26,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.8" />
-		<PackageReference Include="Polly" Version="8.6.3" />
+		<InternalsVisibleTo Include="Tharga.Cache.Tests" />
+		<InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<InternalsVisibleTo Include="Tharga.Cache.Tests" />
-		<InternalsVisibleTo Include="Tharga.Cache.MongoDB" />
-		<InternalsVisibleTo Include="Tharga.Cache.Redis" />
-		<InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
+	  <ProjectReference Include="..\Tharga.Cache\Tharga.Cache.csproj" />
 	</ItemGroup>
 
 </Project>

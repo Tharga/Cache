@@ -2,5 +2,6 @@
 
 public interface IPersistLoader
 {
-    IPersist GetPersist(PersistType persistType);
+    //IPersist GetPersist(PersistType persistType);
+    IPersist GetPersist(Type persistType);
 }

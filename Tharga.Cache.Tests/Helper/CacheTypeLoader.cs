@@ -28,7 +28,7 @@ internal static class CacheTypeLoader
 
         var persistLoader = new Mock<IPersistLoader>(MockBehavior.Strict);
         var cacheMonitor = new CacheMonitor(persistLoader.Object, options);
-        persistLoader.Setup(x => x.GetPersist(It.IsAny<PersistType>())).Returns(new Memory(cacheMonitor));
+        persistLoader.Setup(x => x.GetPersist(It.IsAny<Type>())).Returns(new Memory(cacheMonitor));
         //var fetchQueue = new Mock<IFetchQueue>(MockBehavior.Strict);
         var fetchQueue = new FetchQueue(cacheMonitor, options, default);
 

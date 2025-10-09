@@ -1,3 +1,3 @@
 ﻿namespace Tharga.Cache.Persist;
 
-internal interface IMemory : IPersist;
+public interface IMemory : IPersist;

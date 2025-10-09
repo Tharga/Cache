@@ -1,5 +1,6 @@
 using Quilt4Net.Toolkit.Api;
 using Tharga.Cache;
+using Tharga.Cache.Persist;
 using Tharga.Cache.Web;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,7 +9,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.RegisterCache(o =>
+builder.Services.AddCache(o =>
 {
     o.MaxConcurrentFetchCount = 1;
     o.RegisterType<WeatherForecast[]?>(s =>
@@ -17,8 +18,10 @@ builder.Services.RegisterCache(o =>
         s.MaxCount = 10;
         s.MaxSize = 2000;
         s.EvictionPolicy = EvictionPolicy.FirstInFirstOut;
-        s.PersistType = PersistType.MemoryWithRedis;
+        //s.PersistType = PersistType.MemoryWithRedis;
         s.DefaultFreshSpan = TimeSpan.FromSeconds(10);
+        //s.PersistType = PersistType.Memory;
+        s.PersistType = typeof(IMemory);
     });
 });
 

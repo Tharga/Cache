@@ -1,4 +1,6 @@
-﻿namespace Tharga.Cache;
+﻿using Tharga.Cache.Persist;
+
+namespace Tharga.Cache;
 
 public record CacheOptions
 {
@@ -20,11 +22,12 @@ public record CacheOptions
         return _typeOptions.GetValueOrDefault(typeof(T)) ?? Default;
     }
 
-    internal IEnumerable<PersistType> GetConfiguredPersistTypes => _typeOptions.Values.Select(x => x.PersistType).Distinct();
+    internal IEnumerable<Type> GetConfiguredPersistTypes => _typeOptions.Values.Select(x => x.PersistType).Distinct();
 
     public CacheTypeOptions Default => new()
     {
         StaleWhileRevalidate = false,
-        PersistType = PersistType.Memory
+        //PersistType = PersistType.Memory
+        PersistType = typeof(IMemory)
     };
 }

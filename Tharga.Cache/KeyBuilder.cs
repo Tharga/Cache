@@ -5,6 +5,13 @@ namespace Tharga.Cache;
 
 public static class KeyBuilder
 {
+    public static string BuildKey<T>(string key)
+    {
+        var typeName = typeof(T).Name;
+        if (key.StartsWith($"{typeName}.")) return key;
+        return $"{typeName}.{key}";
+    }
+
     public static KeyDefinition Add(string name, string value)
     {
         var definition = new KeyDefinition { Keys = new ConcurrentDictionary<string, string>() };

@@ -9,7 +9,7 @@ using Tharga.Toolkit.TypeService;
 
 var serviceCollection = new ServiceCollection();
 _ = AssemblyService.GetTypes<ICommand>().Where(x => !x.IsInterface && !x.IsAbstract).Select(serviceCollection.AddTransient).ToArray();
-serviceCollection.RegisterCache(o =>
+serviceCollection.AddCache(o =>
 {
     o.MaxConcurrentFetchCount = 1;
 

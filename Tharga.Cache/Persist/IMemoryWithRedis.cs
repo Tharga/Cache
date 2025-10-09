@@ -1,3 +1,3 @@
-﻿namespace Tharga.Cache.Persist;
+﻿//namespace Tharga.Cache.Persist;
 
-internal interface IMemoryWithRedis : IPersist;
+//internal interface IMemoryWithRedis : IPersist;

@@ -100,7 +100,7 @@ public static class CacheRegistrationExtensions
         serviceCollection.AddTransient<IPersistLoader, PersistLoader>();
         serviceCollection.AddSingleton<IPersist>(_ => throw new InvalidOperationException($"Cannot inject {nameof(IPersist)} directly, use {nameof(IPersistLoader)} instead."));
         serviceCollection.AddSingleton<IMemory, Memory>();
-        serviceCollection.AddSingleton<IRedis, Redis>();
-        serviceCollection.AddSingleton<IMemoryWithRedis, MemoryWithRedis>();
+        //serviceCollection.AddSingleton<IRedis, Redis>();
+        //serviceCollection.AddSingleton<IMemoryWithRedis, MemoryWithRedis>();
     }
 }

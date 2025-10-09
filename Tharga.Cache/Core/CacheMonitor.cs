@@ -119,12 +119,12 @@ internal class CacheMonitor : IManagedCacheMonitor
     public async Task<HealthDto> GetHealthAsync()
     {
         (bool Success, string Message) result = (true, null);
-        var hasRedis = _cacheOptions.GetConfiguredPersistTypes.Any(x => x == PersistType.Redis || x == PersistType.MemoryWithRedis);
-        if (hasRedis)
-        {
-            var redis = (IRedis)_persistLoader.GetPersist(PersistType.Redis);
-            result = await redis.CanConnectAsync();
-        }
+        //var hasRedis = _cacheOptions.GetConfiguredPersistTypes.Any(x => x == PersistType.Redis || x == PersistType.MemoryWithRedis);
+        //if (hasRedis)
+        //{
+        //    var redis = (IRedis)_persistLoader.GetPersist(PersistType.Redis);
+        //    result = await redis.CanConnectAsync();
+        //}
 
         var totalSize = _caches.Values.Sum(x => x.Items.Sum(y => y.Value?.Size ?? 0));
         var totalCount = _caches.Values.Sum(x => x.Items.Count);

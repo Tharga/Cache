@@ -1,6 +1,6 @@
-# Tharga Cache
+﻿# Tharga Cache MongoDB
 
-Memory cache features.
+MongoDB cache features.
 
 Read more on the project site.
 

@@ -1,12 +1,12 @@
-﻿using System.Diagnostics;
-using System.Net.Sockets;
-using System.Text.Json;
-using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Polly;
 using Polly.Retry;
 using StackExchange.Redis;
+using System.Diagnostics;
+using System.Net.Sockets;
+using System.Text.Json;
 using Tharga.Cache.Core;
 
 namespace Tharga.Cache.Redis;
@@ -15,12 +15,12 @@ internal class Redis : IRedis
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly IHostEnvironment _hostEnvironment;
-    private readonly CacheOptions _options;
+    private readonly RedisCacheOptions _options;
     private ConnectionMultiplexer _redisConnection;
     private readonly ILogger<Redis> _logger;
     private readonly AsyncRetryPolicy _retryPolicy;
 
-    public Redis(IServiceProvider serviceProvider, IHostEnvironment hostEnvironment, IManagedCacheMonitor cacheMonitor, IOptions<CacheOptions> options, ILogger<Redis> logger)
+    public Redis(IServiceProvider serviceProvider, IHostEnvironment hostEnvironment, IManagedCacheMonitor cacheMonitor, IOptions<RedisCacheOptions> options, ILogger<Redis> logger)
     {
         _serviceProvider = serviceProvider;
         _hostEnvironment = hostEnvironment;
@@ -49,7 +49,7 @@ internal class Redis : IRedis
     {
         return await _retryPolicy.ExecuteAsync(async () =>
         {
-            var redisConnection = await GetConnection(typeof(IRedis));
+            var redisConnection = await GetConnection();
             if (redisConnection.Multiplexer == null) return null;
 
             var db = redisConnection.Multiplexer.GetDatabase();
@@ -76,7 +76,7 @@ internal class Redis : IRedis
                 if (itemAgain != item) throw new InvalidOperationException("Failed to serialize/deserialize back to same result.");
             }
 
-            var redisConnection = await GetConnection(typeof(IRedis));
+            var redisConnection = await GetConnection();
             if (redisConnection.Multiplexer == null) return;
 
             var db = redisConnection.Multiplexer.GetDatabase();
@@ -101,7 +101,7 @@ internal class Redis : IRedis
     {
         return await _retryPolicy.ExecuteAsync(async () =>
         {
-            var redisConnection = await GetConnection(typeof(IRedis));
+            var redisConnection = await GetConnection();
             if (redisConnection.Multiplexer == null) return false;
 
             var db = redisConnection.Multiplexer.GetDatabase();
@@ -114,7 +114,7 @@ internal class Redis : IRedis
     {
         return await _retryPolicy.ExecuteAsync(async () =>
         {
-            var redisConnection = await GetConnection(typeof(IRedis));
+            var redisConnection = await GetConnection();
             if (redisConnection.Multiplexer == null) return (false, redisConnection.Message);
 
             return (redisConnection.Multiplexer.IsConnected, redisConnection.Message);
@@ -123,7 +123,7 @@ internal class Redis : IRedis
 
     private async Task<bool> SetUpdateTime<T>(Key key, DateTime updateTime)
     {
-        var redisConnection = await GetConnection(typeof(IRedis));
+        var redisConnection = await GetConnection();
         if (redisConnection.Multiplexer == null) return false;
 
         var db = redisConnection.Multiplexer.GetDatabase();
@@ -146,31 +146,30 @@ internal class Redis : IRedis
         return false;
     }
 
-    private async Task<(ConnectionMultiplexer Multiplexer, string Message)> GetConnection(Type type)
+    private async Task<(ConnectionMultiplexer Multiplexer, string Message)> GetConnection()
     {
         if (_redisConnection?.IsConnected ?? false) return (_redisConnection, "Connected (Cached).");
 
-        //var connectionString = _options.ConnectionStringLoader(_serviceProvider, type);
-        //if (string.IsNullOrEmpty(connectionString))
-        //{
-        //    if (!_hostEnvironment.IsDevelopment()) _logger?.LogWarning("No connection string set for distributed cache.");
-        //    return (null, "No connection string.");
-        //}
-        //if (string.Equals(connectionString, "DISABLED", StringComparison.InvariantCultureIgnoreCase)) return (null, "Disabled.");
+        var connectionString = _options.ConnectionStringLoader?.Invoke(_serviceProvider);
+        if (string.IsNullOrEmpty(connectionString))
+        {
+            if (!_hostEnvironment.IsDevelopment()) _logger?.LogWarning("No connection string set for distributed cache.");
+            return (null, "No connection string.");
+        }
+        if (string.Equals(connectionString, "DISABLED", StringComparison.InvariantCultureIgnoreCase)) return (null, "Disabled.");
 
-        //try
-        //{
-        //    _redisConnection = await ConnectionMultiplexer.ConnectAsync(connectionString);
-        //    return (_redisConnection, "Connected to Redis.");
-        //}
-        //catch (Exception e)
-        //{
-        //    _logger?.LogError(e, e.Message);
-        //    if (_redisConnection != null) await _redisConnection.DisposeAsync();
-        //    _redisConnection = null;
-        //    return (null, e.Message);
-        //}
-        throw new NotImplementedException();
+        try
+        {
+            _redisConnection = await ConnectionMultiplexer.ConnectAsync(connectionString);
+            return (_redisConnection, "Connected to Redis.");
+        }
+        catch (Exception e)
+        {
+            _logger?.LogError(e, e.Message);
+            if (_redisConnection != null) await _redisConnection.DisposeAsync();
+            _redisConnection = null;
+            return (null, e.Message);
+        }
     }
 
     public void Dispose()

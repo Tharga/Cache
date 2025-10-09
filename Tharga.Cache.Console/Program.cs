@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Tharga.Cache;
 using Tharga.Cache.Console.Commands;
 using Tharga.Cache.Core;
@@ -13,12 +12,6 @@ _ = AssemblyService.GetTypes<ICommand>().Where(x => !x.IsInterface && !x.IsAbstr
 serviceCollection.AddCache(o =>
 {
     o.MaxConcurrentFetchCount = 1;
-    //o.ConnectionStringLoader = (s, t) =>
-    //{
-    //    Debugger.Break();
-    //    throw new NotImplementedException();
-    //};
-
     o.RegisterType<string>(s =>
     {
         s.DefaultFreshSpan = TimeSpan.FromSeconds(10);

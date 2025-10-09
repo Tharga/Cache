@@ -116,6 +116,7 @@ internal class CacheMonitor : IManagedCacheMonitor
         return new Dictionary<string, CacheItemInfo>();
     }
 
+    //TODO: Note that there can be both mongodb, redis and memory caches.
     public async Task<HealthDto> GetHealthAsync()
     {
         (bool Success, string Message) result = (true, null);
@@ -125,6 +126,9 @@ internal class CacheMonitor : IManagedCacheMonitor
         //    var redis = (IRedis)_persistLoader.GetPersist(PersistType.Redis);
         //    result = await redis.CanConnectAsync();
         //}
+
+        //TODO: Ask monitor for redis stuff
+        //TODO: Ask monitor for mongodb stuff
 
         var totalSize = _caches.Values.Sum(x => x.Items.Sum(y => y.Value?.Size ?? 0));
         var totalCount = _caches.Values.Sum(x => x.Items.Count);

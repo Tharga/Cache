@@ -16,7 +16,7 @@ internal static class CacheTypeLoader
     {
         var options = new CacheOptions
         {
-            ConnectionStringLoader = _ => connectionString
+            //ConnectionStringLoader = (_, _) => connectionString
         };
 
         options.RegisterType<string>(s =>
@@ -29,8 +29,7 @@ internal static class CacheTypeLoader
         var persistLoader = new Mock<IPersistLoader>(MockBehavior.Strict);
         var cacheMonitor = new CacheMonitor(persistLoader.Object, options);
         persistLoader.Setup(x => x.GetPersist(It.IsAny<Type>())).Returns(new Memory(cacheMonitor));
-        //var fetchQueue = new Mock<IFetchQueue>(MockBehavior.Strict);
-        var fetchQueue = new FetchQueue(cacheMonitor, options, default);
+        var fetchQueue = new FetchQueue(cacheMonitor, options, null);
 
         ICache cache;
         switch (cacheType.Name)

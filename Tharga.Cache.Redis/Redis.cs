@@ -1,23 +1,15 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using System.Diagnostics;
+using System.Net.Sockets;
+using System.Text.Json;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Polly;
 using Polly.Retry;
 using StackExchange.Redis;
-using System.Diagnostics;
-using System.Net.Sockets;
-using System.Text.Json;
 using Tharga.Cache.Core;
-using Tharga.Cache.Persist;
 
 namespace Tharga.Cache.Redis;
-
-internal interface IRedis : IPersist, IAsyncDisposable, IDisposable
-{
-    Task<(bool Success, string Message)> CanConnectAsync();
-}
-
-internal interface IMemoryWithRedis : IPersist;
 
 internal class Redis : IRedis
 {
@@ -57,8 +49,8 @@ internal class Redis : IRedis
     {
         return await _retryPolicy.ExecuteAsync(async () =>
         {
-            var redisConnection = await GetConnection();
-            if (redisConnection.Multiplexer == default) return default;
+            var redisConnection = await GetConnection(typeof(IRedis));
+            if (redisConnection.Multiplexer == null) return null;
 
             var db = redisConnection.Multiplexer.GetDatabase();
             var data = await db.StringGetAsync((string)key);
@@ -68,7 +60,7 @@ internal class Redis : IRedis
                 return cacheItem;
             }
 
-            return default;
+            return null;
         });
     }
 
@@ -84,8 +76,8 @@ internal class Redis : IRedis
                 if (itemAgain != item) throw new InvalidOperationException("Failed to serialize/deserialize back to same result.");
             }
 
-            var redisConnection = await GetConnection();
-            if (redisConnection.Multiplexer == default) return;
+            var redisConnection = await GetConnection(typeof(IRedis));
+            if (redisConnection.Multiplexer == null) return;
 
             var db = redisConnection.Multiplexer.GetDatabase();
             if (cacheItem.FreshSpan == null || cacheItem.FreshSpan == TimeSpan.MaxValue || staleWhileRevalidate)
@@ -109,8 +101,8 @@ internal class Redis : IRedis
     {
         return await _retryPolicy.ExecuteAsync(async () =>
         {
-            var redisConnection = await GetConnection();
-            if (redisConnection.Multiplexer == default) return default;
+            var redisConnection = await GetConnection(typeof(IRedis));
+            if (redisConnection.Multiplexer == null) return false;
 
             var db = redisConnection.Multiplexer.GetDatabase();
             var result = await db.KeyDeleteAsync((string)key);
@@ -122,8 +114,8 @@ internal class Redis : IRedis
     {
         return await _retryPolicy.ExecuteAsync(async () =>
         {
-            var redisConnection = await GetConnection();
-            if (redisConnection.Multiplexer == default) return (false, redisConnection.Message);
+            var redisConnection = await GetConnection(typeof(IRedis));
+            if (redisConnection.Multiplexer == null) return (false, redisConnection.Message);
 
             return (redisConnection.Multiplexer.IsConnected, redisConnection.Message);
         });
@@ -131,8 +123,8 @@ internal class Redis : IRedis
 
     private async Task<bool> SetUpdateTime<T>(Key key, DateTime updateTime)
     {
-        var redisConnection = await GetConnection();
-        if (redisConnection.Multiplexer == default) return default;
+        var redisConnection = await GetConnection(typeof(IRedis));
+        if (redisConnection.Multiplexer == null) return false;
 
         var db = redisConnection.Multiplexer.GetDatabase();
         var data = await db.StringGetAsync((string)key);
@@ -154,30 +146,31 @@ internal class Redis : IRedis
         return false;
     }
 
-    private async Task<(ConnectionMultiplexer Multiplexer, string Message)> GetConnection()
+    private async Task<(ConnectionMultiplexer Multiplexer, string Message)> GetConnection(Type type)
     {
         if (_redisConnection?.IsConnected ?? false) return (_redisConnection, "Connected (Cached).");
 
-        var connectionString = _options.ConnectionStringLoader(_serviceProvider);
-        if (string.IsNullOrEmpty(connectionString))
-        {
-            if (!_hostEnvironment.IsDevelopment()) _logger?.LogWarning("No connection string set for distributed cache.");
-            return (default, "No connection string.");
-        }
-        if (string.Equals(connectionString, "DISABLED", StringComparison.InvariantCultureIgnoreCase)) return (default, "Disabled.");
+        //var connectionString = _options.ConnectionStringLoader(_serviceProvider, type);
+        //if (string.IsNullOrEmpty(connectionString))
+        //{
+        //    if (!_hostEnvironment.IsDevelopment()) _logger?.LogWarning("No connection string set for distributed cache.");
+        //    return (null, "No connection string.");
+        //}
+        //if (string.Equals(connectionString, "DISABLED", StringComparison.InvariantCultureIgnoreCase)) return (null, "Disabled.");
 
-        try
-        {
-            _redisConnection = await ConnectionMultiplexer.ConnectAsync(connectionString);
-            return (_redisConnection, "Connected to Redis.");
-        }
-        catch (Exception e)
-        {
-            _logger?.LogError(e, e.Message);
-            if (_redisConnection != null) await _redisConnection.DisposeAsync();
-            _redisConnection = null;
-            return (default, e.Message);
-        }
+        //try
+        //{
+        //    _redisConnection = await ConnectionMultiplexer.ConnectAsync(connectionString);
+        //    return (_redisConnection, "Connected to Redis.");
+        //}
+        //catch (Exception e)
+        //{
+        //    _logger?.LogError(e, e.Message);
+        //    if (_redisConnection != null) await _redisConnection.DisposeAsync();
+        //    _redisConnection = null;
+        //    return (null, e.Message);
+        //}
+        throw new NotImplementedException();
     }
 
     public void Dispose()
@@ -188,75 +181,5 @@ internal class Redis : IRedis
     public async ValueTask DisposeAsync()
     {
         if (_redisConnection != null) await _redisConnection.DisposeAsync();
-    }
-}
-
-internal class MemoryWithRedis : IMemoryWithRedis, IAsyncDisposable, IDisposable
-{
-    private readonly IMemory _memory;
-    private readonly IRedis _redis;
-
-    public MemoryWithRedis(IMemory memory, IRedis redis, IManagedCacheMonitor cacheMonitor)
-    {
-        _memory = memory;
-        _redis = redis;
-
-        cacheMonitor.RequestEvictEvent += async (_, e) =>
-        {
-            await DropAsync(e.Key);
-            cacheMonitor.Drop(e.Type, e.Key);
-        };
-    }
-
-    public async Task<CacheItem<T>> GetAsync<T>(Key key)
-    {
-        var result = await _memory.GetAsync<T>(key);
-        if (result != default) return result;
-
-        return await _redis.GetAsync<T>(key);
-    }
-
-    public Task SetAsync<T>(Key key, CacheItem<T> item, bool staleWhileRevalidate)
-    {
-        var memoryTask = _memory.SetAsync(key, item, staleWhileRevalidate);
-        var redisTask = _redis.SetAsync(key, item, staleWhileRevalidate);
-        return Task.WhenAll(memoryTask, redisTask);
-    }
-
-    public async Task<bool> BuyMoreTime<T>(Key key)
-    {
-        var memoryTask = _memory.BuyMoreTime<T>(key);
-        var redisTask = _redis.BuyMoreTime<T>(key);
-
-        await Task.WhenAll(memoryTask, redisTask);
-        return memoryTask.Result || redisTask.Result;
-    }
-
-    public async Task<bool> Invalidate<T>(Key key)
-    {
-        var memoryTask = _memory.Invalidate<T>(key);
-        var redisTask = _redis.Invalidate<T>(key);
-
-        await Task.WhenAll(memoryTask, redisTask);
-        return memoryTask.Result || redisTask.Result;
-    }
-
-    public async Task<bool> DropAsync(Key key)
-    {
-        var memoryTask = ((Memory)_memory).DropAsync(key);
-        var redisTask = ((Redis)_redis).DropAsync(key);
-
-        await Task.WhenAll(memoryTask, redisTask);
-        return memoryTask.Result || redisTask.Result;
-    }
-
-    public void Dispose()
-    {
-        _redis?.Dispose();
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        if (_redis != null) await _redis.DisposeAsync();
     }
 }

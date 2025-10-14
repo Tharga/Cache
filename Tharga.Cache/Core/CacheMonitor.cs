@@ -142,12 +142,23 @@ internal class CacheMonitor : IManagedCacheMonitor
         return _fetchCount.Select(x => x.Invoke()).Sum(x => x);
     }
 
-    public void CleanSale()
+    public void ClearStale()
     {
         var infos = GetInfos().Where(x => !x.StaleWhileRevalidate).ToArray();
         foreach (var info in infos)
         {
             foreach (var item in info.Items.Where(x => x.Value.IsStale))
+            {
+                RequestEvictEvent?.Invoke(this, new RequestEvictEventArgs(info.Type, item.Key));
+            }
+        }
+    }
+
+    public void ClearAll()
+    {
+        foreach (var info in GetInfos())
+        {
+            foreach (var item in info.Items)
             {
                 RequestEvictEvent?.Invoke(this, new RequestEvictEventArgs(info.Type, item.Key));
             }

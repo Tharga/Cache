@@ -23,7 +23,7 @@ internal class WatchDogService : BackgroundService, IWatchDogService
         {
             try
             {
-                _cacheMonitor.CleanSale();
+                _cacheMonitor.ClearStale();
             }
             catch (Exception ex)
             {

@@ -35,6 +35,7 @@ internal class MongoDB : IMongoDB
 
             return new CacheItem<T>()
             {
+                KeyParts = key.KeyParts,
                 CreateTime = item.CreateTime,
                 Data = JsonSerializer.Deserialize<T>(item.Data),
                 FreshSpan = item.FreshSpan,
@@ -43,6 +44,11 @@ internal class MongoDB : IMongoDB
         }
 
         return null;
+    }
+
+    public IAsyncEnumerable<(Key Key, CacheItem<T> CacheItem)> FindAsync<T>(Key key)
+    {
+        throw new NotImplementedException();
     }
 
     public async Task SetAsync<T>(Key key, CacheItem<T> cacheItem, bool staleWhileRevalidate)

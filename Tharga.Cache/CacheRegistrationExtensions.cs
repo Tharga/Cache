@@ -17,7 +17,14 @@ public static class CacheRegistrationExtensions
 
     public static void AddCache(this IServiceCollection serviceCollection, Action<CacheOptions> options = null)
     {
-        var o = new CacheOptions();
+        var o = new CacheOptions
+        {
+            Default = new CacheTypeOptions
+            {
+                StaleWhileRevalidate = false,
+                PersistType = typeof(IMemory)
+            }
+        };
         options?.Invoke(o);
 
         serviceCollection.AddSingleton(Options.Create(o));

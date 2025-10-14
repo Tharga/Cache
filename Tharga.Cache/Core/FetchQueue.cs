@@ -40,7 +40,7 @@ internal class FetchQueue : IFetchQueue
                             var result = await fetch();
 
                             var staleWhileRevalidate = _options.Get<T>().StaleWhileRevalidate;
-                            var item = CacheItemBuilder.BuildCacheItem(result, freshSpan);
+                            var item = CacheItemBuilder.BuildCacheItem(key.KeyParts, result, freshSpan);
                             await fetchCallback.Invoke(key, item, staleWhileRevalidate);
 
                             tcs.TrySetResult(result!);

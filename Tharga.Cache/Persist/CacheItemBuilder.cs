@@ -2,8 +2,8 @@
 
 internal static class CacheItemBuilder
 {
-    public static CacheItem<T> BuildCacheItem<T>(T data, TimeSpan? freshSpan)
+    public static CacheItem<T> BuildCacheItem<T>(Dictionary<string,string> parts, T data, TimeSpan? freshSpan)
     {
-        return new CacheItem<T> { Data = data, FreshSpan = freshSpan, CreateTime = DateTime.UtcNow };
+        return new CacheItem<T> { KeyParts = parts, Data = data, FreshSpan = freshSpan, CreateTime = DateTime.UtcNow };
     }
 }

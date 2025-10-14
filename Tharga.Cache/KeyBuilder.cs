@@ -1,15 +1,16 @@
 ﻿using System.Collections.Concurrent;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace Tharga.Cache;
 
 public static class KeyBuilder
 {
-    public static string BuildKey<T>(string key)
+    internal static Key SetTypeKey<T>(this Key key)
     {
         var typeName = typeof(T).Name;
-        if (key.StartsWith($"{typeName}.")) return key;
-        return $"{typeName}.{key}";
+        if (key.Value.StartsWith($"{typeName}.")) return key;
+        return new Key(key, typeName, key.KeyParts);
     }
 
     public static KeyDefinition Add(string name, string value)
@@ -24,20 +25,15 @@ public static class KeyBuilder
         return definition;
     }
 
-    //TODO: Build tests for this
-    public static Key Build(this KeyDefinition definition)
+    internal static string ToHash(this KeyDefinition definition)
     {
         definition = new KeyDefinition { Keys = new ConcurrentDictionary<string, string>(definition.Keys.OrderBy(x => x.Key)) };
-        var raw = System.Text.Json.JsonSerializer.Serialize(definition);
-        var base64Encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(raw));
-        return new Key(base64Encoded);
-    }
+        var rawString = System.Text.Json.JsonSerializer.Serialize(definition);
 
-    //TODO: Build tests for this
-    public static KeyDefinition ToKeyDefinition(this Key key)
-    {
-        var decoded = Encoding.UTF8.GetString(Convert.FromBase64String(key.Value));
-        var definition = System.Text.Json.JsonSerializer.Deserialize<KeyDefinition>(decoded);
-        return definition;
+        using var md5 = MD5.Create();
+        var bytes = Encoding.UTF8.GetBytes(rawString);
+        var hashBytes = md5.ComputeHash(bytes);
+
+        return Convert.ToBase64String(hashBytes);
     }
 }

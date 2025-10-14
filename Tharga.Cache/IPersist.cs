@@ -3,6 +3,7 @@
 public interface IPersist
 {
     Task<CacheItem<T>> GetAsync<T>(Key key);
+    IAsyncEnumerable<(Key Key, CacheItem<T> CacheItem)> FindAsync<T>(Key key);
     Task SetAsync<T>(Key key, CacheItem<T> cacheItem, bool staleWhileRevalidate);
     Task<bool> BuyMoreTime<T>(Key key);
 

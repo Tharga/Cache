@@ -11,5 +11,6 @@ public interface ICacheMonitor
     IDictionary<string, CacheItemInfo> GetByType(Type type);
     IEnumerable<HealthType> GetHealthTypesAsync();
     int GetFetchQueueCount();
-    void CleanSale();
+    void ClearStale();
+    void ClearAll();
 }

@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Tharga.Cache.Persist;
 
 namespace Tharga.Cache;
 
@@ -9,6 +8,10 @@ public record CacheOptions
     private readonly List<Action<IServiceCollection>> _callbacks = new();
 
     public int MaxConcurrentFetchCount { get; set; } = 10;
+
+    /// <summary>
+    /// The interval for the backgroud job that cleans out stale data.
+    /// </summary>
     public TimeSpan WatchDogInterval { get; set; } = TimeSpan.FromSeconds(60);
 
     //TODO: Enable this method in fugure version, so that memory will be default.
@@ -30,11 +33,8 @@ public record CacheOptions
         return _typeOptions.GetValueOrDefault(typeof(T)) ?? Default;
     }
 
-    public CacheTypeOptions Default => new()
-    {
-        StaleWhileRevalidate = false,
-        PersistType = typeof(IMemory)
-    };
+
+    public CacheTypeOptions Default { get; set; }
 
     internal IEnumerable<Type> GetConfiguredPersistTypes => _typeOptions.Values.Select(x => x.PersistType).Distinct();
 

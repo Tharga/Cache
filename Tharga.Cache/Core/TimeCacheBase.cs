@@ -9,7 +9,9 @@ internal abstract class TimeCacheBase : CacheBase, ITimeCache
 
     protected override TimeSpan GetDefaultFreshSpan<T>()
     {
-        return GetTypeOptions<T>().DefaultFreshSpan ?? throw new InvalidOperationException($"No freshSpan provided and no {nameof(CacheTypeOptions.DefaultFreshSpan)} configured for cache type {typeof(T).Name}.");
+        return GetTypeOptions<T>().DefaultFreshSpan
+               ?? _options?.Default?.DefaultFreshSpan
+               ?? throw new InvalidOperationException($"No freshSpan provided and no {nameof(CacheTypeOptions.DefaultFreshSpan)} configured for cache type {typeof(T).Name}.");
     }
 
     public virtual async Task<T> GetAsync<T>(Key key, Func<Task<T>> fetch, TimeSpan freshSpan)

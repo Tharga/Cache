@@ -6,12 +6,20 @@ namespace Tharga.Cache;
 
 public static class KeyBuilder
 {
-    internal static Key SetTypeKey<T>(this Key key)
+    public static string SetTypeKey<T>(string key)
     {
         var typeName = typeof(T).Name;
-        if (key.Value.StartsWith($"{typeName}.")) return key;
-        return new Key(key, typeName, key.KeyParts);
+        if (key.StartsWith($"{typeName}.")) return key;
+        return $"{typeName}.{key}";
     }
+
+    //internal static Key SetTypeKey<T>(this Key key)
+    //{
+    //    //var typeName = typeof(T).Name;
+    //    //if (key.Value.StartsWith($"{typeName}.")) return key;
+    //    //return new Key(key, typeName, key.KeyParts);
+    //    throw new NotImplementedException();
+    //}
 
     public static KeyDefinition Add(string name, string value)
     {

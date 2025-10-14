@@ -28,6 +28,11 @@ internal class MemoryWithRedis : IMemoryWithRedis, IAsyncDisposable, IDisposable
         return await _redis.GetAsync<T>(key);
     }
 
+    public IAsyncEnumerable<(Key Key, CacheItem<T> CacheItem)> FindAsync<T>(Key key)
+    {
+        throw new NotImplementedException();
+    }
+
     public Task SetAsync<T>(Key key, CacheItem<T> item, bool staleWhileRevalidate)
     {
         var memoryTask = _memory.SetAsync(key, item, staleWhileRevalidate);

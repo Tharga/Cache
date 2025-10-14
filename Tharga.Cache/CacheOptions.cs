@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Tharga.Cache.Persist;
 
 namespace Tharga.Cache;
 
@@ -22,7 +23,7 @@ public record CacheOptions
 
     public void RegisterType<TCache, TPersist>(Action<CacheTypeOptions> options = null) where TPersist : IPersist
     {
-        var typeOptions = Default with { };
+        var typeOptions = (Default ?? BuildDefault()) with { };
         typeOptions.PersistType = typeof(TPersist);
         options?.Invoke(typeOptions);
         if (!_typeOptions.TryAdd(typeof(TCache), typeOptions)) throw new InvalidOperationException($"The type '{typeof(TCache).Name}' has already been registered.");
@@ -30,9 +31,19 @@ public record CacheOptions
 
     internal CacheTypeOptions Get<T>()
     {
-        return _typeOptions.GetValueOrDefault(typeof(T)) ?? Default;
+        return _typeOptions.GetValueOrDefault(typeof(T))
+               ?? Default
+               ?? BuildDefault();
     }
 
+    public static CacheTypeOptions BuildDefault()
+    {
+        return new CacheTypeOptions
+        {
+            StaleWhileRevalidate = false,
+            PersistType = typeof(IMemory)
+        };
+    }
 
     public CacheTypeOptions Default { get; set; }
 

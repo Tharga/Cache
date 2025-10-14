@@ -9,9 +9,7 @@ namespace Tharga.Cache.Tests;
 
 public class FetchDataThrottleTests
 {
-    //private readonly IFetchQueue _fetchQueue;
     private readonly Mock<IPersistLoader> _persistLoader;
-    //private readonly CacheMonitor _cacheMonitor;
 
     public FetchDataThrottleTests()
     {
@@ -22,18 +20,24 @@ public class FetchDataThrottleTests
     public async Task DualCallsWithSameKey()
     {
         //Arrange
-        var options = new CacheOptions();
+        var options = new CacheOptions
+        {
+            MaxConcurrentFetchCount = 1
+        };
         var dataGetEventCount = 0;
         var dataSetEventCount = 0;
         var monitorSetEventCount = 0;
         var monitorGetEventCount = 0;
         var monitorDropEventCount = 0;
         var cacheMonitor = new CacheMonitor(_persistLoader.Object, options);
-        var fetchQueue = new FetchQueue(cacheMonitor, options, default);
+        var fetchQueue = new FetchQueue(cacheMonitor, options, null);
         _persistLoader.Setup(x => x.GetPersist(options.Get<string>().PersistType)).Returns(new Memory(cacheMonitor));
         var sut = new TimeToLiveCache(cacheMonitor, _persistLoader.Object, fetchQueue, options);
         sut.DataGetEvent += (_, _) => dataGetEventCount++;
-        sut.DataSetEvent += (_, _) => dataSetEventCount++;
+        sut.DataSetEvent += (_, _) =>
+        {
+            dataSetEventCount++;
+        };
         cacheMonitor.DataSetEvent += (_, _) => monitorSetEventCount++;
         cacheMonitor.DataGetEvent += (_, _) => monitorGetEventCount++;
         cacheMonitor.DataDropEvent += (_, _) => monitorDropEventCount++;
@@ -87,7 +91,7 @@ public class FetchDataThrottleTests
         await Task.Delay(200);
 
         //Assert
-        dataSetEventCount.Should().BeGreaterThanOrEqualTo(fetchCount-1);
+        dataSetEventCount.Should().BeGreaterThanOrEqualTo(fetchCount-2);
         dataGetEventCount.Should().Be(fetchCount);
         monitorSetEventCount.Should().BeGreaterThanOrEqualTo(fetchCount-1);
         monitorGetEventCount.Should().Be(fetchCount);

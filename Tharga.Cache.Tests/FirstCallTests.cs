@@ -124,7 +124,7 @@ public class FirstCallTests
         _monitorSetEventCount.Should().Be(0);
         _monitorGetEventCount.Should().Be(0);
         _monitorDropEventCount.Should().Be(0);
-        item.Should().BeFalse();
+        item.Should().Be(0);
         result.Monitor.GetInfos().SelectMany(x => x.Items).Sum(x => x.Value.Size).Should().Be(0);
     }
 }

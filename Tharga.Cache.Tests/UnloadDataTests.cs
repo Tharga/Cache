@@ -52,8 +52,8 @@ public class UnloadDataTests
         monitorGetEventCount.Should().Be(0);
         monitorDropEventCount.Should().Be(1);
         _cacheMonitor.GetInfos().Single().Items.Count.Should().Be(3);
-        _cacheMonitor.GetInfos().Single().Items.Should().Contain(x => x.Key == KeyBuilder.BuildKey<string>("d"));
-        _cacheMonitor.GetInfos().Single().Items.Should().NotContain(x => x.Key == KeyBuilder.BuildKey<string>("a"));
+        _cacheMonitor.GetInfos().Single().Items.Should().Contain(x => x.Key == KeyBuilder.SetTypeKey<string>("d"));
+        _cacheMonitor.GetInfos().Single().Items.Should().NotContain(x => x.Key == KeyBuilder.SetTypeKey<string>("a"));
         _cacheMonitor.GetInfos().SelectMany(x => x.Items).Sum(x => x.Value.Size).Should().BeGreaterThan(0);
     }
 
@@ -90,8 +90,8 @@ public class UnloadDataTests
         monitorGetEventCount.Should().Be(4);
         monitorDropEventCount.Should().Be(1);
         _cacheMonitor.GetInfos().Single().Items.Count.Should().Be(3);
-        _cacheMonitor.GetInfos().Single().Items.Should().Contain(x => x.Key == KeyBuilder.BuildKey<string>("b"));
-        _cacheMonitor.GetInfos().Single().Items.Should().NotContain(x => x.Key == KeyBuilder.BuildKey<string>("a"));
+        _cacheMonitor.GetInfos().Single().Items.Should().Contain(x => x.Key == KeyBuilder.SetTypeKey<string>("b"));
+        _cacheMonitor.GetInfos().Single().Items.Should().NotContain(x => x.Key == KeyBuilder.SetTypeKey<string>("a"));
         _cacheMonitor.GetInfos().SelectMany(x => x.Items).Sum(x => x.Value.Size).Should().BeGreaterThan(0);
     }
 
@@ -127,7 +127,7 @@ public class UnloadDataTests
         monitorGetEventCount.Should().Be(0);
         monitorDropEventCount.Should().Be(1);
         _cacheMonitor.GetInfos().Single().Items.Count.Should().Be(3);
-        _cacheMonitor.GetInfos().Single().Items.Should().Contain(x => x.Key == KeyBuilder.BuildKey<string>("d"));
+        _cacheMonitor.GetInfos().Single().Items.Should().Contain(x => x.Key == KeyBuilder.SetTypeKey<string>("d"));
         _cacheMonitor.GetInfos().SelectMany(x => x.Items).Sum(x => x.Value.Size).Should().BeGreaterThan(0);
     }
 }

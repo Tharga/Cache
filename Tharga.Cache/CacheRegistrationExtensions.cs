@@ -19,11 +19,7 @@ public static class CacheRegistrationExtensions
     {
         var o = new CacheOptions
         {
-            Default = new CacheTypeOptions
-            {
-                StaleWhileRevalidate = false,
-                PersistType = typeof(IMemory)
-            }
+            Default = CacheOptions.BuildDefault()
         };
         options?.Invoke(o);
 

@@ -34,7 +34,8 @@ internal abstract class CacheBase : ICache
     {
         var fs = freshSpan == TimeSpan.MaxValue ? (TimeSpan?)null : freshSpan;
 
-        key = key.SetTypeKey<T>();
+        //key = key.SetTypeKey<T>();
+        key = KeyBuilder.SetTypeKey<T>(key);
 
         var result = await GetPersist<T>().GetAsync<T>(key);
 
@@ -81,7 +82,8 @@ internal abstract class CacheBase : ICache
 
     public virtual async Task<T> PeekAsync<T>(Key key)
     {
-        key = key.SetTypeKey<T>();
+        //key = key.SetTypeKey<T>();
+        key = KeyBuilder.SetTypeKey<T>(key);
 
         var result = await GetPersist<T>().GetAsync<T>(key);
         if (result.IsValid())
@@ -110,35 +112,40 @@ internal abstract class CacheBase : ICache
 
     protected async Task SetCoreAsync<T>(Key key, T data, TimeSpan freshSpan)
     {
-        key = key.SetTypeKey<T>();
+        //key = key.SetTypeKey<T>();
+        key = KeyBuilder.SetTypeKey<T>(key);
 
         var staleWhileRevalidate = GetTypeOptions<T>().StaleWhileRevalidate;
-        var item = CacheItemBuilder.BuildCacheItem(key.KeyParts, data, freshSpan);
+        //TODO: Implement
+        //var item = CacheItemBuilder.BuildCacheItem(key.KeyParts, data, freshSpan);
+        var item = CacheItemBuilder.BuildCacheItem([], data, freshSpan);
         await GetPersist<T>().SetAsync(key, item, staleWhileRevalidate);
         await OnSetAsync(key, item, staleWhileRevalidate);
     }
 
     public virtual async Task<int> DropAsync<T>(Key key)
     {
+        //TODO: Implement
         //NOTE: Look for KeyParts to drop.
-        if (key.KeyParts.Any())
-        {
-            var results = GetPersist<T>().FindAsync<T>(key);
-            var count = 0;
-            await foreach (var result in results)
-            {
-                var dropped = await GetPersist<T>().DropAsync(result.Key);
-                if (dropped)
-                {
-                    OnDrop<T>(result.Key);
-                    count++;
-                }
-            }
+        //if (key.KeyParts.Any())
+        //{
+        //    var results = GetPersist<T>().FindAsync<T>(key);
+        //    var count = 0;
+        //    await foreach (var result in results)
+        //    {
+        //        var dropped = await GetPersist<T>().DropAsync(result.Key);
+        //        if (dropped)
+        //        {
+        //            OnDrop<T>(result.Key);
+        //            count++;
+        //        }
+        //    }
 
-            return count;
-        }
+        //    return count;
+        //}
 
-        key = key.SetTypeKey<T>();
+        //key = key.SetTypeKey<T>();
+        key = KeyBuilder.SetTypeKey<T>(key);
 
         var item = await GetPersist<T>().DropAsync(key);
         if (item)
@@ -154,23 +161,25 @@ internal abstract class CacheBase : ICache
     {
         if (!GetTypeOptions<T>().StaleWhileRevalidate) return await DropAsync<T>(key);
 
+        //TODO: Implement
         //NOTE: Look for KeyParts to invalidate.
-        if (key.KeyParts.Any())
-        {
-            var results = GetPersist<T>().FindAsync<T>(key);
-            var count = 0;
-            await foreach (var result in results)
-            {
-                if (await GetPersist<T>().Invalidate<T>(result.Key))
-                {
-                    count++;
-                }
-            }
+        //if (key.KeyParts.Any())
+        //{
+        //    var results = GetPersist<T>().FindAsync<T>(key);
+        //    var count = 0;
+        //    await foreach (var result in results)
+        //    {
+        //        if (await GetPersist<T>().Invalidate<T>(result.Key))
+        //        {
+        //            count++;
+        //        }
+        //    }
 
-            return count;
-        }
+        //    return count;
+        //}
 
-        key = key.SetTypeKey<T>();
+        //key = key.SetTypeKey<T>();
+        key = KeyBuilder.SetTypeKey<T>(key);
 
         return await GetPersist<T>().Invalidate<T>(key) ? 1 : 0;
     }

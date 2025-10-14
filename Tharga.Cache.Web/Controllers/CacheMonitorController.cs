@@ -1,4 +1,3 @@
-using System.Reflection;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Tharga.Cache.Web.Controllers;

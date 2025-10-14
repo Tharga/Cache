@@ -1,5 +1,3 @@
 ﻿namespace Tharga.Cache;
 
-public interface IScopeCache : ICache
-{
-}
+public interface IScopeCache : ICache;

@@ -30,7 +30,7 @@ public class ExpiredEndingCacheTests
         result.Monitor.DataGetEvent += (_, _) => { _monitorGetEventCount++; };
         result.Monitor.DataDropEvent += (_, _) => { _monitorDropEventCount++; };
         await Task.Delay(500);
-        result.Monitor.CleanSale();
+        result.Monitor.ClearStale();
 
         //Act
         var item = await sut.GetAsync("Key", async () =>
@@ -79,7 +79,7 @@ public class ExpiredEndingCacheTests
         result.Monitor.DataGetEvent += (_, _) => { _monitorGetEventCount++; };
         result.Monitor.DataDropEvent += (_, _) => { _monitorDropEventCount++; };
         await Task.Delay(500);
-        result.Monitor.CleanSale();
+        result.Monitor.ClearStale();
 
         //Act
         var item = await sut.PeekAsync<string>("Key");
@@ -106,7 +106,7 @@ public class ExpiredEndingCacheTests
             _monitorSetEventCount.Should().Be(0);
             _monitorGetEventCount.Should().Be(0);
             _monitorDropEventCount.Should().Be(1);
-            item.Should().Be(default);
+            item.Should().Be(null);
             result.Monitor.GetInfos().SelectMany(x => x.Items).Sum(x => x.Value.Size).Should().Be(0);
         }
     }

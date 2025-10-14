@@ -1,16 +1,30 @@
-﻿namespace Tharga.Cache;
+﻿using System.Reflection.Metadata;
+
+namespace Tharga.Cache;
 
 public record Key
 {
-    public Key(string value)
+    private readonly string _value;
+    private readonly string _typeName;
+
+    internal Key(string value)
     {
-        Value = value;
+        _value = value;
+        _typeName = null;
     }
 
-    public string Value { get; }
+    //internal Key(string value, string typeName)
+    //{
+    //    _value = value;
+    //    _typeName = typeName;
+    //}
+
+    public string Value => _typeName == null ? _value : $"{_typeName}.{_value}";
 
     public static implicit operator string(Key key) => key.Value;
     public static implicit operator Key(string key) => new(key);
+
+    public override string ToString() => Value;
 }
 
 //public record Key

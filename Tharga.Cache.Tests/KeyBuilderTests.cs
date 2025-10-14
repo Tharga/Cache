@@ -10,7 +10,7 @@ public class KeyBuilderTests
     {
         //Arrange
         //Act
-        var key = KeyBuilder.SetTypeKey<string>("a");
+        var key = (string)KeyBuilder.SetTypeKey<string>("a");
 
         //Assert
         key.Should().Be("String.a");
@@ -21,7 +21,7 @@ public class KeyBuilderTests
     {
         //Arrange
         //Act
-        var key = KeyBuilder.SetTypeKey<KeyBuilderTests>("a");
+        var key = (string)KeyBuilder.SetTypeKey<KeyBuilderTests>("a");
 
         //Assert
         key.Should().Be("KeyBuilderTests.a");
@@ -31,13 +31,25 @@ public class KeyBuilderTests
     public void Multiple()
     {
         //Arrange
-        var key = KeyBuilder.SetTypeKey<string>("a");
+        string key = KeyBuilder.SetTypeKey<string>("a");
 
         //Act
-        //key = key.SetTypeKey<string>();
         key = KeyBuilder.SetTypeKey<string>(key);
 
         //Assert
         key.Should().Be("String.a");
+    }
+
+    [Fact]
+    public void FromKey()
+    {
+        //Arrange
+        Key key = "a";
+
+        //Act
+        key = key.SetTypeKey<string>();
+
+        //Assert
+        ((string)key).Should().Be("String.a");
     }
 }

@@ -1,4 +1,5 @@
 ﻿using FluentAssertions;
+using Tharga.Cache.Persist;
 using Tharga.Cache.Tests.Helper;
 using Xunit;
 

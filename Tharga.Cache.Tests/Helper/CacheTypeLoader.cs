@@ -6,17 +6,31 @@ namespace Tharga.Cache.Tests.Helper;
 
 internal static class CacheTypeLoader
 {
-    public static (T Cache, ICacheMonitor Monitor) GetCache<T>(Type cacheType, EvictionPolicy? evictionPolicy, bool staleWhileRevalidate, TimeSpan? defaultFreshSpan = default, string connectionString = "LOCAL")
+    public static (T Cache, ICacheMonitor Monitor) GetCache<T, TPersist>(Type cacheType, EvictionPolicy? evictionPolicy, bool staleWhileRevalidate, TimeSpan? defaultFreshSpan = null, string connectionString = "LOCAL")
+        where T : ICache
+        where TPersist : IPersist
     {
-        var item = GetCache(cacheType, evictionPolicy, staleWhileRevalidate, defaultFreshSpan, connectionString);
+        var item = GetCache<TPersist>(cacheType, evictionPolicy, staleWhileRevalidate, defaultFreshSpan, connectionString);
         return ((T)item.Cache, item.Monitor);
     }
 
-    public static (ICache Cache, ICacheMonitor Monitor) GetCache(Type cacheType, EvictionPolicy? evictionPolicy, bool staleWhileRevalidate, TimeSpan? defaultFreshSpan = default, string connectionString = "LOCAL")
+    public static (ICache Cache, ICacheMonitor Monitor) GetCache(Type cacheType, EvictionPolicy? evictionPolicy, bool staleWhileRevalidate, TimeSpan? defaultFreshSpan = null, string connectionString = "LOCAL")
     {
-        var options = new CacheOptions();
+        return GetCache<IMemory>(cacheType, evictionPolicy, staleWhileRevalidate, defaultFreshSpan = null, connectionString);
+    }
 
-        options.RegisterType<string, IMemory>(s =>
+    public static (ICache Cache, ICacheMonitor Monitor) GetCache<TPersist>(Type cacheType, EvictionPolicy? evictionPolicy, bool staleWhileRevalidate, TimeSpan? defaultFreshSpan = null, string connectionString = "LOCAL")
+        where TPersist : IPersist
+    {
+        var options = new CacheOptions
+        {
+            Default = new CacheTypeOptions
+            {
+                DefaultFreshSpan = defaultFreshSpan ?? TimeSpan.FromSeconds(10)
+            }
+        };
+
+        options.RegisterType<string, TPersist>(s =>
         {
             s.StaleWhileRevalidate = staleWhileRevalidate;
             s.DefaultFreshSpan = defaultFreshSpan ?? TimeSpan.FromSeconds(10);

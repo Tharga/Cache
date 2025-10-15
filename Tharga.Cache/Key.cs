@@ -1,30 +1,45 @@
-﻿using System.Reflection.Metadata;
-
-namespace Tharga.Cache;
+﻿namespace Tharga.Cache;
 
 public record Key
 {
     private readonly string _value;
-    private readonly string _typeName;
 
     internal Key(string value)
     {
         _value = value;
-        _typeName = null;
+        KeyParts = [];
     }
 
-    //internal Key(string value, string typeName)
-    //{
-    //    _value = value;
-    //    _typeName = typeName;
-    //}
+    internal Key(string value, Dictionary<string, string> keyParts)
+    {
+        _value = value;
+        KeyParts = keyParts ?? [];
+    }
 
-    public string Value => _typeName == null ? _value : $"{_typeName}.{_value}";
+    private Key(KeyDefinition definition)
+    {
+        _value = definition.ToHash();
+        KeyParts = definition.Keys.ToDictionary();
+    }
+
+    public string Value => _value;
 
     public static implicit operator string(Key key) => key.Value;
     public static implicit operator Key(string key) => new(key);
+    public static implicit operator Key(KeyDefinition definition) => new(definition);
 
     public override string ToString() => Value;
+    public Dictionary<string, string> KeyParts { get; }
+
+    public virtual bool Equals(Key other)
+    {
+        return string.Equals(Value, other?.Value, StringComparison.OrdinalIgnoreCase);
+    }
+
+    public override int GetHashCode()
+    {
+        return (_value != null ? _value.GetHashCode() : 0);
+    }
 }
 
 //public record Key

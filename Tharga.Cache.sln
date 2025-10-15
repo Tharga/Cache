@@ -21,6 +21,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tharga.Cache.MongoDB", "Tha
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tharga.Cache.Redis", "Tharga.Cache.Redis\Tharga.Cache.Redis.csproj", "{0006914F-40FD-4F90-ABB5-36564B28478C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tharga.Cache.MongoDB.Tests", "Tharga.Cache.MongoDB.Tests\Tharga.Cache.MongoDB.Tests.csproj", "{14E3B834-DCF3-4156-83CE-DB03BFCDC780}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tharga.Cache.Redis.Tests", "Tharga.Cache.Redis.Tests\Tharga.Cache.Redis.Tests.csproj", "{032FFBC3-B484-4374-803C-99C8798FA064}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +55,14 @@ Global
 		{0006914F-40FD-4F90-ABB5-36564B28478C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0006914F-40FD-4F90-ABB5-36564B28478C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0006914F-40FD-4F90-ABB5-36564B28478C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{14E3B834-DCF3-4156-83CE-DB03BFCDC780}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{14E3B834-DCF3-4156-83CE-DB03BFCDC780}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{14E3B834-DCF3-4156-83CE-DB03BFCDC780}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{14E3B834-DCF3-4156-83CE-DB03BFCDC780}.Release|Any CPU.Build.0 = Release|Any CPU
+		{032FFBC3-B484-4374-803C-99C8798FA064}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{032FFBC3-B484-4374-803C-99C8798FA064}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{032FFBC3-B484-4374-803C-99C8798FA064}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{032FFBC3-B484-4374-803C-99C8798FA064}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

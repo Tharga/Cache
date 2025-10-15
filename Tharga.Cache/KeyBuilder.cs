@@ -8,28 +8,22 @@ public static class KeyBuilder
 {
     public static Key SetTypeKey<T>(this Key key)
     {
+        if (string.IsNullOrEmpty(key.Value)) return new Key(null, key.KeyParts);
+
         var typeName = typeof(T).Name;
         if (key.Value.StartsWith($"{typeName}.")) return key;
-        //return new Key(key, typeName);
-        return new Key($"{typeName}.{key}");
-        //return $"{typeName}.{key}";
+        return new Key($"{typeName}.{key}", key.KeyParts);
     }
 
-    //internal static Key SetTypeKey<T>(this Key key)
-    //{
-    //    //var typeName = typeof(T).Name;
-    //    //if (key.Value.StartsWith($"{typeName}.")) return key;
-    //    //return new Key(key, typeName, key.KeyParts);
-    //    throw new NotImplementedException();
-    //}
+    public static KeyDefinition Empty { get; } = new() { Keys = new ConcurrentDictionary<string, string>() };
 
-    public static KeyDefinition Add(string name, string value)
+    public static KeyDefinition Set(string name, string value)
     {
         var definition = new KeyDefinition { Keys = new ConcurrentDictionary<string, string>() };
-        return Add(definition, name, value);
+        return Set(definition, name, value);
     }
 
-    public static KeyDefinition Add(this KeyDefinition definition, string name, string value)
+    public static KeyDefinition Set(this KeyDefinition definition, string name, string value)
     {
         if (!definition.Keys.TryAdd(name, value)) throw new InvalidOperationException($"Cannot add key '{name}' with value '{value}'.");
         return definition;
@@ -37,6 +31,8 @@ public static class KeyBuilder
 
     internal static string ToHash(this KeyDefinition definition)
     {
+        if (!definition.Keys.Any()) return null;
+
         definition = new KeyDefinition { Keys = new ConcurrentDictionary<string, string>(definition.Keys.OrderBy(x => x.Key)) };
         var rawString = System.Text.Json.JsonSerializer.Serialize(definition);
 

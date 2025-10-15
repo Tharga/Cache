@@ -61,6 +61,11 @@ internal class Redis : IRedis
         });
     }
 
+    public IAsyncEnumerable<(Key Key, CacheItem<T> CacheItem)> FindAsync<T>(Key key)
+    {
+        throw new NotImplementedException();
+    }
+
     public async Task SetAsync<T>(Key key, CacheItem<T> cacheItem, bool staleWhileRevalidate)
     {
         await _retryPolicy.ExecuteAsync(async () =>

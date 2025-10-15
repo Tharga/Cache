@@ -1,4 +1,5 @@
 ﻿using FluentAssertions;
+using Tharga.Cache.Persist;
 using Tharga.Cache.Tests.Helper;
 using Xunit;
 
@@ -20,7 +21,7 @@ public class ExpiredEndingCacheTests
     {
         //Arrange
         var value = "value";
-        var result = CacheTypeLoader.GetCache<ITimeCache>(type, evictionPolicy, staleWhileRevalidate);
+        var result = CacheTypeLoader.GetCache<ITimeCache, IMemory>(type, evictionPolicy, staleWhileRevalidate);
         var sut = result.Cache;
         await sut.SetAsync("Key", value, TimeSpan.FromMilliseconds(100));
         sut.DataSetEvent += (_, _) => { _dataSetEventCount++; };
@@ -69,7 +70,7 @@ public class ExpiredEndingCacheTests
     {
         //Arrange
         var value = "value";
-        var result = CacheTypeLoader.GetCache<ITimeCache>(type, evictionPolicy, staleWhileRevalidate);
+        var result = CacheTypeLoader.GetCache<ITimeCache, IMemory>(type, evictionPolicy, staleWhileRevalidate);
         var sut = result.Cache;
         await sut.SetAsync("Key", value, TimeSpan.FromMilliseconds(100));
         sut.DataSetEvent += (_, _) => { _dataSetEventCount++; };

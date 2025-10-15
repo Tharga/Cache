@@ -23,19 +23,20 @@ internal class Memory : IMemory
 
     public async IAsyncEnumerable<(Key Key, CacheItem<T> CacheItem)> FindAsync<T>(Key key)
     {
-        //var datas = _datas.Where(x =>
-        //    key.KeyParts.All(kvp =>
-        //        x.Value.KeyParts.TryGetValue(kvp.Key, out var value) &&
-        //        value == kvp.Value
-        //    )
-        //);
-        //
-        //foreach (var data in datas)
-        //{
-        //    yield return (data.Key, (CacheItem<T>)data.Value);
-        //}
-        throw new NotImplementedException();
-        yield break;
+        var datas = _datas
+            .Where(x => x.Value.GetType() == typeof(CacheItem<T>))
+            .Where(x =>
+                key.KeyParts
+                    .All(kvp =>
+                        x.Value.KeyParts.TryGetValue(kvp.Key, out var value) &&
+                        value == kvp.Value
+                    )
+            );
+
+        foreach (var data in datas)
+        {
+            yield return (data.Key, (CacheItem<T>)data.Value);
+        }
     }
 
     public Task SetAsync<T>(Key key, CacheItem<T> item, bool staleWhileRevalidate)

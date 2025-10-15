@@ -35,8 +35,7 @@ internal class MongoDB : IMongoDB
 
             return new CacheItem<T>()
             {
-                //KeyParts = key.KeyParts,
-                KeyParts = [], //TODO: Implement
+                KeyParts = key.KeyParts,
                 CreateTime = item.CreateTime,
                 Data = JsonSerializer.Deserialize<T>(item.Data),
                 FreshSpan = item.FreshSpan,

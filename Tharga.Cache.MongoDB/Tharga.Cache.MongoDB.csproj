@@ -27,11 +27,15 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Tharga.Cache.Tests" />
+    <InternalsVisibleTo Include="Tharga.Cache.MongoDB.Tests" />
     <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\MongoDB\Tharga.MongoDB\Tharga.MongoDB.csproj" />
+    <PackageReference Include="Tharga.MongoDB" Version="2.3.2" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Tharga.Cache\Tharga.Cache.csproj" />
   </ItemGroup>
 

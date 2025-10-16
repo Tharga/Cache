@@ -19,4 +19,11 @@ public class MongoDBCacheController : ControllerBase
         var item = await _timeToLiveCache.GetAsync(key, () => Task.FromResult(new MongoDBData { Guid = Guid.NewGuid() }));
         return Ok(item);
     }
+
+    [HttpDelete("{key}")]
+    public async Task<IActionResult> Delete(string key)
+    {
+        var item = await _timeToLiveCache.DropAsync<MongoDBData>(key);
+        return Ok(item);
+    }
 }

@@ -19,4 +19,11 @@ public class MemoryCacheController : ControllerBase
         var item = await _timeToLiveCache.GetAsync(key, () => Task.FromResult(new MemoryData { Guid = Guid.NewGuid() }));
         return Ok(item);
     }
+
+    [HttpDelete("{key}")]
+    public async Task<IActionResult> Delete(string key)
+    {
+        var item = await _timeToLiveCache.DropAsync<MemoryData>(key);
+        return Ok(item);
+    }
 }

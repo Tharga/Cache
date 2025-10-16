@@ -42,12 +42,29 @@ stages:
         arguments: '-c Release'
         versioningScheme: 'byBuildNumber'
 
+    # - task: DotNetCoreCLI@2
+    #   displayName: 'Test'
+    #   inputs:
+    #     command: 'test'
+    #     projects: '**/*.Tests.csproj'
+    #     arguments: >-
+    #       --collect "Code coverage"
+    #       --configuration $(buildConfiguration)
+    #       --filter "Category!=TimeCritical"
+
     - task: DotNetCoreCLI@2
       displayName: 'Test'
       inputs:
         command: 'test'
-        projects: '**/*.Tests.csproj'
-        arguments: '--collect "Code coverage" --configuration $(buildConfiguration) --filter "Category!=TimeCritical"'
+        projects: '**/*Tests.csproj'
+        arguments: >-
+          -c $(buildConfiguration)
+          --no-build
+          --filter "(Category!=Integration)&(Category!=TimeCritical)"
+          /p:CollectCoverage=true
+          /p:CoverletOutputFormat=cobertura
+          /p:SkipAutoProps=true
+          /p:ExcludeByAttribute="Obsolete"
 
     # - task: BuildQualityChecks@8
     #   displayName: 'Build Quality Checks'

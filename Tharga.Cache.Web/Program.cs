@@ -4,6 +4,7 @@ using Tharga.Cache.MongoDB;
 using Tharga.Cache.Persist;
 using Tharga.Cache.Redis;
 using Tharga.Cache.Web;
+using Tharga.MongoDB;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,8 +14,16 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddCache(o =>
 {
+    o.Default.DefaultFreshSpan = TimeSpan.FromSeconds(10);
     o.MaxConcurrentFetchCount = 1;
-    o.RegisterType<WeatherForecast[]?, IRedis>(s =>
+    o.RegisterType<MemoryData, IMemory>();
+
+    o.RegisterType<MongoDBData, IMongoDB>();
+
+    o.AddRedisDBOptions();
+    o.RegisterType<RedisData, IRedis>();
+
+    o.RegisterType<WeatherForecast[]?, IMemory>(s =>
     {
         s.StaleWhileRevalidate = false;
         s.MaxCount = 10;
@@ -22,8 +31,6 @@ builder.Services.AddCache(o =>
         s.EvictionPolicy = EvictionPolicy.FirstInFirstOut;
         s.DefaultFreshSpan = TimeSpan.FromSeconds(10);
     });
-    o.RegisterType<string, IMemory>(_ => { });
-    o.RegisterType<bool, IMongoDB>(_ => { });
 });
 
 builder.Services.AddHostedService<CacheMonitorBackgroundService>();
@@ -51,3 +58,5 @@ app.MapControllers();
 app.UseQuilt4NetApi();
 
 app.Run();
+
+public partial class Program { }

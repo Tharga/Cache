@@ -1,5 +1,4 @@
 ﻿using System.Collections.Concurrent;
-using Tharga.Cache.Persist;
 
 namespace Tharga.Cache.Core;
 
@@ -80,7 +79,7 @@ internal class CacheMonitor : IManagedCacheMonitor
 
     public Key Get<T>(EvictionPolicy evictionPolicy)
     {
-        if (!_caches.TryGetValue(typeof(T), out var val)) return default;
+        if (!_caches.TryGetValue(typeof(T), out var val)) return null;
 
         switch (evictionPolicy)
         {
@@ -116,24 +115,26 @@ internal class CacheMonitor : IManagedCacheMonitor
         return new Dictionary<string, CacheItemInfo>();
     }
 
-    public async Task<HealthDto> GetHealthAsync()
+    public IEnumerable<HealthType> GetHealthTypesAsync()
     {
-        (bool Success, string Message) result = (true, null);
-        var hasRedis = _cacheOptions.GetConfiguredPersistTypes.Any(x => x == PersistType.Redis || x == PersistType.MemoryWithRedis);
-        if (hasRedis)
+        foreach (var healthType in _cacheOptions.GetConfiguredPersistTypes)
         {
-            var redis = (IRedis)_persistLoader.GetPersist(PersistType.Redis);
-            result = await redis.CanConnectAsync();
+            yield return new HealthType
+            {
+                Type = healthType.Name,
+                GetHealthAsync = async () =>
+                {
+                    var persist = _persistLoader.GetPersist(healthType);
+                    var result = await persist.CanConnectAsync();
+
+                    return new HealthDto
+                    {
+                        Message = result.Message,
+                        Success = result.Success
+                    };
+                }
+            };
         }
-
-        var totalSize = _caches.Values.Sum(x => x.Items.Sum(y => y.Value?.Size ?? 0));
-        var totalCount = _caches.Values.Sum(x => x.Items.Count);
-
-        return new HealthDto
-        {
-            Message = $"There are {totalCount} items cached with a size of {totalSize} bytes. {result.Message}".TrimEnd(),
-            Success = result.Success,
-        };
     }
 
     public int GetFetchQueueCount()
@@ -141,12 +142,23 @@ internal class CacheMonitor : IManagedCacheMonitor
         return _fetchCount.Select(x => x.Invoke()).Sum(x => x);
     }
 
-    public void CleanSale()
+    public void ClearStale()
     {
         var infos = GetInfos().Where(x => !x.StaleWhileRevalidate).ToArray();
         foreach (var info in infos)
         {
             foreach (var item in info.Items.Where(x => x.Value.IsStale))
+            {
+                RequestEvictEvent?.Invoke(this, new RequestEvictEventArgs(info.Type, item.Key));
+            }
+        }
+    }
+
+    public void ClearAll()
+    {
+        foreach (var info in GetInfos())
+        {
+            foreach (var item in info.Items)
             {
                 RequestEvictEvent?.Invoke(this, new RequestEvictEventArgs(info.Type, item.Key));
             }

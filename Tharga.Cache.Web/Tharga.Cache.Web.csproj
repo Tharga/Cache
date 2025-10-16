@@ -2,17 +2,18 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>09cc7c4f-73b8-421c-bb7b-b2ceb99d4354</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Quilt4Net.Toolkit.Api" Version="0.1.28" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.4" />
+    <PackageReference Include="Quilt4Net.Toolkit.Api" Version="0.1.30" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.6" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Tharga.Cache.MongoDB\Tharga.Cache.MongoDB.csproj" />
+    <ProjectReference Include="..\Tharga.Cache.Redis\Tharga.Cache.Redis.csproj" />
     <ProjectReference Include="..\Tharga.Cache\Tharga.Cache.csproj" />
   </ItemGroup>
 

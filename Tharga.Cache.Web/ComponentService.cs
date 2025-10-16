@@ -3,6 +3,23 @@ using Quilt4Net.Toolkit.Features.Health;
 
 namespace Tharga.Cache.Web;
 
+public abstract record TestData
+{
+    public required Guid Guid { get; init; }
+}
+
+public record MemoryData : TestData
+{
+}
+
+public record MongoDBData : TestData
+{
+}
+
+public record RedisData : TestData
+{
+}
+
 internal class ComponentService : IComponentService
 {
     private readonly ICacheMonitor _cacheMonitor;
@@ -14,19 +31,23 @@ internal class ComponentService : IComponentService
 
     public IEnumerable<Component> GetComponents()
     {
-        yield return new Component
+        var healthTypes = _cacheMonitor.GetHealthTypesAsync();
+        foreach (var healthType in healthTypes)
         {
-            Name = "DistributedCache",
-            Essential = false,
-            CheckAsync = async _ =>
+            yield return new Component
             {
-                var result = await _cacheMonitor.GetHealthAsync();
-                return new CheckResult
+                Name = $"Cache.{healthType.Type}",
+                Essential = false,
+                CheckAsync = async _ =>
                 {
-                    Success = result.Success,
-                    Message = result.Message
-                };
-            }
-        };
+                    var result = await healthType.GetHealthAsync();
+                    return new CheckResult
+                    {
+                        Success = result.Success,
+                        Message = result.Message
+                    };
+                }
+            };
+        }
     }
 }

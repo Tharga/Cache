@@ -1,7 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Tharga.Cache.Persist;
-
-namespace Tharga.Cache.Core;
+﻿namespace Tharga.Cache.Core;
 
 internal class PersistLoader : IPersistLoader
 {
@@ -12,18 +9,12 @@ internal class PersistLoader : IPersistLoader
         _serviceProvider = serviceProvider;
     }
 
-    public IPersist GetPersist(PersistType persistType)
+    public IPersist GetPersist(Type persistType)
     {
-        switch (persistType)
-        {
-            case PersistType.Memory:
-                return _serviceProvider.GetService<IMemory>();
-            case PersistType.Redis:
-                return _serviceProvider.GetService<IRedis>();
-            case PersistType.MemoryWithRedis:
-                return _serviceProvider.GetService<IMemoryWithRedis>();
-            default:
-                throw new ArgumentOutOfRangeException(nameof(PersistType), $"Unknown {nameof(PersistLoader)} {persistType}.");
-        }
+        var t = _serviceProvider.GetService(persistType);
+        if (t == null) throw new InvalidOperationException($"Cannot create type '{persistType.Name}'.");
+        var persist = t as IPersist;
+        if (persist == null) throw new InvalidOperationException($"Type {persistType.Name} does not implement the '{nameof(IPersist)}' interface.");
+        return persist;
     }
 }

@@ -1,4 +1,5 @@
 ﻿using FluentAssertions;
+using Tharga.Cache.Persist;
 using Tharga.Cache.Tests.Helper;
 using Xunit;
 
@@ -130,7 +131,7 @@ public class SecondCallTests
         _monitorSetEventCount.Should().Be(0);
         _monitorGetEventCount.Should().Be(0);
         _monitorDropEventCount.Should().Be(1);
-        item.Should().BeTrue();
+        item.Should().BeGreaterThan(0);
         result.Monitor.GetInfos().SelectMany(x => x.Items).Sum(x => x.Value.Size).Should().Be(0);
     }
 }

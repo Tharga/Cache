@@ -6,20 +6,31 @@ namespace Tharga.Cache.Tests.Helper;
 
 internal static class CacheTypeLoader
 {
-    public static (T Cache, ICacheMonitor Monitor) GetCache<T>(Type cacheType, EvictionPolicy? evictionPolicy, bool staleWhileRevalidate, TimeSpan? defaultFreshSpan = default, string connectionString = "LOCAL")
+    public static (T Cache, ICacheMonitor Monitor) GetCache<T, TPersist>(Type cacheType, EvictionPolicy? evictionPolicy, bool staleWhileRevalidate, TimeSpan? defaultFreshSpan = null, string connectionString = "LOCAL")
+        where T : ICache
+        where TPersist : IPersist
     {
-        var item = GetCache(cacheType, evictionPolicy, staleWhileRevalidate, defaultFreshSpan, connectionString);
+        var item = GetCache<TPersist>(cacheType, evictionPolicy, staleWhileRevalidate, defaultFreshSpan, connectionString);
         return ((T)item.Cache, item.Monitor);
     }
 
-    public static (ICache Cache, ICacheMonitor Monitor) GetCache(Type cacheType, EvictionPolicy? evictionPolicy, bool staleWhileRevalidate, TimeSpan? defaultFreshSpan = default, string connectionString = "LOCAL")
+    public static (ICache Cache, ICacheMonitor Monitor) GetCache(Type cacheType, EvictionPolicy? evictionPolicy, bool staleWhileRevalidate, TimeSpan? defaultFreshSpan = null, string connectionString = "LOCAL")
+    {
+        return GetCache<IMemory>(cacheType, evictionPolicy, staleWhileRevalidate, defaultFreshSpan = null, connectionString);
+    }
+
+    public static (ICache Cache, ICacheMonitor Monitor) GetCache<TPersist>(Type cacheType, EvictionPolicy? evictionPolicy, bool staleWhileRevalidate, TimeSpan? defaultFreshSpan = null, string connectionString = "LOCAL")
+        where TPersist : IPersist
     {
         var options = new CacheOptions
         {
-            ConnectionStringLoader = _ => connectionString
+            Default = new CacheTypeOptions
+            {
+                DefaultFreshSpan = defaultFreshSpan ?? TimeSpan.FromSeconds(10)
+            }
         };
 
-        options.RegisterType<string>(s =>
+        options.RegisterType<string, TPersist>(s =>
         {
             s.StaleWhileRevalidate = staleWhileRevalidate;
             s.DefaultFreshSpan = defaultFreshSpan ?? TimeSpan.FromSeconds(10);
@@ -28,9 +39,8 @@ internal static class CacheTypeLoader
 
         var persistLoader = new Mock<IPersistLoader>(MockBehavior.Strict);
         var cacheMonitor = new CacheMonitor(persistLoader.Object, options);
-        persistLoader.Setup(x => x.GetPersist(It.IsAny<PersistType>())).Returns(new Memory(cacheMonitor));
-        //var fetchQueue = new Mock<IFetchQueue>(MockBehavior.Strict);
-        var fetchQueue = new FetchQueue(cacheMonitor, options, default);
+        persistLoader.Setup(x => x.GetPersist(It.IsAny<Type>())).Returns(new Memory(cacheMonitor));
+        var fetchQueue = new FetchQueue(cacheMonitor, options, null);
 
         ICache cache;
         switch (cacheType.Name)

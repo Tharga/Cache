@@ -21,6 +21,24 @@ internal class Memory : IMemory
         return Task.FromResult((CacheItem<T>)_datas.GetValueOrDefault(key));
     }
 
+    public async IAsyncEnumerable<(Key Key, CacheItem<T> CacheItem)> FindAsync<T>(Key key)
+    {
+        var datas = _datas
+            .Where(x => x.Value.GetType() == typeof(CacheItem<T>))
+            .Where(x =>
+                key.KeyParts
+                    .All(kvp =>
+                        x.Value.KeyParts.TryGetValue(kvp.Key, out var value) &&
+                        value == kvp.Value
+                    )
+            );
+
+        foreach (var data in datas)
+        {
+            yield return (data.Key, (CacheItem<T>)data.Value);
+        }
+    }
+
     public Task SetAsync<T>(Key key, CacheItem<T> item, bool staleWhileRevalidate)
     {
         _datas.AddOrUpdate(key, item, (_, _) => item);
@@ -41,6 +59,12 @@ internal class Memory : IMemory
     {
         var result = _datas.TryRemove(key, out _);
         return Task.FromResult(result);
+    }
+
+    public Task<(bool Success, string Message)> CanConnectAsync()
+    {
+        var cnt = _datas.Count;
+        return Task.FromResult((true, $"There {(cnt == 1 ? "is" : "are")} {cnt} record{(cnt == 1 ? "" : "s")} cached."));
     }
 
     private Task<bool> SetUpdateTimeAsync(Key key, DateTime updateTime)

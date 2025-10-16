@@ -1,6 +1,7 @@
 ﻿using Tharga.Cache.Core;
+using Tharga.Cache.Persist;
 
-namespace Tharga.Cache.Persist;
+namespace Tharga.Cache.Redis;
 
 internal class MemoryWithRedis : IMemoryWithRedis, IAsyncDisposable, IDisposable
 {
@@ -22,9 +23,14 @@ internal class MemoryWithRedis : IMemoryWithRedis, IAsyncDisposable, IDisposable
     public async Task<CacheItem<T>> GetAsync<T>(Key key)
     {
         var result = await _memory.GetAsync<T>(key);
-        if (result != default) return result;
+        if (result != null) return result;
 
         return await _redis.GetAsync<T>(key);
+    }
+
+    public IAsyncEnumerable<(Key Key, CacheItem<T> CacheItem)> FindAsync<T>(Key key)
+    {
+        throw new NotImplementedException();
     }
 
     public Task SetAsync<T>(Key key, CacheItem<T> item, bool staleWhileRevalidate)
@@ -59,6 +65,11 @@ internal class MemoryWithRedis : IMemoryWithRedis, IAsyncDisposable, IDisposable
 
         await Task.WhenAll(memoryTask, redisTask);
         return memoryTask.Result || redisTask.Result;
+    }
+
+    public Task<(bool Success, string Message)> CanConnectAsync()
+    {
+        return _redis.CanConnectAsync();
     }
 
     public void Dispose()

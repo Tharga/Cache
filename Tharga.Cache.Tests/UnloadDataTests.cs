@@ -16,8 +16,8 @@ public class UnloadDataTests
     {
         var options = new CacheOptions();
         _cacheMonitor = new CacheMonitor(_persistLoader.Object, options);
-        _persistLoader.Setup(x => x.GetPersist(It.IsAny<PersistType>())).Returns(new Memory(_cacheMonitor));
-        _fetchQueue = new FetchQueue(_cacheMonitor, options, default);
+        _persistLoader.Setup(x => x.GetPersist(It.IsAny<Type>())).Returns(new Memory(_cacheMonitor));
+        _fetchQueue = new FetchQueue(_cacheMonitor, options, null);
     }
 
     [Fact]
@@ -29,7 +29,7 @@ public class UnloadDataTests
         var monitorGetEventCount = 0;
         var monitorDropEventCount = 0;
         var options = new CacheOptions();
-        options.RegisterType<string>(o =>
+        options.RegisterType<string, IMemory>(o =>
         {
             o.MaxCount = 3;
             o.EvictionPolicy = EvictionPolicy.FirstInFirstOut;
@@ -52,8 +52,8 @@ public class UnloadDataTests
         monitorGetEventCount.Should().Be(0);
         monitorDropEventCount.Should().Be(1);
         _cacheMonitor.GetInfos().Single().Items.Count.Should().Be(3);
-        _cacheMonitor.GetInfos().Single().Items.Should().Contain(x => x.Key == KeyBuilder.BuildKey<string>("d"));
-        _cacheMonitor.GetInfos().Single().Items.Should().NotContain(x => x.Key == KeyBuilder.BuildKey<string>("a"));
+        _cacheMonitor.GetInfos().Single().Items.Should().Contain(x => x.Key == KeyBuilder.SetTypeKey<string>("d"));
+        _cacheMonitor.GetInfos().Single().Items.Should().NotContain(x => x.Key == KeyBuilder.SetTypeKey<string>("a"));
         _cacheMonitor.GetInfos().SelectMany(x => x.Items).Sum(x => x.Value.Size).Should().BeGreaterThan(0);
     }
 
@@ -66,7 +66,7 @@ public class UnloadDataTests
         var monitorGetEventCount = 0;
         var monitorDropEventCount = 0;
         var options = new CacheOptions();
-        options.RegisterType<string>(o =>
+        options.RegisterType<string, IMemory>(o =>
         {
             o.MaxCount = 3;
             o.EvictionPolicy = EvictionPolicy.LeastRecentlyUsed;
@@ -90,8 +90,8 @@ public class UnloadDataTests
         monitorGetEventCount.Should().Be(4);
         monitorDropEventCount.Should().Be(1);
         _cacheMonitor.GetInfos().Single().Items.Count.Should().Be(3);
-        _cacheMonitor.GetInfos().Single().Items.Should().Contain(x => x.Key == KeyBuilder.BuildKey<string>("b"));
-        _cacheMonitor.GetInfos().Single().Items.Should().NotContain(x => x.Key == KeyBuilder.BuildKey<string>("a"));
+        _cacheMonitor.GetInfos().Single().Items.Should().Contain(x => x.Key == KeyBuilder.SetTypeKey<string>("b"));
+        _cacheMonitor.GetInfos().Single().Items.Should().NotContain(x => x.Key == KeyBuilder.SetTypeKey<string>("a"));
         _cacheMonitor.GetInfos().SelectMany(x => x.Items).Sum(x => x.Value.Size).Should().BeGreaterThan(0);
     }
 
@@ -104,7 +104,7 @@ public class UnloadDataTests
         var monitorGetEventCount = 0;
         var monitorDropEventCount = 0;
         var options = new CacheOptions();
-        options.RegisterType<string>(o =>
+        options.RegisterType<string, IMemory>(o =>
         {
             o.MaxCount = 3;
             o.EvictionPolicy = EvictionPolicy.RandomReplacement;
@@ -127,7 +127,7 @@ public class UnloadDataTests
         monitorGetEventCount.Should().Be(0);
         monitorDropEventCount.Should().Be(1);
         _cacheMonitor.GetInfos().Single().Items.Count.Should().Be(3);
-        _cacheMonitor.GetInfos().Single().Items.Should().Contain(x => x.Key == KeyBuilder.BuildKey<string>("d"));
+        _cacheMonitor.GetInfos().Single().Items.Should().Contain(x => x.Key == KeyBuilder.SetTypeKey<string>("d"));
         _cacheMonitor.GetInfos().SelectMany(x => x.Items).Sum(x => x.Value.Size).Should().BeGreaterThan(0);
     }
 }

@@ -1,7 +1,7 @@
 trigger:
 - master
 
-name: 0.0.$(Rev:r)
+name: 0.1.$(Rev:r)
 
 pool:
   vmImage: 'windows-latest'
@@ -39,15 +39,32 @@ stages:
       inputs:
         command: 'build'
         projects: '**/*.csproj'
-        arguments: '-c Release /p:NoWarn=0618'
+        arguments: '-c Release'
         versioningScheme: 'byBuildNumber'
+
+    # - task: DotNetCoreCLI@2
+    #   displayName: 'Test'
+    #   inputs:
+    #     command: 'test'
+    #     projects: '**/*.Tests.csproj'
+    #     arguments: >-
+    #       --collect "Code coverage"
+    #       --configuration $(buildConfiguration)
+    #       --filter "Category!=TimeCritical"
 
     - task: DotNetCoreCLI@2
       displayName: 'Test'
       inputs:
         command: 'test'
-        projects: '**/*.Tests.csproj'
-        arguments: '--collect "Code coverage" --configuration $(buildConfiguration) --filter "Category!=TimeCritical"'
+        projects: '**/*Tests.csproj'
+        arguments: >-
+          -c $(buildConfiguration)
+          --no-build
+          --filter "(Category!=Integration)&(Category!=TimeCritical)"
+          /p:CollectCoverage=true
+          /p:CoverletOutputFormat=cobertura
+          /p:SkipAutoProps=true
+          /p:ExcludeByAttribute="Obsolete"
 
     # - task: BuildQualityChecks@8
     #   displayName: 'Build Quality Checks'

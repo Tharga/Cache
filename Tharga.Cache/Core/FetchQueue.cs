@@ -19,7 +19,6 @@ internal class FetchQueue : IFetchQueue
         _options = options;
         _logger = logger;
         _globalSemaphore = new(options.MaxConcurrentFetchCount, options.MaxConcurrentFetchCount);
-        //cacheMonitor.AddFetchCount(() => _fetchStack.Count);
         cacheMonitor.AddFetchCount(() => _inFlightFetches.Count);
     }
 
@@ -32,7 +31,7 @@ internal class FetchQueue : IFetchQueue
 
                 _fetchStack.Push(new FetchWorkItem
                 {
-                    Key = key,
+                    Key = key.Value,
                     Fetch = async () =>
                     {
                         try
@@ -40,7 +39,7 @@ internal class FetchQueue : IFetchQueue
                             var result = await fetch();
 
                             var staleWhileRevalidate = _options.Get<T>().StaleWhileRevalidate;
-                            var item = CacheItemBuilder.BuildCacheItem(result, freshSpan);
+                            var item = CacheItemBuilder.BuildCacheItem(key.KeyParts, result, freshSpan);
                             await fetchCallback.Invoke(key, item, staleWhileRevalidate);
 
                             tcs.TrySetResult(result!);

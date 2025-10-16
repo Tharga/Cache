@@ -1,6 +1,6 @@
 ﻿namespace Tharga.Cache.Core;
 
-public interface IPersistLoader
+internal interface IPersistLoader
 {
-    IPersist GetPersist(PersistType persistType);
+    IPersist GetPersist(Type persistType);
 }

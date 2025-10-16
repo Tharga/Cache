@@ -16,7 +16,6 @@ internal class CacheGetWithCallbackCommand : ActionCommandBase
     {
         Task.Run(async () =>
         {
-            //var key = Guid.NewGuid().ToString();
             var key = "key";
             OutputInformation($"Calling data with key {key}.");
             var item = await _timeToLiveCache.GetWithCallbackAsync(key, async () =>

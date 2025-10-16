@@ -1,6 +1,6 @@
 # Tharga Cache
 
-Memory and Redis cache features.
+Memory cache features.
 
 Read more on the project site.
 

@@ -9,6 +9,6 @@ public interface ICache
     Task<T> GetAsync<T>(Key key, Func<Task<T>> fetch);
     Task<T> PeekAsync<T>(Key key);
     Task SetAsync<T>(Key key, T data);
-    Task<bool> DropAsync<T>(Key key);
-    Task<bool> InvalidateAsync<T>(Key key);
+    Task<int> DropAsync<T>(Key key);
+    Task<int> InvalidateAsync<T>(Key key);
 }

@@ -16,8 +16,8 @@ public class TimeToLiveCacheTests
     {
         var options = new CacheOptions();
         _cacheMonitor = new CacheMonitor(_persistLoader.Object, options);
-        _persistLoader.Setup(x => x.GetPersist(It.IsAny<PersistType>())).Returns(new Memory(_cacheMonitor));
-        _fetchQueue = new FetchQueue(_cacheMonitor, options, default);
+        _persistLoader.Setup(x => x.GetPersist(It.IsAny<Type>())).Returns(new Memory(_cacheMonitor));
+        _fetchQueue = new FetchQueue(_cacheMonitor, options, null);
     }
 
     [Theory]

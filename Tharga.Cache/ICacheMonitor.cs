@@ -9,7 +9,8 @@ public interface ICacheMonitor
     IEnumerable<CacheTypeInfo> GetInfos();
     IDictionary<string, CacheItemInfo> GetByType<T>();
     IDictionary<string, CacheItemInfo> GetByType(Type type);
-    Task<HealthDto> GetHealthAsync();
+    IEnumerable<HealthType> GetHealthTypesAsync();
     int GetFetchQueueCount();
-    void CleanSale();
+    void ClearStale();
+    void ClearAll();
 }

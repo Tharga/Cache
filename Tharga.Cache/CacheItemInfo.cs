@@ -12,6 +12,7 @@ public record CacheItemInfo
         _createTime = createTime;
     }
 
+    //TODO: Add information about load time
     public required int Size { get; init; }
     public required TimeSpan? FreshSpan { get; init; }
     public DateTime CreateTime => _createTime;

@@ -1,26 +1,26 @@
 ﻿using System.Diagnostics;
+using System.Net.Sockets;
 using System.Text.Json;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using StackExchange.Redis;
-using Tharga.Cache.Core;
 using Polly;
 using Polly.Retry;
-using System.Net.Sockets;
+using StackExchange.Redis;
+using Tharga.Cache.Core;
 
-namespace Tharga.Cache.Persist;
+namespace Tharga.Cache.Redis;
 
 internal class Redis : IRedis
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly IHostEnvironment _hostEnvironment;
-    private readonly CacheOptions _options;
-    private ConnectionMultiplexer _redisConnection;
+    private readonly RedisCacheOptions _options;
     private readonly ILogger<Redis> _logger;
     private readonly AsyncRetryPolicy _retryPolicy;
+    private ConnectionMultiplexer _redisConnection;
 
-    public Redis(IServiceProvider serviceProvider, IHostEnvironment hostEnvironment, IManagedCacheMonitor cacheMonitor, IOptions<CacheOptions> options, ILogger<Redis> logger)
+    public Redis(IServiceProvider serviceProvider, IHostEnvironment hostEnvironment, IManagedCacheMonitor cacheMonitor, IOptions<RedisCacheOptions> options, ILogger<Redis> logger)
     {
         _serviceProvider = serviceProvider;
         _hostEnvironment = hostEnvironment;
@@ -31,12 +31,9 @@ internal class Redis : IRedis
             .Or<TimeoutException>()
             .Or<SocketException>()
             .WaitAndRetryAsync(
-                retryCount: 3,
-                sleepDurationProvider: attempt => TimeSpan.FromMilliseconds(200 * Math.Pow(2, attempt)),
-                onRetry: (exception, timeSpan, retryCount, _) =>
-                {
-                    _logger.LogWarning($"Retry {retryCount} after {timeSpan.TotalMilliseconds}ms due to: {exception.Message}");
-                });
+                3,
+                attempt => TimeSpan.FromMilliseconds(200 * Math.Pow(2, attempt)),
+                (exception, timeSpan, retryCount, _) => { _logger.LogWarning($"Retry {retryCount} after {timeSpan.TotalMilliseconds}ms due to: {exception.Message}"); });
 
         cacheMonitor.RequestEvictEvent += async (_, e) =>
         {
@@ -50,7 +47,7 @@ internal class Redis : IRedis
         return await _retryPolicy.ExecuteAsync(async () =>
         {
             var redisConnection = await GetConnection();
-            if (redisConnection.Multiplexer == default) return default;
+            if (redisConnection.Multiplexer == null) return null;
 
             var db = redisConnection.Multiplexer.GetDatabase();
             var data = await db.StringGetAsync((string)key);
@@ -60,8 +57,13 @@ internal class Redis : IRedis
                 return cacheItem;
             }
 
-            return default;
+            return null;
         });
+    }
+
+    public IAsyncEnumerable<(Key Key, CacheItem<T> CacheItem)> FindAsync<T>(Key key)
+    {
+        throw new NotImplementedException();
     }
 
     public async Task SetAsync<T>(Key key, CacheItem<T> cacheItem, bool staleWhileRevalidate)
@@ -77,13 +79,17 @@ internal class Redis : IRedis
             }
 
             var redisConnection = await GetConnection();
-            if (redisConnection.Multiplexer == default) return;
+            if (redisConnection.Multiplexer == null) return;
 
             var db = redisConnection.Multiplexer.GetDatabase();
             if (cacheItem.FreshSpan == null || cacheItem.FreshSpan == TimeSpan.MaxValue || staleWhileRevalidate)
+            {
                 await db.StringSetAsync((string)key, item);
+            }
             else
+            {
                 await db.StringSetAsync((string)key, item, cacheItem.FreshSpan);
+            }
         });
     }
 
@@ -102,7 +108,7 @@ internal class Redis : IRedis
         return await _retryPolicy.ExecuteAsync(async () =>
         {
             var redisConnection = await GetConnection();
-            if (redisConnection.Multiplexer == default) return default;
+            if (redisConnection.Multiplexer == null) return false;
 
             var db = redisConnection.Multiplexer.GetDatabase();
             var result = await db.KeyDeleteAsync((string)key);
@@ -115,7 +121,7 @@ internal class Redis : IRedis
         return await _retryPolicy.ExecuteAsync(async () =>
         {
             var redisConnection = await GetConnection();
-            if (redisConnection.Multiplexer == default) return (false, redisConnection.Message);
+            if (redisConnection.Multiplexer == null) return (false, redisConnection.Message);
 
             return (redisConnection.Multiplexer.IsConnected, redisConnection.Message);
         });
@@ -124,7 +130,7 @@ internal class Redis : IRedis
     private async Task<bool> SetUpdateTime<T>(Key key, DateTime updateTime)
     {
         var redisConnection = await GetConnection();
-        if (redisConnection.Multiplexer == default) return default;
+        if (redisConnection.Multiplexer == null) return false;
 
         var db = redisConnection.Multiplexer.GetDatabase();
         var data = await db.StringGetAsync((string)key);
@@ -139,6 +145,7 @@ internal class Redis : IRedis
                 var itemAgain = JsonSerializer.Serialize(convertedBack);
                 if (itemAgain != item) throw new InvalidOperationException("Failed to serialize/deserialize back to same result.");
             }
+
             await db.StringSetAsync((string)key, item);
             return true;
         }
@@ -150,13 +157,14 @@ internal class Redis : IRedis
     {
         if (_redisConnection?.IsConnected ?? false) return (_redisConnection, "Connected (Cached).");
 
-        var connectionString = _options.ConnectionStringLoader(_serviceProvider);
+        var connectionString = _options.ConnectionStringLoader?.Invoke(_serviceProvider);
         if (string.IsNullOrEmpty(connectionString))
         {
             if (!_hostEnvironment.IsDevelopment()) _logger?.LogWarning("No connection string set for distributed cache.");
-            return (default, "No connection string.");
+            return (null, "No connection string.");
         }
-        if (string.Equals(connectionString, "DISABLED", StringComparison.InvariantCultureIgnoreCase)) return (default, "Disabled.");
+
+        if (string.Equals(connectionString, "DISABLED", StringComparison.InvariantCultureIgnoreCase)) return (null, "Cache is Disabled.");
 
         try
         {
@@ -168,7 +176,7 @@ internal class Redis : IRedis
             _logger?.LogError(e, e.Message);
             if (_redisConnection != null) await _redisConnection.DisposeAsync();
             _redisConnection = null;
-            return (default, e.Message);
+            return (null, e.Message);
         }
     }
 

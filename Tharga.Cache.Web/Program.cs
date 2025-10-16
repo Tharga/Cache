@@ -1,6 +1,10 @@
 using Quilt4Net.Toolkit.Api;
 using Tharga.Cache;
+using Tharga.Cache.MongoDB;
+using Tharga.Cache.Persist;
+using Tharga.Cache.Redis;
 using Tharga.Cache.Web;
+using Tharga.MongoDB;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,16 +12,23 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.RegisterCache(o =>
+builder.Services.AddCache(o =>
 {
+    o.Default.DefaultFreshSpan = TimeSpan.FromSeconds(10);
     o.MaxConcurrentFetchCount = 1;
-    o.RegisterType<WeatherForecast[]?>(s =>
+    o.RegisterType<MemoryData, IMemory>();
+
+    o.RegisterType<MongoDBData, IMongoDB>();
+
+    o.AddRedisDBOptions();
+    o.RegisterType<RedisData, IRedis>();
+
+    o.RegisterType<WeatherForecast[]?, IMemory>(s =>
     {
         s.StaleWhileRevalidate = false;
         s.MaxCount = 10;
         s.MaxSize = 2000;
         s.EvictionPolicy = EvictionPolicy.FirstInFirstOut;
-        s.PersistType = PersistType.MemoryWithRedis;
         s.DefaultFreshSpan = TimeSpan.FromSeconds(10);
     });
 });
@@ -47,3 +58,5 @@ app.MapControllers();
 app.UseQuilt4NetApi();
 
 app.Run();
+
+public partial class Program { }

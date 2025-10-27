@@ -32,7 +32,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Tharga.MongoDB" Version="2.3.2" />
+    <PackageReference Include="Tharga.MongoDB" Version="2.3.4" />
   </ItemGroup>
 
   <ItemGroup>

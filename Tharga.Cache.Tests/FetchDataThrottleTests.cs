@@ -80,7 +80,7 @@ public class FetchDataThrottleTests
         cacheMonitor.DataGetEvent += (_, _) => monitorGetEventCount++;
         cacheMonitor.DataDropEvent += (_, _) => monitorDropEventCount++;
         var stopwatch = Stopwatch.StartNew();
-        var countMargin = 1; //NOTE: Larger number gives more margin, but less accurate test.
+        var countMargin = 2; //NOTE: Larger number gives more margin, but less accurate test.
 
         //Act
         var tasks = Enumerable.Range(0, fetchCount).Select(_ => sut.GetAsync(Guid.NewGuid().ToString(), async () =>

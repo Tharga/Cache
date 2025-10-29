@@ -76,6 +76,20 @@ stages:
         packagesToPack: '**/Tharga.Cache.csproj'
         versioningScheme: 'byBuildNumber'
 
+    - task: DotNetCoreCLI@2
+      displayName: 'Pack Tharga.Cache.MongoDB'
+      inputs:
+        command: 'pack'
+        packagesToPack: '**/Tharga.Cache.MongoDB.csproj'
+        versioningScheme: 'byBuildNumber'
+
+    - task: DotNetCoreCLI@2
+      displayName: 'Pack Tharga.Cache.Redis'
+      inputs:
+        command: 'pack'
+        packagesToPack: '**/Tharga.Cache.Redis.csproj'
+        versioningScheme: 'byBuildNumber'
+
     - task: PublishBuildArtifacts@1
       displayName: 'Publish artifacts'
       inputs:

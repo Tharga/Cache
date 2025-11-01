@@ -6,7 +6,7 @@ using Tharga.Cache.Persist;
 using Tharga.Console;
 using Tharga.Console.Commands;
 using Tharga.Console.Consoles;
-using Tharga.Toolkit.TypeService;
+using Tharga.Runtime;
 
 var serviceCollection = new ServiceCollection();
 _ = AssemblyService.GetTypes<ICommand>().Where(x => !x.IsInterface && !x.IsAbstract).Select(serviceCollection.AddTransient).ToArray();

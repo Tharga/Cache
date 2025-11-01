@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Tharga.MongoDB;
-using Tharga.Toolkit.TypeService;
+using Tharga.Runtime;
 
 namespace Tharga.Cache.MongoDB.Tests;
 

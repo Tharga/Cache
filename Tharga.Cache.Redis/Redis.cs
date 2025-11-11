@@ -50,7 +50,7 @@ internal class Redis : IRedis
             if (redisConnection.Multiplexer == null) return null;
 
             var db = redisConnection.Multiplexer.GetDatabase();
-            var data = await db.StringGetAsync((string)key);
+            var data = (await db.StringGetAsync((string)key)).ToString();
             if (!string.IsNullOrEmpty(data))
             {
                 var cacheItem = JsonSerializer.Deserialize<CacheItem<T>>(data);
@@ -133,7 +133,7 @@ internal class Redis : IRedis
         if (redisConnection.Multiplexer == null) return false;
 
         var db = redisConnection.Multiplexer.GetDatabase();
-        var data = await db.StringGetAsync((string)key);
+        var data = (await db.StringGetAsync((string)key)).ToString();
         if (!string.IsNullOrEmpty(data))
         {
             var cacheItem = JsonSerializer.Deserialize<CacheItem<T>>(data);

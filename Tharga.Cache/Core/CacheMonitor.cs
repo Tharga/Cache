@@ -115,7 +115,7 @@ internal class CacheMonitor : IManagedCacheMonitor
         return new Dictionary<string, CacheItemInfo>();
     }
 
-    public IEnumerable<HealthType> GetHealthTypesAsync()
+    public IEnumerable<HealthType> GetHealthTypes()
     {
         foreach (var healthType in _cacheOptions.GetConfiguredPersistTypes)
         {

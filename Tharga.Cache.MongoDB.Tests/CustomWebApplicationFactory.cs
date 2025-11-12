@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
+using Tharga.Cache.Web;
 using Tharga.MongoDB;
 using Tharga.Runtime;
 
@@ -16,7 +17,7 @@ public class CustomWebApplicationFactory<TStartup> : WebApplicationFactory<TStar
         {
             services.AddMongoDB(o =>
             {
-                o.AutoRegistrationAssemblies = AssemblyService.GetAssemblies<Program>();
+                o.AutoRegistrationAssemblies = AssemblyService.GetAssemblies<MemoryData>();
             });
         });
     }

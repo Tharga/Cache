@@ -1,13 +1,14 @@
-﻿using Xunit;
+﻿using Tharga.Cache.Web;
+using Xunit;
 
 namespace Tharga.Cache.Redis.Tests;
 
-public abstract class TestFixtureBase : IClassFixture<CustomWebApplicationFactory<Program>>
+public abstract class TestFixtureBase : IClassFixture<CustomWebApplicationFactory<MemoryData>>
 {
     protected readonly HttpClient _client;
-    private readonly CustomWebApplicationFactory<Program> _factory;
+    private readonly CustomWebApplicationFactory<MemoryData> _factory;
 
-    protected TestFixtureBase(CustomWebApplicationFactory<Program> factory)
+    protected TestFixtureBase(CustomWebApplicationFactory<MemoryData> factory)
     {
         _factory = factory;
         factory.ConfigureTestServices = services =>

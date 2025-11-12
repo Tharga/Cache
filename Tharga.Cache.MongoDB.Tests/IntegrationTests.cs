@@ -11,7 +11,7 @@ public class IntegrationTests : TestFixtureBase
 {
     private readonly string _controller = "MongoDBCache";
 
-    public IntegrationTests(CustomWebApplicationFactory<Program> factory)
+    public IntegrationTests(CustomWebApplicationFactory<MemoryData> factory)
         : base(factory)
     {
     }

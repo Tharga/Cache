@@ -27,7 +27,7 @@ internal class MongoDB : IMongoDB
         var item = await collection.GetOneAsync(x => x.Id == key.Value, OneOption<CacheEntity>.SingleOrDefault); //TODO: Should be possible to provide option with ID (not predicate).
         if (item != null)
         {
-            if (!item.StaleWhileRevalidate && item.FreshSpan.HasValue && item.CreateTime.Add(item.FreshSpan.Value) < DateTime.UtcNow)
+            if (!item.StaleWhileRevalidate && item.FreshSpan.HasValue && item.FreshSpan.Value != TimeSpan.MaxValue && item.CreateTime.Add(item.FreshSpan.Value) < DateTime.UtcNow)
             {
                 await collection.DeleteOneAsync(x => x.Id == item.Id, OneOption<CacheEntity>.SingleOrDefault); //TODO: Here we should not need a predicate
                 return null;

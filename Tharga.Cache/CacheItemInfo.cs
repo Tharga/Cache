@@ -17,7 +17,7 @@ public record CacheItemInfo
     public required TimeSpan? FreshSpan { get; init; }
     public DateTime CreateTime => _createTime;
     public DateTime? UpdateTime => _updateTime;
-    public DateTime? ExpireTime => FreshSpan.HasValue ? (UpdateTime ?? CreateTime).Add(FreshSpan.Value) : null;
+    public DateTime? ExpireTime => FreshSpan.HasValue && FreshSpan.Value != TimeSpan.MaxValue ? (UpdateTime ?? CreateTime).Add(FreshSpan.Value) : null;
     public DateTime? LastAccessTime => _lastAccessTime;
     public int AccessCount => _accessCount;
     public bool IsStale => ExpireTime.HasValue && DateTime.UtcNow > ExpireTime;

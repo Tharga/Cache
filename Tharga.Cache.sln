@@ -1,21 +1,17 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.0.11205.157 d18.0
+VisualStudioVersion = 18.0.11205.157
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tharga.Cache", "Tharga.Cache\Tharga.Cache.csproj", "{0F4554D3-5104-4F55-BBE8-9C021D589214}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tharga.Cache.Tests", "Tharga.Cache.Tests\Tharga.Cache.Tests.csproj", "{8425AAB8-7C10-42FA-8A09-75FE38D70E00}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tharga.Cache.Console", "Tharga.Cache.Console\Tharga.Cache.Console.csproj", "{37606B8C-8C7D-4987-82C3-274A4C624FD6}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{B2037503-DDED-46E6-BF80-9E2914A10291}"
 	ProjectSection(SolutionItems) = preProject
 		azure-pipelines.yml = azure-pipelines.yml
 		README.md = README.md
 	EndProjectSection
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tharga.Cache.Web", "Tharga.Cache.Web\Tharga.Cache.Web.csproj", "{0641A898-4E73-4E08-B6B5-F4094F02ACEE}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tharga.Cache.MongoDB", "Tharga.Cache.MongoDB\Tharga.Cache.MongoDB.csproj", "{B4579E19-0CEB-4D3C-8C06-DBBBCF7751A3}"
 EndProject
@@ -26,6 +22,18 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tharga.Cache.Redis.Tests", "Tharga.Cache.Redis.Tests\Tharga.Cache.Redis.Tests.csproj", "{032FFBC3-B484-4374-803C-99C8798FA064}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Sample", "Sample", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tharga.Cache.Blazor", "Tharga.Cache.Blazor\Tharga.Cache.Blazor.csproj", "{65E94E63-AD9F-403F-9E73-9E21493F19DB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tharga.Cache.WebApi", "Sample\Tharga.Cache.WebApi\Tharga.Cache.WebApi.csproj", "{EC41C862-CDE7-91E0-CE92-B0A876469287}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tharga.Cache.Console", "Sample\Tharga.Cache.Console\Tharga.Cache.Console.csproj", "{D7C77E40-0526-C2A3-BED1-51415ABCED45}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "MongoDB", "MongoDB", "{80C2CFE9-1731-48DA-96CD-57FF196A737A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Redis", "Redis", "{5A7B21A0-CDCA-48D2-B58F-622BD8D06D1B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tharga.Cache.BlazorServer", "Sample\Tharga.Cache.BlazorServer\Tharga.Cache.BlazorServer.csproj", "{0152CAF9-5AA1-409D-BD4E-73BC64E14609}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -41,14 +49,6 @@ Global
 		{8425AAB8-7C10-42FA-8A09-75FE38D70E00}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8425AAB8-7C10-42FA-8A09-75FE38D70E00}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8425AAB8-7C10-42FA-8A09-75FE38D70E00}.Release|Any CPU.Build.0 = Release|Any CPU
-		{37606B8C-8C7D-4987-82C3-274A4C624FD6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{37606B8C-8C7D-4987-82C3-274A4C624FD6}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{37606B8C-8C7D-4987-82C3-274A4C624FD6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{37606B8C-8C7D-4987-82C3-274A4C624FD6}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0641A898-4E73-4E08-B6B5-F4094F02ACEE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0641A898-4E73-4E08-B6B5-F4094F02ACEE}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0641A898-4E73-4E08-B6B5-F4094F02ACEE}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0641A898-4E73-4E08-B6B5-F4094F02ACEE}.Release|Any CPU.Build.0 = Release|Any CPU
 		{B4579E19-0CEB-4D3C-8C06-DBBBCF7751A3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{B4579E19-0CEB-4D3C-8C06-DBBBCF7751A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B4579E19-0CEB-4D3C-8C06-DBBBCF7751A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -65,13 +65,34 @@ Global
 		{032FFBC3-B484-4374-803C-99C8798FA064}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{032FFBC3-B484-4374-803C-99C8798FA064}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{032FFBC3-B484-4374-803C-99C8798FA064}.Release|Any CPU.Build.0 = Release|Any CPU
+		{65E94E63-AD9F-403F-9E73-9E21493F19DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{65E94E63-AD9F-403F-9E73-9E21493F19DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{65E94E63-AD9F-403F-9E73-9E21493F19DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{65E94E63-AD9F-403F-9E73-9E21493F19DB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EC41C862-CDE7-91E0-CE92-B0A876469287}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EC41C862-CDE7-91E0-CE92-B0A876469287}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EC41C862-CDE7-91E0-CE92-B0A876469287}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EC41C862-CDE7-91E0-CE92-B0A876469287}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D7C77E40-0526-C2A3-BED1-51415ABCED45}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D7C77E40-0526-C2A3-BED1-51415ABCED45}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D7C77E40-0526-C2A3-BED1-51415ABCED45}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D7C77E40-0526-C2A3-BED1-51415ABCED45}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0152CAF9-5AA1-409D-BD4E-73BC64E14609}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0152CAF9-5AA1-409D-BD4E-73BC64E14609}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0152CAF9-5AA1-409D-BD4E-73BC64E14609}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0152CAF9-5AA1-409D-BD4E-73BC64E14609}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{37606B8C-8C7D-4987-82C3-274A4C624FD6} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
-		{0641A898-4E73-4E08-B6B5-F4094F02ACEE} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{B4579E19-0CEB-4D3C-8C06-DBBBCF7751A3} = {80C2CFE9-1731-48DA-96CD-57FF196A737A}
+		{0006914F-40FD-4F90-ABB5-36564B28478C} = {5A7B21A0-CDCA-48D2-B58F-622BD8D06D1B}
+		{14E3B834-DCF3-4156-83CE-DB03BFCDC780} = {80C2CFE9-1731-48DA-96CD-57FF196A737A}
+		{032FFBC3-B484-4374-803C-99C8798FA064} = {5A7B21A0-CDCA-48D2-B58F-622BD8D06D1B}
+		{EC41C862-CDE7-91E0-CE92-B0A876469287} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{D7C77E40-0526-C2A3-BED1-51415ABCED45} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{0152CAF9-5AA1-409D-BD4E-73BC64E14609} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F2E1437A-D6A6-4B5B-805B-EC86998C4A4B}

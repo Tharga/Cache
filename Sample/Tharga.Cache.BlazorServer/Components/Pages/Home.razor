@@ -1,0 +1,31 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@inject ITimeToLiveCache TimeToLiveCache
+
+<PageTitle>Home</PageTitle>
+
+<h1>Cache Sample</h1>
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+    <RadzenCard>
+        <RadzenText Text="@_data"/>
+        <RadzenButton Text="Load Data" Click="LoadDataAsync"/>
+    </RadzenCard>
+</RadzenStack>
+
+@code {
+    private string _data = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        _data = await TimeToLiveCache.GetAsync("CacheKey", () => Task.FromResult("Initial data expires after 3 seconds. Wait 3 seconds and press 'Load Data' to get new data from cache."));
+        await base.OnInitializedAsync();
+    }
+
+    private async Task LoadDataAsync(MouseEventArgs arg)
+    {
+        _data = await TimeToLiveCache.GetAsync("CacheKey", () => Task.FromResult("New data."));
+        StateHasChanged();
+    }
+
+}

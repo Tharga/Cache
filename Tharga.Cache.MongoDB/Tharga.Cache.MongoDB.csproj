@@ -1,54 +1,47 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
-	<PropertyGroup>
-		<TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
-		<ImplicitUsings>enable</ImplicitUsings>
-		<Version>1.0.0</Version>
-		<Authors>Daniel Bohlin</Authors>
-		<Company>Thargelion AB</Company>
-		<Product>Tharga Cache MongoDB</Product>
-		<Description>MongoDB cache features.</Description>
-		<PackageIconUrl>http://thargelion.se/wp-content/uploads/2019/11/Thargelion-White-Icon-150.png</PackageIconUrl>
-		<GenerateDocumentationFile>True</GenerateDocumentationFile>
-		<PackageProjectUrl>https://github.com/Tharga/Cache</PackageProjectUrl>
-		<PackageReadmeFile>README.md</PackageReadmeFile>
-		<IncludeSymbols>true</IncludeSymbols>
-		<IncludeSource>true</IncludeSource>
-		<PublishRepositoryUrl>true</PublishRepositoryUrl>
-		<EmbedUntrackedSources>true</EmbedUntrackedSources>
-		<DebugType>portable</DebugType>
-		<DebugSymbols>true</DebugSymbols>
-		<EnableSourceLink>false</EnableSourceLink>
-		<ImplicitUsings>enable</ImplicitUsings>
-	</PropertyGroup>
-
-	<PropertyGroup>
-		<NoWarn>1701;1702;CS1591</NoWarn>
-	</PropertyGroup>
-
-	<ItemGroup>
-		<None Include="README.md">
-			<Pack>True</Pack>
-			<PackagePath>\</PackagePath>
-		</None>
-	</ItemGroup>
-
-	<ItemGroup>
-		<InternalsVisibleTo Include="Tharga.Cache.Tests" />
-		<InternalsVisibleTo Include="Tharga.Cache.MongoDB.Tests" />
-		<InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<PackageReference Include="Tharga.MongoDB" Version="2.5.2" />
-		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
-	</ItemGroup>
-
-	<ItemGroup>
-		<ProjectReference Include="..\Tharga.Cache\Tharga.Cache.csproj" />
-	</ItemGroup>
-
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Version>1.0.0</Version>
+    <Authors>Daniel Bohlin</Authors>
+    <Company>Thargelion AB</Company>
+    <Product>Tharga Cache MongoDB</Product>
+    <Description>MongoDB cache features.</Description>
+    <PackageIconUrl>https://thargelion.se/wp-content/uploads/2025/11/Thargelion-Cache-Icon-150.png</PackageIconUrl>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <PackageProjectUrl>https://github.com/Tharga/Cache</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <IncludeSymbols>true</IncludeSymbols>
+    <IncludeSource>true</IncludeSource>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <DebugType>portable</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <EnableSourceLink>false</EnableSourceLink>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <PropertyGroup>
+    <NoWarn>1701;1702;CS1591</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Tharga.Cache.Tests" />
+    <InternalsVisibleTo Include="Tharga.Cache.MongoDB.Tests" />
+    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Tharga.MongoDB" Version="2.7.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Tharga.Cache\Tharga.Cache.csproj" />
+  </ItemGroup>
 </Project>

@@ -26,7 +26,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\Tharga.Cache.Web\Tharga.Cache.Web.csproj" />
+	  <ProjectReference Include="..\Tharga.Cache.MongoDB\Tharga.Cache.MongoDB.csproj" />
+	  <ProjectReference Include="..\Tharga.Cache.Tests\Tharga.Cache.Tests.csproj" />
 	</ItemGroup>
 
 </Project>

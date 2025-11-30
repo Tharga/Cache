@@ -7,14 +7,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Quilt4Net.Toolkit.Api" Version="0.2.8" />
+    <PackageReference Include="Quilt4Net.Toolkit.Api" Version="0.3.2" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.0.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Tharga.Cache.MongoDB\Tharga.Cache.MongoDB.csproj" />
-    <ProjectReference Include="..\Tharga.Cache.Redis\Tharga.Cache.Redis.csproj" />
-    <ProjectReference Include="..\Tharga.Cache\Tharga.Cache.csproj" />
+    <ProjectReference Include="..\..\Tharga.Cache.MongoDB\Tharga.Cache.MongoDB.csproj" />
+    <ProjectReference Include="..\..\Tharga.Cache.Redis\Tharga.Cache.Redis.csproj" />
+    <ProjectReference Include="..\..\Tharga.Cache\Tharga.Cache.csproj" />
   </ItemGroup>
 
 </Project>

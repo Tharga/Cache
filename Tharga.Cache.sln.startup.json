@@ -7,9 +7,19 @@
         "Tharga.Cache.Console": {}
       }
     },
-    "Web": {
+    "WebApi": {
       "Projects": {
-        "Tharga.Cache.Web": {}
+        "Tharga.Cache.WebApi": {}
+      }
+    },
+    "Blazor": {
+      "Projects": {
+        "Tharga.Cache.BlazorWeb": {}
+      }
+    },
+    "Blazor Server": {
+      "Projects": {
+        "Tharga.Cache.BlazorServer": {}
       }
     }
   }

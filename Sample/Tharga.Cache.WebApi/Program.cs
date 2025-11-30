@@ -2,9 +2,7 @@ using Quilt4Net.Toolkit.Api;
 using Tharga.Cache;
 using Tharga.Cache.MongoDB;
 using Tharga.Cache.Persist;
-using Tharga.Cache.Redis;
 using Tharga.Cache.Web;
-using Tharga.MongoDB;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,10 +18,10 @@ builder.Services.AddCache(o =>
 
     o.RegisterType<MongoDBData, IMongoDB>();
 
-    o.AddRedisDBOptions();
-    o.RegisterType<RedisData, IRedis>();
+    //o.AddRedisDBOptions();
+    //o.RegisterType<RedisData, IRedis>();
 
-    o.RegisterType<WeatherForecast[]?, IMemory>(s =>
+    o.RegisterType<WeatherForecast[], IMemory>(s =>
     {
         s.StaleWhileRevalidate = false;
         s.MaxCount = 10;

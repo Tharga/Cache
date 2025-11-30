@@ -1,0 +1,17 @@
+﻿@page "/cache"
+@rendermode InteractiveServer
+@inject ITimeToLiveCache TimeToLiveCache
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+    <RadzenCard>
+        <Tharga.Cache.Blazor.SummaryView />
+    </RadzenCard>
+    <RadzenCard>
+        <Tharga.Cache.Blazor.ListView />
+    </RadzenCard>
+</RadzenStack>
+
+
+@code {
+
+}

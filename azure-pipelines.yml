@@ -91,7 +91,7 @@ stages:
         versioningScheme: 'byBuildNumber'
 
     - task: DotNetCoreCLI@2
-      displayName: 'Pack Tharga.Cache.Redis'
+      displayName: 'Pack Tharga.Cache.Blazor'
       inputs:
         command: 'pack'
         packagesToPack: '**/Tharga.Cache.Blazor.csproj'

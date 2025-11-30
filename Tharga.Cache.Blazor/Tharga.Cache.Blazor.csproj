@@ -31,15 +31,11 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Tharga.Cache\Tharga.Cache.csproj" />
+	  <PackageReference Include="Tharga.Blazor" Version="1.0.8" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<Folder Include="wwwroot\" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <PackageReference Include="Tharga.Blazor" Version="1.0.6" />
+	  <ProjectReference Include="..\Tharga.Cache\Tharga.Cache.csproj" />
 	</ItemGroup>
 
 </Project>

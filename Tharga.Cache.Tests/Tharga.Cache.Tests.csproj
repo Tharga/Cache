@@ -31,7 +31,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\Tharga.Cache.Web\Tharga.Cache.Web.csproj" />
+	  <ProjectReference Include="..\Tharga.Cache\Tharga.Cache.csproj" />
 	</ItemGroup>
 
 </Project>

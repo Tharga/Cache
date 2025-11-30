@@ -1,28 +1,29 @@
-﻿using Tharga.Cache.Web;
-using Xunit;
+﻿//using Tharga.Cache.Tests.Integration;
+//using Tharga.Cache.Web;
+//using Xunit;
 
-namespace Tharga.Cache.MongoDB.Tests;
+//namespace Tharga.Cache.MongoDB.Tests;
 
-public abstract class TestFixtureBase : IClassFixture<CustomWebApplicationFactory<MemoryData>>
-{
-    protected readonly HttpClient _client;
-    private readonly CustomWebApplicationFactory<MemoryData> _factory;
+//public abstract class TestFixtureBase : IClassFixture<CustomWebApplicationFactory<MemoryData>>
+//{
+//    protected readonly HttpClient _client;
+//    private readonly CustomWebApplicationFactory<MemoryData> _factory;
 
-    protected TestFixtureBase(CustomWebApplicationFactory<MemoryData> factory)
-    {
-        _factory = factory;
-        factory.ConfigureTestServices = services =>
-        {
-            //services.Remove<IAgentMessageService>();
-        };
+//    protected TestFixtureBase(CustomWebApplicationFactory<MemoryData> factory)
+//    {
+//        _factory = factory;
+//        factory.ConfigureTestServices = services =>
+//        {
+//            //services.Remove<IAgentMessageService>();
+//        };
 
-        _client = factory.CreateClient();
-        //var farmService = factory.Services.GetService(typeof(IFarmService));
-    }
+//        _client = factory.CreateClient();
+//        //var farmService = factory.Services.GetService(typeof(IFarmService));
+//    }
 
-    protected T GetService<T>()
-    {
-        var service = _factory.Services.GetService(typeof(T));
-        return (T)service;
-    }
-}
+//    protected T GetService<T>()
+//    {
+//        var service = _factory.Services.GetService(typeof(T));
+//        return (T)service;
+//    }
+//}

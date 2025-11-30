@@ -1,0 +1,91 @@
+﻿@inject ICacheMonitor CacheMonitor
+
+@if (_model == null)
+{
+    <Loading />
+}
+else
+{
+    <RadzenDataGrid Data="@_model" TItem="CacheTypeInfo"
+                    AllowFiltering="false" FilterMode="FilterMode.Simple" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                    AllowSorting="true"
+                    AllowPaging="true" PageSize="8" PageSizeOptions="[8, 16, 32, 64]"
+                    ShowPagingSummary="true" PagingSummaryFormat="@("{2:N0} types, page {0} of {1}")">
+        <Template Context="cacheType">
+            <RadzenDataGrid Data="@cacheType.Items"
+                            AllowFiltering="false" FilterMode="FilterMode.Simple" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                            AllowSorting="true"
+                            AllowPaging="true" PageSize="8" PageSizeOptions="[8, 16, 32, 64]"
+                            ShowPagingSummary="true" PagingSummaryFormat="@("{2:N0} items, page {0} of {1}")">
+                <Columns>
+                    <RadzenDataGridColumn Title="Key">
+                        <Template Context="item">
+                            <span title="@item.Key">@item.Key</span>
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn Title="Created" SortProperty="Value.CreateTime">
+                        <Template>
+                            <DateTimeView Date="@context.Value.CreateTime"/>
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn Title="Updated" SortProperty="Value.UpdateTime">
+                        <Template>
+                            <DateTimeView Date="@context.Value.UpdateTime"/>
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn Title="Fresh Span" SortProperty="Value.FreshSpan">
+                        <Template>
+                            <TimeSpanView TimeSpan="@context.Value.FreshSpan"/>
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn Title="Expires" SortProperty="Value.ExpireTime">
+                        <Template>
+                            <DateTimeView Date="@context.Value.ExpireTime"/>
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn Title="Last Accessed" SortProperty="Value.LastAccessTime">
+                        <Template>
+                            <DateTimeView Date="@context.Value.LastAccessTime"/>
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn Title="Size" SortProperty="Value.Size">
+                        <Template Context="item">
+                            @item.Value.Size.ToReadableByteSize()
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn Title="Access Count" SortProperty="Value.AccessCount">
+                        <Template>
+                            @context.Value.AccessCount
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn Title="Stale" Property="Value.IsStale" Sortable="false"/>
+                </Columns>
+            </RadzenDataGrid>
+        </Template>
+        <Columns>
+            <RadzenDataGridColumn Title="Type">
+                <Template>
+                    @context.Type.Name
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn Title="Count">
+                <Template>
+                    @context.Items.Count
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn Title="Stale while revalidate" Property="@nameof(CacheTypeInfo.StaleWhileRevalidate)" Sortable="false"/>
+        </Columns>
+    </RadzenDataGrid>
+}
+
+@code {
+    private CacheTypeInfo[] _model;
+
+    protected override Task OnInitializedAsync()
+    {
+        _model = CacheMonitor.GetInfos().ToArray();
+
+        return base.OnInitializedAsync();
+    }
+
+}

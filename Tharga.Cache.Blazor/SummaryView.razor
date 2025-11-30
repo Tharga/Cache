@@ -1,0 +1,48 @@
+﻿@inject ICacheMonitor CacheMonitor
+
+<RadzenRow>
+    <RadzenColumn>
+        <RadzenText TextStyle="TextStyle.Caption">Cache Count</RadzenText>
+        <RadzenText TextStyle="TextStyle.Body1">@($"{_cacheCount:N0}")</RadzenText>
+    </RadzenColumn>
+    <RadzenColumn>
+        <RadzenText TextStyle="TextStyle.Caption">Cache Size</RadzenText>
+        <RadzenText TextStyle="TextStyle.Body1">@_cacheSize.ToReadableByteSize()</RadzenText>
+    </RadzenColumn>
+    <RadzenColumn>
+        <RadzenText TextStyle="TextStyle.Caption">Cache Queue Count</RadzenText>
+        <RadzenText TextStyle="TextStyle.Body1">@_queueCount</RadzenText>
+    </RadzenColumn>
+</RadzenRow>
+<RadzenRow>
+    <RadzenColumn>
+        <ActionButton Text="Clear Cache" Icon="reset_focus" Click="@ResetCacheAsync" Delay="@TimeSpan.FromSeconds(1)" />
+    </RadzenColumn>
+</RadzenRow>
+
+@code {
+    private int _cacheCount;
+    private int _cacheSize;
+    private int _queueCount;
+
+    protected override Task OnInitializedAsync()
+    {
+        LoadCacheInfo();
+
+        return base.OnInitializedAsync();
+    }
+
+    private void LoadCacheInfo()
+    {
+        _cacheCount = CacheMonitor.GetInfos()?.SelectMany(x => x.Items).Count() ?? 0;
+        _cacheSize = CacheMonitor.GetInfos()?.SelectMany(x => x.Items).Sum(y => y.Value.Size) ?? 0;
+        _queueCount = CacheMonitor.GetFetchQueueCount();
+    }
+
+    private async Task ResetCacheAsync()
+    {
+        CacheMonitor.ClearAll();
+        LoadCacheInfo();
+        await InvokeAsync(StateHasChanged);
+    }
+}

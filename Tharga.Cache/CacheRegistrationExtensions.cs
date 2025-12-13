@@ -18,8 +18,6 @@ public static class CacheRegistrationExtensions
         options?.Invoke(o);
 
         serviceCollection.AddSingleton(Options.Create(o));
-        o.RegisterConfigurations(serviceCollection);
-        //serviceCollection.AddSingleton(typeof(object), o._cfg);
 
         serviceCollection.AddSingleton<ICacheMonitor>(s => s.GetService<IManagedCacheMonitor>());
         serviceCollection.AddSingleton<IFetchQueue>(s =>
@@ -88,6 +86,8 @@ public static class CacheRegistrationExtensions
         serviceCollection.AddHostedService<WatchDogService>();
 
         InvokeAllPersistRegistrations(serviceCollection);
+
+        o.RegisterConfigurations(serviceCollection);
     }
 
     private static void RegisterPersist(IServiceCollection serviceCollection)

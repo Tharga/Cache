@@ -126,7 +126,7 @@ internal abstract class CacheBase : ICache
             var count = 0;
             await foreach (var result in results)
             {
-                var dropped = await GetPersist<T>().DropAsync(result.Key);
+                var dropped = await GetPersist<T>().DropAsync<T>(result.Key);
                 if (dropped)
                 {
                     OnDrop<T>(result.Key);
@@ -139,7 +139,7 @@ internal abstract class CacheBase : ICache
 
         key = key.SetTypeKey<T>();
 
-        var item = await GetPersist<T>().DropAsync(key);
+        var item = await GetPersist<T>().DropAsync<T>(key);
         if (item)
         {
             OnDrop<T>(key);
@@ -222,7 +222,7 @@ internal abstract class CacheBase : ICache
             if (maxCount <= result?.Items.Count || maxSize <= result?.Items.Sum(x => x.Value.Size) + data.ToSize())
             {
                 var keyToDrop = _cacheMonitor.Get<T>(GetTypeOptions<T>().EvictionPolicy);
-                await GetPersist<T>().DropAsync(keyToDrop);
+                await GetPersist<T>().DropAsync<T>(keyToDrop);
                 OnDrop<T>(keyToDrop);
             }
         }

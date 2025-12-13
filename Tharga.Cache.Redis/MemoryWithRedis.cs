@@ -15,7 +15,13 @@ internal class MemoryWithRedis : IMemoryWithRedis, IAsyncDisposable, IDisposable
 
         cacheMonitor.RequestEvictEvent += async (_, e) =>
         {
-            await DropAsync(e.Key);
+            var dropAsyncMethod = typeof(MemoryWithRedis)
+                .GetMethod("DropAsync")!
+                .MakeGenericMethod(e.Type);
+
+            var task = (Task)dropAsyncMethod.Invoke(this, [e.Key])!;
+            await task;
+
             cacheMonitor.Drop(e.Type, e.Key);
         };
     }
@@ -58,10 +64,10 @@ internal class MemoryWithRedis : IMemoryWithRedis, IAsyncDisposable, IDisposable
         return memoryTask.Result || redisTask.Result;
     }
 
-    public async Task<bool> DropAsync(Key key)
+    public async Task<bool> DropAsync<T>(Key key)
     {
-        var memoryTask = ((Memory)_memory).DropAsync(key);
-        var redisTask = ((Redis)_redis).DropAsync(key);
+        var memoryTask = ((Memory)_memory).DropAsync<T>(key);
+        var redisTask = ((Redis)_redis).DropAsync<T>(key);
 
         await Task.WhenAll(memoryTask, redisTask);
         return memoryTask.Result || redisTask.Result;

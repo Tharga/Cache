@@ -1,9 +1,6 @@
 ﻿using Microsoft.Extensions.Options;
 using System.Diagnostics;
-using System.IO.Compression;
 using System.Reflection;
-using System.Text;
-using System.Text.Json;
 using Tharga.Cache.Core;
 
 namespace Tharga.Cache.File;
@@ -36,7 +33,8 @@ internal class File : IFile
     public async Task<CacheItem<T>> GetAsync<T>(Key key)
     {
         var fileExtension = _fileFormatService.GetFileExtensions(_options.Format);
-        var dataAsync = await _fileService.GetDataAsync(BuildFilename(key, typeof(T), fileExtension));
+        var buildFilename = BuildFilename(key, typeof(T), fileExtension);
+        var dataAsync = await _fileService.GetDataAsync(buildFilename);
         var data = _fileFormatService.Unpack<T>(dataAsync);
         return data;
     }
@@ -127,159 +125,15 @@ internal class File : IFile
             .Where(x => !string.IsNullOrEmpty(x))
             .ToArray();
 
-        var cachePath = Path.Combine(combined);
+        var cachePath = Path.Combine(combined)
+            .Replace("`1", "s");
+
+        if (!_fileFormatService.IsPathCharactersValid(cachePath))
+        {
+            Debugger.Break();
+            throw new InvalidOperationException($"Invalid filepath '{cachePath}'.");
+        }
 
         return cachePath;
-    }
-}
-
-public interface IFileFormatService
-{
-    (string Data, string FileExtension) Pack<T>(CacheItem<T> data);
-    CacheItem<T> Unpack<T>(string data);
-    string GetFileExtensions(Format format);
-}
-
-internal class FileFormatService : IFileFormatService
-{
-    private readonly FileCacheOptions _options;
-
-    public FileFormatService(FileCacheOptions options)
-    {
-        _options = options;
-    }
-
-    public string GetFileExtensions(Format format)
-    {
-        switch (format)
-        {
-            case Format.Json:
-                return "json";
-            case Format.Base64:
-                return "b64";
-            case Format.GZip:
-                return "gz";
-            case Format.Brotli:
-                return "br";
-            default:
-                throw new ArgumentOutOfRangeException(nameof(_options.Format));
-        }
-    }
-
-    public (string Data, string FileExtension) Pack<T>(CacheItem<T> data)
-    {
-        var json = JsonSerializer.Serialize(data);
-
-        switch (_options.Format)
-        {
-            case Format.Json:
-                {
-                    return (json, "json");
-                }
-
-            case Format.Base64:
-                {
-                    var bytes = Encoding.UTF8.GetBytes(json);
-                    var base64 = Convert.ToBase64String(bytes);
-                    return (base64, "b64");
-                }
-
-            case Format.GZip:
-                {
-                    var bytes = Encoding.UTF8.GetBytes(json);
-                    var compressed = Compress(bytes, Format.GZip);
-                    var base64 = Convert.ToBase64String(compressed);
-                    return (base64, "gz");
-                }
-
-            case Format.Brotli:
-                {
-                    var bytes = Encoding.UTF8.GetBytes(json);
-                    var compressed = Compress(bytes, Format.Brotli);
-                    var base64 = Convert.ToBase64String(compressed);
-                    return (base64, "br");
-                }
-
-            default:
-                {
-                    throw new ArgumentOutOfRangeException(nameof(_options.Format));
-                }
-        }
-    }
-
-    public CacheItem<T> Unpack<T>(string data)
-    {
-        switch (_options.Format)
-        {
-            case Format.Json:
-                {
-                    return JsonSerializer.Deserialize<CacheItem<T>>(data);
-                }
-
-            case Format.Base64:
-                {
-                    var bytes = Convert.FromBase64String(data);
-                    var json = Encoding.UTF8.GetString(bytes);
-                    return JsonSerializer.Deserialize<CacheItem<T>>(json);
-                }
-
-            case Format.GZip:
-                {
-                    var compressed = Convert.FromBase64String(data);
-                    var bytes = Decompress(compressed, Format.GZip);
-                    var json = Encoding.UTF8.GetString(bytes);
-                    return JsonSerializer.Deserialize<CacheItem<T>>(json);
-                }
-
-            case Format.Brotli:
-                {
-                    var compressed = Convert.FromBase64String(data);
-                    var bytes = Decompress(compressed, Format.Brotli);
-                    var json = Encoding.UTF8.GetString(bytes);
-                    return JsonSerializer.Deserialize<CacheItem<T>>(json);
-                }
-
-            default:
-                {
-                    throw new ArgumentOutOfRangeException(nameof(_options.Format));
-                }
-        }
-    }
-
-    private byte[] Compress(byte[] input, Format format)
-    {
-        using var output = new MemoryStream();
-
-        Stream compressor = format switch
-        {
-            Format.GZip => new GZipStream(output, CompressionLevel.Optimal, leaveOpen: true),
-            Format.Brotli => new BrotliStream(output, CompressionLevel.Optimal, leaveOpen: true),
-            _ => throw new ArgumentOutOfRangeException(nameof(format))
-        };
-
-        using (compressor)
-        {
-            compressor.Write(input, 0, input.Length);
-        }
-
-        return output.ToArray();
-    }
-
-    private byte[] Decompress(byte[] input, Format format)
-    {
-        using var inputStream = new MemoryStream(input);
-
-        Stream decompressor = format switch
-        {
-            Format.GZip => new GZipStream(inputStream, CompressionMode.Decompress),
-            Format.Brotli => new BrotliStream(inputStream, CompressionMode.Decompress),
-            _ => throw new ArgumentOutOfRangeException(nameof(format))
-        };
-
-        using var output = new MemoryStream();
-
-        decompressor.CopyTo(output);
-
-        return output.ToArray();
     }
 }

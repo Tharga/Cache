@@ -2,9 +2,10 @@
 
 internal class FileService : IFileService
 {
-    public Task<string> GetDataAsync(string filename)
+    public async Task<string> GetDataAsync(string filename)
     {
-        return System.IO.File.ReadAllTextAsync(filename);
+        if (!System.IO.File.Exists(filename)) return null;
+        return await System.IO.File.ReadAllTextAsync(filename);
     }
 
     public Task SetDataAsync(string filename, string data)

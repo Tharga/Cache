@@ -86,19 +86,19 @@ internal class MongoDB : IMongoDB
         return SetUpdateTime(key, DateTime.MinValue);
     }
 
+    public async Task<bool> DropAsync<T>(Key key)
+    {
+        var collection = GetCollection();
+        var item = await collection.DeleteOneAsync(x => x.Id == key.Value, OneOption<CacheEntity>.SingleOrDefault); //TODO: Here we should not need a predicate
+        return item != null;
+    }
+
     private async Task<bool> SetUpdateTime(Key key, DateTime updateTime)
     {
         var collection = GetCollection();
         var update = new UpdateDefinitionBuilder<CacheEntity>().Set(x => x.UpdateTime, updateTime);
         var result = await collection.UpdateOneAsync(key.Value, update, OneOption<CacheEntity>.SingleOrDefault);
         return result.Before != null;
-    }
-
-    public async Task<bool> DropAsync(Key key)
-    {
-        var collection = GetCollection();
-        var item = await collection.DeleteOneAsync(x => x.Id == key.Value, OneOption<CacheEntity>.SingleOrDefault); //TODO: Here we should not need a predicate
-        return item != null;
     }
 
     public async Task<(bool Success, string Message)> CanConnectAsync()

@@ -37,7 +37,13 @@ internal class Redis : IRedis
 
         cacheMonitor.RequestEvictEvent += async (_, e) =>
         {
-            await DropAsync(e.Key);
+            var dropAsyncMethod = typeof(Redis)
+                .GetMethod("DropAsync")!
+                .MakeGenericMethod(e.Type);
+
+            var task = (Task)dropAsyncMethod.Invoke(this, [e.Key])!;
+            await task;
+
             cacheMonitor.Drop(e.Type, e.Key);
         };
     }
@@ -103,7 +109,7 @@ internal class Redis : IRedis
         return await _retryPolicy.ExecuteAsync(async () => await SetUpdateTime<T>(key, DateTime.MinValue));
     }
 
-    public async Task<bool> DropAsync(Key key)
+    public async Task<bool> DropAsync<T>(Key key)
     {
         return await _retryPolicy.ExecuteAsync(async () =>
         {

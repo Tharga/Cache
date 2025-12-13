@@ -12,17 +12,12 @@ internal class PersistRegistration : IPersistRegistration
         if (services.All(sd => sd.ServiceType != typeof(IExternalIpAddressService)))
         {
             //NOTE: MongoDB is not registered or is registered after the cache.
-            services.AddMongoDB(o => { });
+            throw new InvalidOperationException($"Call {nameof(MongoDbRegistrationExtensions.AddMongoDB)} before {nameof(Register)} cache.");
         }
         else
         {
-            //NOTE: MongoDB is registered before the cache.
-            //TODO: Here I just want to register the collection type, not run the entire registration, since that will mess upp other settings.
-            //There should be a method that does only that...
-            services.AddMongoDB(o =>
-            {
-                o.RegisterCollections = [new CollectionType<ICacheRepositoryCollection, CacheRepositoryCollection>()];
-            });
+            //var collection = new CollectionType<ICacheRepositoryCollection, CacheRepositoryCollection>();
+            services.RegisterMongoDBCollection<ICacheRepositoryCollection, CacheRepositoryCollection>();
         }
     }
 }

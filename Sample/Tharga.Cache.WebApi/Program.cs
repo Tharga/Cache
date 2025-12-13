@@ -2,7 +2,9 @@ using Quilt4Net.Toolkit.Api;
 using Tharga.Cache;
 using Tharga.Cache.MongoDB;
 using Tharga.Cache.Persist;
+using Tharga.Cache.Redis;
 using Tharga.Cache.Web;
+using Tharga.MongoDB;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,12 +12,17 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddMongoDB();
+
 builder.Services.AddCache(o =>
 {
     o.Default.DefaultFreshSpan = TimeSpan.FromSeconds(10);
     o.MaxConcurrentFetchCount = 1;
-    o.RegisterType<MemoryData, IMemory>();
 
+    //o.AddRedisDBOptions(s => s.ConnectionStringLoader);
+    //o.AddMongoDBOptions();
+
+    o.RegisterType<MemoryData, IMemory>();
     o.RegisterType<MongoDBData, IMongoDB>();
 
     //o.AddRedisDBOptions();

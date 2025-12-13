@@ -11,6 +11,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <ProjectReference Include="..\..\Tharga.Cache.File\Tharga.Cache.File.csproj" />
 	  <ProjectReference Include="..\..\Tharga.Cache\Tharga.Cache.csproj" />
 	</ItemGroup>
 

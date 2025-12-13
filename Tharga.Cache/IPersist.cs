@@ -20,8 +20,9 @@ public interface IPersist
     /// Returns true if something was removed.
     /// </summary>
     /// <param name="key"></param>
+    /// <param name="type"></param>
     /// <returns></returns>
-    Task<bool> DropAsync(Key key);
+    Task<bool> DropAsync<T>(Key key);
 
     Task<(bool Success, string Message)> CanConnectAsync();
 }

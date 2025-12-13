@@ -35,6 +35,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Redis", "Redis", "{5A7B21A0
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tharga.Cache.BlazorServer", "Sample\Tharga.Cache.BlazorServer\Tharga.Cache.BlazorServer.csproj", "{0152CAF9-5AA1-409D-BD4E-73BC64E14609}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tharga.Cache.File", "Tharga.Cache.File\Tharga.Cache.File.csproj", "{C66BF5B0-BA06-4E08-86CD-A670A7970553}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "File", "File", "{09A0B60C-AA2F-4EAD-B69B-0B051F53A758}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tharga.Cache.File.Tests", "Tharga.Cache.File.Tests\Tharga.Cache.File.Tests.csproj", "{05B3FF19-42EB-4EAE-BAD6-803B2EEDAA71}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -81,6 +87,14 @@ Global
 		{0152CAF9-5AA1-409D-BD4E-73BC64E14609}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0152CAF9-5AA1-409D-BD4E-73BC64E14609}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0152CAF9-5AA1-409D-BD4E-73BC64E14609}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C66BF5B0-BA06-4E08-86CD-A670A7970553}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C66BF5B0-BA06-4E08-86CD-A670A7970553}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C66BF5B0-BA06-4E08-86CD-A670A7970553}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C66BF5B0-BA06-4E08-86CD-A670A7970553}.Release|Any CPU.Build.0 = Release|Any CPU
+		{05B3FF19-42EB-4EAE-BAD6-803B2EEDAA71}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{05B3FF19-42EB-4EAE-BAD6-803B2EEDAA71}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{05B3FF19-42EB-4EAE-BAD6-803B2EEDAA71}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{05B3FF19-42EB-4EAE-BAD6-803B2EEDAA71}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -93,6 +107,8 @@ Global
 		{EC41C862-CDE7-91E0-CE92-B0A876469287} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{D7C77E40-0526-C2A3-BED1-51415ABCED45} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{0152CAF9-5AA1-409D-BD4E-73BC64E14609} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{C66BF5B0-BA06-4E08-86CD-A670A7970553} = {09A0B60C-AA2F-4EAD-B69B-0B051F53A758}
+		{05B3FF19-42EB-4EAE-BAD6-803B2EEDAA71} = {09A0B60C-AA2F-4EAD-B69B-0B051F53A758}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F2E1437A-D6A6-4B5B-805B-EC86998C4A4B}

@@ -94,7 +94,7 @@ internal class Redis : IRedis
             }
             else
             {
-                await db.StringSetAsync((string)key, item, cacheItem.FreshSpan);
+                await db.StringSetAsync((string)key, item, cacheItem.FreshSpan, false);
             }
         });
     }

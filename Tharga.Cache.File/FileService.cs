@@ -1,29 +1,64 @@
-﻿namespace Tharga.Cache.File;
+﻿using System.Collections.Concurrent;
+
+namespace Tharga.Cache.File;
 
 internal class FileService : IFileService
 {
+    private static readonly ConcurrentDictionary<string, SemaphoreSlim> _locks = new();
+
     public async Task<string> GetDataAsync(string filename)
     {
         if (!System.IO.File.Exists(filename)) return null;
-        return await System.IO.File.ReadAllTextAsync(filename);
+
+        var fileLock = GetLock(filename);
+        await fileLock.WaitAsync();
+
+        try
+        {
+            return await System.IO.File.ReadAllTextAsync(filename);
+        }
+        finally
+        {
+            fileLock.Release();
+        }
     }
 
-    public Task SetDataAsync(string filename, string data)
+    public async Task SetDataAsync(string filename, string data)
     {
-        var directoryName = Path.GetDirectoryName(filename) ?? throw new NullReferenceException($"Cannot find directory from '{filename}'.");
-        if (!Directory.Exists(directoryName))
-        {
-            Directory.CreateDirectory(directoryName);
-        }
+        var fileLock = GetLock(filename);
+        await fileLock.WaitAsync();
 
-        return System.IO.File.WriteAllTextAsync(filename, data);
+        try
+        {
+            var directoryName = Path.GetDirectoryName(filename) ?? throw new NullReferenceException($"Cannot find directory from '{filename}'.");
+            if (!Directory.Exists(directoryName)) Directory.CreateDirectory(directoryName);
+
+            await System.IO.File.WriteAllTextAsync(filename, data);
+        }
+        finally
+        {
+            fileLock.Release();
+        }
     }
 
     public async Task<bool> DeleteDataAsync(string filename)
     {
-        if (!System.IO.File.Exists(filename)) return true;
-        System.IO.File.Delete(filename);
-        return !System.IO.File.Exists(filename);
+        var fileLock = GetLock(filename);
+        await fileLock.WaitAsync();
+
+        try
+        {
+            var directoryName = Path.GetDirectoryName(filename) ?? throw new NullReferenceException($"Cannot find directory from '{filename}'.");
+            if (!Directory.Exists(directoryName)) Directory.CreateDirectory(directoryName);
+
+            if (!System.IO.File.Exists(filename)) return true;
+            System.IO.File.Delete(filename);
+            return !System.IO.File.Exists(filename);
+        }
+        finally
+        {
+            fileLock.Release();
+        }
     }
 
     public async Task<(bool Success, string Message)> CanConnectAsync(string filename)
@@ -38,5 +73,10 @@ internal class FileService : IFileService
         {
             return (false, e.Message);
         }
+    }
+
+    private static SemaphoreSlim GetLock(string filename)
+    {
+        return _locks.GetOrAdd(filename, _ => new SemaphoreSlim(1, 1));
     }
 }

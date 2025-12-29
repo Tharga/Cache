@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using System.Diagnostics;
 using Tharga.Cache.Persist;
 
 namespace Tharga.Cache;
@@ -29,6 +30,14 @@ public record CacheOptions
         if (!_typeOptions.TryAdd(typeof(TCache), typeOptions)) throw new InvalidOperationException($"The type '{typeof(TCache).Name}' has already been registered.");
     }
 
+    internal void AddType(Type type, CacheTypeOptions typeOptions)
+    {
+        if (!_typeOptions.TryAdd(type, typeOptions))
+        {
+            throw new InvalidOperationException($"The type '{type.Name}' has already been registered.");
+        }
+    }
+
     internal CacheTypeOptions Get<T>()
     {
         return _typeOptions.GetValueOrDefault(typeof(T))
@@ -48,6 +57,7 @@ public record CacheOptions
     public CacheTypeOptions Default { get; set; }
 
     internal IEnumerable<Type> GetConfiguredPersistTypes => _typeOptions.Values.Select(x => x.PersistType).Distinct();
+    internal Dictionary<Type, CacheTypeOptions> GetRegistered() => _typeOptions;
 
     internal void RegisterConfigurations(IServiceCollection serviceCollection)
     {

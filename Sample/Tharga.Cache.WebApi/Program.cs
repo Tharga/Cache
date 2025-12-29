@@ -1,8 +1,7 @@
-using Quilt4Net.Toolkit.Api;
+//using Quilt4Net.Toolkit.Api;
 using Tharga.Cache;
 using Tharga.Cache.MongoDB;
 using Tharga.Cache.Persist;
-using Tharga.Cache.Redis;
 using Tharga.Cache.Web;
 using Tharga.MongoDB;
 
@@ -40,11 +39,11 @@ builder.Services.AddCache(o =>
 
 builder.Services.AddHostedService<CacheMonitorBackgroundService>();
 
-builder.Services.AddQuilt4NetApi(o =>
-{
-    //o.ShowInOpenApi = !Debugger.IsAttached;
-    o.AddComponentService<ComponentService>();
-});
+//builder.Services.AddQuilt4NetApi(o =>
+//{
+//    //o.ShowInOpenApi = !Debugger.IsAttached;
+//    o.AddComponentService<ComponentService>();
+//});
 
 var app = builder.Build();
 
@@ -60,7 +59,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.UseQuilt4NetApi();
+//app.UseQuilt4NetApi();
 
 app.Run();
 

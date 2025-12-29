@@ -9,6 +9,8 @@ namespace Tharga.Cache;
 
 public static class CacheRegistrationExtensions
 {
+    private static readonly Dictionary<Type, CacheTypeOptions> _configuredPersistTypes = new();
+
     public static void AddCache(this IServiceCollection serviceCollection, Action<CacheOptions> options = null)
     {
         var o = new CacheOptions
@@ -16,6 +18,8 @@ public static class CacheRegistrationExtensions
             Default = CacheOptions.BuildDefault()
         };
         options?.Invoke(o);
+
+        AppendPreviousRegistrations(o);
 
         serviceCollection.AddSingleton(Options.Create(o));
 
@@ -88,6 +92,27 @@ public static class CacheRegistrationExtensions
         InvokeAllPersistRegistrations(serviceCollection);
 
         o.RegisterConfigurations(serviceCollection);
+    }
+
+    /// <summary>
+    /// If AddCache are called several times, this feature appends all registrations so they can be used in the end.
+    /// </summary>
+    /// <param name="o"></param>
+    /// <exception cref="InvalidOperationException"></exception>
+    private static void AppendPreviousRegistrations(CacheOptions o)
+    {
+        var previouslyRegisteredTypes = _configuredPersistTypes.ToArray();
+        foreach (var item in o.GetRegistered())
+        {
+            if (!_configuredPersistTypes.TryAdd(item.Key, item.Value))
+            {
+                throw new InvalidOperationException($"The type {item.Key.Name} has already been registered.");
+            }
+        }
+        foreach (var previouslyRegisteredType in previouslyRegisteredTypes)
+        {
+            o.AddType(previouslyRegisteredType.Key, previouslyRegisteredType.Value);
+        }
     }
 
     private static void RegisterPersist(IServiceCollection serviceCollection)

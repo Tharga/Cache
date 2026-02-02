@@ -1,10 +1,11 @@
 trigger:
 - master
 
-name: 0.2.$(Rev:r)
+name: 0.3.0-pre.$(Rev:r)
 
 pool:
-  vmImage: 'windows-latest'
+  #vmImage: 'windows-latest'
+  name: 'Default'
 
 variables:
   buildPlatform: 'Any CPU'

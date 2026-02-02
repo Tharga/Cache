@@ -1,4 +1,3 @@
-//using Quilt4Net.Toolkit.Api;
 using Tharga.Cache;
 using Tharga.Cache.MongoDB;
 using Tharga.Cache.Persist;
@@ -11,7 +10,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddMongoDB();
+builder.AddMongoDB();
 
 builder.Services.AddCache(o =>
 {

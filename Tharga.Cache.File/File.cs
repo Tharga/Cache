@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Options;
 using System.Diagnostics;
 using System.Reflection;
+using Microsoft.Extensions.Hosting;
 using Tharga.Cache.Core;
 
 namespace Tharga.Cache.File;
@@ -9,12 +10,14 @@ internal class File : IFile
 {
     private readonly IFileService _fileService;
     private readonly IFileFormatService _fileFormatService;
+    private readonly IHostEnvironment _hostEnvironment;
     private readonly FileCacheOptions _options;
 
-    public File(IManagedCacheMonitor cacheMonitor, IFileService fileService, IFileFormatService fileFormatService, IOptions<FileCacheOptions> options)
+    public File(IManagedCacheMonitor cacheMonitor, IFileService fileService, IFileFormatService fileFormatService, IHostEnvironment hostEnvironment, IOptions<FileCacheOptions> options)
     {
         _fileService = fileService;
         _fileFormatService = fileFormatService;
+        _hostEnvironment = hostEnvironment;
         _options = options.Value;
 
         cacheMonitor.RequestEvictEvent += async (_, e) =>
@@ -121,6 +124,7 @@ internal class File : IFile
 
         var combined = parts
             .Concat(names)
+            .Concat([_hostEnvironment.IsProduction() ? null : _hostEnvironment.EnvironmentName])
             .Concat(["Cache", type?.Name, $"{key.Value}.{fileExtension}"])
             .Where(x => !string.IsNullOrEmpty(x))
             .ToArray();

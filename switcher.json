@@ -1,0 +1,8 @@
+{
+  "solution": "Tharga.Cache.sln",
+  "solutionFolder": null,
+  "mappings": {
+    "Tharga.MongoDB": "../MongoDB/Tharga.MongoDB/Tharga.MongoDB.csproj"
+  },
+  "removeProjects": true
+}

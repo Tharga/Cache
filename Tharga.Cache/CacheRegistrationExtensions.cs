@@ -44,18 +44,18 @@ public static class CacheRegistrationExtensions
         serviceCollection.AddSingleton<ICache>(s =>
         {
             throw new NotImplementedException($"Direct use of {nameof(ICache)} has not yet been implemented.");
-            var cacheMonitor = s.GetService<IManagedCacheMonitor>();
-            var persistLoader = s.GetService<IPersistLoader>();
-            var fetchQueue = s.GetService<IFetchQueue>();
-            return new GenericCache(cacheMonitor, persistLoader, fetchQueue, o);
+            //var cacheMonitor = s.GetService<IManagedCacheMonitor>();
+            //var persistLoader = s.GetService<IPersistLoader>();
+            //var fetchQueue = s.GetService<IFetchQueue>();
+            //return new GenericCache(cacheMonitor, persistLoader, fetchQueue, o);
         });
         serviceCollection.AddSingleton<ITimeCache>(s =>
         {
             throw new NotImplementedException($"Direct use of {nameof(ITimeCache)} has not yet been implemented.");
-            var cacheMonitor = s.GetService<IManagedCacheMonitor>();
-            var persistLoader = s.GetService<IPersistLoader>();
-            var fetchQueue = s.GetService<IFetchQueue>();
-            return new GenericTimeCache(cacheMonitor, persistLoader, fetchQueue, o);
+            //var cacheMonitor = s.GetService<IManagedCacheMonitor>();
+            //var persistLoader = s.GetService<IPersistLoader>();
+            //var fetchQueue = s.GetService<IFetchQueue>();
+            //return new GenericTimeCache(cacheMonitor, persistLoader, fetchQueue, o);
         });
         serviceCollection.AddSingleton<IEternalCache>(s =>
         {

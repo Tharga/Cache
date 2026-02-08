@@ -1,7 +1,8 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Tharga.Cache.Web;
 
-namespace Tharga.Cache.Web.Controllers;
+namespace Tharga.Cache.WebApi.Controllers;
 
 [ApiController]
 [Route("[controller]")]
@@ -13,12 +14,10 @@ public class MoreWeatherForecastController : ControllerBase
     ];
 
     private readonly ITimeToLiveCache _ttlCache;
-    private readonly ILogger<WeatherForecastController> _logger;
 
-    public MoreWeatherForecastController(ITimeToLiveCache ttlCache, ILogger<WeatherForecastController> logger)
+    public MoreWeatherForecastController(ITimeToLiveCache ttlCache)
     {
         _ttlCache = ttlCache;
-        _logger = logger;
     }
 
     [HttpGet("cache_same")]
@@ -39,7 +38,7 @@ public class MoreWeatherForecastController : ControllerBase
         return await GetDataAsync(null, 10, TimeSpan.FromSeconds(2));
     }
 
-    private async Task<IActionResult> GetDataAsync(string? cacheKey, int count = 3, TimeSpan? delayPerItem = null)
+    private async Task<IActionResult> GetDataAsync(string cacheKey, int count = 3, TimeSpan? delayPerItem = null)
     {
         var sw = Stopwatch.StartNew();
 
@@ -61,7 +60,7 @@ public class MoreWeatherForecastController : ControllerBase
 
         sw.Stop();
 
-        Response.Headers.Add("LoadTime", $"{sw.Elapsed.TotalMilliseconds}ms");
+        Response.Headers.TryAdd("LoadTime", $"{sw.Elapsed.TotalMilliseconds}ms");
 
         return Ok(response);
     }

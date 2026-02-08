@@ -1,16 +1,24 @@
 trigger:
 - master
 
-name: 0.3.0-pre.$(Rev:r)
-
 pool:
   #vmImage: 'windows-latest'
   name: 'Default'
 
 variables:
-  buildPlatform: 'Any CPU'
-  buildConfiguration: 'Release'
-  BQC.ForceNewBaseline: true
+- name: runNamePrefix
+  ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/master') }}:
+    value: '0.3.'
+  ${{ else }}:
+    value: '0.3.0-merge.'
+- name: buildPlatform
+  value: 'Any CPU'
+- name: buildConfiguration
+  value: 'Release'
+- name: BQC.ForceNewBaseline
+  value: 'false'
+
+name: $(runNamePrefix)$(Rev:r)
 
 stages:
 - stage: Build

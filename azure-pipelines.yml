@@ -127,6 +127,9 @@ stages:
   - job: Release
     displayName: Release
 
+    workspace:
+      clean: all
+
     steps:
     - download: current
       artifact: drop
@@ -137,7 +140,7 @@ stages:
       displayName: 'Push .nupkg to NuGet.org (with symbols)'
       inputs:
         command: 'push'
-        packagesToPush: '$(Pipeline.Workspace)/**/*.symbols.nupkg'
+        packagesToPush: '$(Pipeline.Workspace)/drop/**/*.symbols.nupkg'
         nuGetFeedType: 'external'
         publishFeedCredentials: 'Nuget.org'
 

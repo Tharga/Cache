@@ -6,19 +6,10 @@ pool:
   name: 'Default'
 
 variables:
-- name: runNamePrefix
-  ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/master') }}:
-    value: '0.3.'
-  ${{ else }}:
-    value: '0.3.0-merge.'
-- name: buildPlatform
-  value: 'Any CPU'
-- name: buildConfiguration
-  value: 'Release'
-- name: BQC.ForceNewBaseline
-  value: 'false'
-
-name: $(runNamePrefix)$(Rev:r)
+  buildPlatform: 'Any CPU'
+  buildConfiguration: 'Release'
+  BQC.ForceNewBaseline: 'false'
+  majorMinor: '0.3'
 
 stages:
 - stage: Build
@@ -28,6 +19,12 @@ stages:
     displayName: Build and Test
 
     steps:
+    - checkout: self
+
+    - template: buildnumber.yml
+      parameters:
+        majorMinor: ${{ variables.majorMinor }}
+
     - task: UseDotNet@2
       displayName: 'Use .NET 10'
       inputs:

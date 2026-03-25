@@ -41,7 +41,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="Polly" Version="8.6.6" />
-		<PackageReference Include="StackExchange.Redis" Version="2.12.4" />
+		<PackageReference Include="StackExchange.Redis" Version="2.12.8" />
 		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.201">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

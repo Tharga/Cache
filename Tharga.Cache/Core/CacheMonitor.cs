@@ -20,7 +20,7 @@ internal class CacheMonitor : IManagedCacheMonitor
     public event EventHandler<DataSetEventArgs> DataSetEvent;
     public event EventHandler<DataDropEventArgs> DataDropEvent;
 
-    public void Set<T>(Type type, Key key, CacheItem<T> item, bool staleWhileRevalidate)
+    public void Set<T>(Type type, Key key, CacheItem<T> item, bool staleWhileRevalidate, bool returnDefaultOnFirstLoad)
     {
         var size = item.Data.ToSize();
 
@@ -28,6 +28,7 @@ internal class CacheMonitor : IManagedCacheMonitor
         {
             Type = type,
             StaleWhileRevalidate = staleWhileRevalidate,
+            ReturnDefaultOnFirstLoad = returnDefaultOnFirstLoad,
             Items = new ConcurrentDictionary<string, CacheItemInfo>(new Dictionary<string, CacheItemInfo>
             {
                 {

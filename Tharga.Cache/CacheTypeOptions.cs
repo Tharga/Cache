@@ -7,6 +7,13 @@ public record CacheTypeOptions
     /// When the data is updated the event DataSetEvent will be fired and the method 'xx'.
     /// </summary>
     public bool StaleWhileRevalidate { get; set; }
+
+    /// <summary>
+    /// If this is set to true and there is no cached data at all (first load),
+    /// default(T) will be returned immediately and the factory will run in the background.
+    /// Works independently of <see cref="StaleWhileRevalidate"/>.
+    /// </summary>
+    public bool ReturnDefaultOnFirstLoad { get; set; }
     public long? MaxSize { get; set; }
     public int? MaxCount { get; set; }
     public EvictionPolicy EvictionPolicy { get; set; } = EvictionPolicy.FirstInFirstOut;

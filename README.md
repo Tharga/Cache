@@ -5,6 +5,27 @@
 ![Nuget](https://img.shields.io/nuget/dt/Tharga.Cache)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
+## Cache Type Options
+
+When registering a cache type, you can configure the following options:
+
+```csharp
+builder.Services.RegisterCache(o =>
+{
+    o.RegisterType<string, IMemory>(s =>
+    {
+        s.StaleWhileRevalidate = true;
+        s.ReturnDefaultOnFirstLoad = true;
+        s.DefaultFreshSpan = TimeSpan.FromSeconds(30);
+    });
+});
+```
+
+- **StaleWhileRevalidate** — When `true`, stale data is returned immediately while fresh data is fetched in the background.
+- **ReturnDefaultOnFirstLoad** — When `true`, returns `default(T)` immediately on the first cache miss instead of blocking. The factory runs in the background and populates the cache for subsequent reads. Works independently of `StaleWhileRevalidate`.
+
+> **Note:** `IMemoryWithRedis` is deprecated. Use `IRedis` or `IMemory` explicitly instead.
+
 ## Get Started
 
 Register the service

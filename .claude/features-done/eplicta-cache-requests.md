@@ -15,12 +15,15 @@ Mark `IMemoryWithRedis` and `MemoryWithRedis` as `[Obsolete]` — the type coupl
 Add a `ReturnDefaultOnFirstLoad` property to `CacheTypeOptions` that returns `default(T)` immediately on the first cache miss instead of blocking. The factory runs in the background. Works independently of `StaleWhileRevalidate`.
 
 ## Acceptance Criteria
-- [ ] `IMemoryWithRedis` and `MemoryWithRedis` are marked `[Obsolete]`
-- [ ] `ReturnDefaultOnFirstLoad` option exists on `CacheTypeOptions`
-- [ ] When enabled, first cache miss returns `default(T)` and triggers background load
-- [ ] Works independently of `StaleWhileRevalidate` (all 4 combinations valid)
-- [ ] Tests cover all scenarios
-- [ ] All existing tests pass
+- [x] `IMemoryWithRedis` and `MemoryWithRedis` are marked `[Obsolete]`
+- [x] `ReturnDefaultOnFirstLoad` option exists on `CacheTypeOptions`
+- [x] When enabled, first cache miss returns `default(T)` and triggers background load
+- [x] Works independently of `StaleWhileRevalidate` (all 4 combinations valid)
+- [x] Tests cover all scenarios
+- [x] All existing tests pass
 
 ## Done Condition
 Both requests implemented, all tests pass, user confirms done.
+
+## Completed
+2026-03-27 on branch `feature/eplicta-cache-requests`

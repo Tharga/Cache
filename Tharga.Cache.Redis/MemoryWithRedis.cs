@@ -3,6 +3,7 @@ using Tharga.Cache.Persist;
 
 namespace Tharga.Cache.Redis;
 
+[Obsolete("MemoryWithRedis couples two storage concerns. Use Redis or Memory explicitly instead.")]
 internal class MemoryWithRedis : IMemoryWithRedis, IAsyncDisposable, IDisposable
 {
     private readonly IMemory _memory;

@@ -5,7 +5,6 @@
   },  
   "permissions": {
     "allow": [
-      "Bash(git:*)",
       "Bash(cd:*)",
       "Bash(dotnet:*)",
       "Bash(mkdir:*)",
@@ -17,7 +16,13 @@
       "Skill(update-config:*)",
       "Bash(grep -r [Inject] --include=*.razor.cs --include=*.cs .)",
       "Bash(rm .claude/feature.md)",
-      "Bash(rm .claude/plan.md)"
+      "Bash(rm .claude/plan.md)",
+      "Bash(xargs grep:*)",
+      "Bash(git checkout:*)",
+      "Bash(dotnet test:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git merge:*)"
     ],
     "additionalDirectories": [
     ]

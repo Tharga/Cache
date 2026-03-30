@@ -147,6 +147,8 @@ await timeCache.SetAsync<MyData>("key", myData, TimeSpan.FromHours(1));
 
 By default, all data is cached in memory (`IMemory`). You can configure specific types to use a different backend.
 
+> **Note:** `IMemoryWithRedis` is deprecated. Use `IRedis` or `IMemory` explicitly instead.
+
 ### Redis
 
 ```bash
@@ -242,6 +244,7 @@ builder.Services.AddCache(o =>
 |--------|---------|-------------|
 | `DefaultFreshSpan` | `null` | Default TTL when not specified per call |
 | `StaleWhileRevalidate` | `false` | Return stale data immediately while refreshing in the background |
+| `ReturnDefaultOnFirstLoad` | `false` | Return `default(T)` on first cache miss instead of blocking; factory runs in the background |
 | `MaxCount` | `null` | Maximum number of cached items for this type |
 | `MaxSize` | `null` | Maximum total size in bytes for this type |
 | `EvictionPolicy` | `FirstInFirstOut` | Strategy when `MaxCount` or `MaxSize` is exceeded |

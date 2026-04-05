@@ -38,6 +38,11 @@ public record CacheOptions
         }
     }
 
+    internal bool TryAddType(Type type, CacheTypeOptions typeOptions)
+    {
+        return _typeOptions.TryAdd(type, typeOptions);
+    }
+
     internal CacheTypeOptions Get<T>()
     {
         return _typeOptions.GetValueOrDefault(typeof(T))

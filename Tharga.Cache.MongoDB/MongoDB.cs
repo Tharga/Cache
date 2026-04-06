@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using System.Diagnostics;
 using System.Text.Json;
 using MongoDB.Driver;
+using Tharga.Cache.Core;
 using Tharga.MongoDB;
 
 namespace Tharga.Cache.MongoDB;
@@ -13,11 +14,23 @@ internal class MongoDB : IMongoDB
     private readonly ICollectionProvider _collectionProvider;
     private readonly MongoDBCacheOptions _options;
 
-    public MongoDB(ICollectionProvider collectionProvider, IOptions<MongoDBCacheOptions> options, ILogger<MongoDB> logger)
+    public MongoDB(ICollectionProvider collectionProvider, IManagedCacheMonitor cacheMonitor, IOptions<MongoDBCacheOptions> options, ILogger<MongoDB> logger)
     {
         _collectionProvider = collectionProvider;
         _logger = logger;
         _options = options.Value;
+
+        cacheMonitor.RequestEvictEvent += async (_, e) =>
+        {
+            var dropAsyncMethod = typeof(MongoDB)
+                .GetMethod("DropAsync")!
+                .MakeGenericMethod(e.Type);
+
+            var task = (Task)dropAsyncMethod.Invoke(this, [e.Key])!;
+            await task;
+
+            cacheMonitor.Drop(e.Type, e.Key);
+        };
     }
 
     public async Task<CacheItem<T>> GetAsync<T>(Key key)
@@ -40,6 +53,7 @@ internal class MongoDB : IMongoDB
                 Data = JsonSerializer.Deserialize<T>(item.Data),
                 FreshSpan = item.FreshSpan,
                 UpdateTime = item.UpdateTime,
+                LoadDuration = item.LoadDuration,
             };
         }
 
@@ -69,7 +83,8 @@ internal class MongoDB : IMongoDB
             CreateTime = cacheItem.CreateTime,
             FreshSpan = cacheItem.FreshSpan,
             UpdateTime = cacheItem.UpdateTime,
-            StaleWhileRevalidate = staleWhileRevalidate
+            StaleWhileRevalidate = staleWhileRevalidate,
+            LoadDuration = cacheItem.LoadDuration
         };
 
         var collection = GetCollection();

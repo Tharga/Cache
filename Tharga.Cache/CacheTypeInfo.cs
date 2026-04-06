@@ -6,5 +6,6 @@ public record CacheTypeInfo
 {
     public required Type Type { get; init; }
     public required bool StaleWhileRevalidate { get; init; }
+    public required bool ReturnDefaultOnFirstLoad { get; init; }
     public required ConcurrentDictionary<string, CacheItemInfo> Items { get; init; }
 }

@@ -20,7 +20,7 @@ internal class CacheMonitor : IManagedCacheMonitor
     public event EventHandler<DataSetEventArgs> DataSetEvent;
     public event EventHandler<DataDropEventArgs> DataDropEvent;
 
-    public void Set<T>(Type type, Key key, CacheItem<T> item, bool staleWhileRevalidate)
+    public void Set<T>(Type type, Key key, CacheItem<T> item, bool staleWhileRevalidate, bool returnDefaultOnFirstLoad)
     {
         var size = item.Data.ToSize();
 
@@ -28,13 +28,15 @@ internal class CacheMonitor : IManagedCacheMonitor
         {
             Type = type,
             StaleWhileRevalidate = staleWhileRevalidate,
+            ReturnDefaultOnFirstLoad = returnDefaultOnFirstLoad,
             Items = new ConcurrentDictionary<string, CacheItemInfo>(new Dictionary<string, CacheItemInfo>
             {
                 {
                     key, new CacheItemInfo(item.CreateTime)
                     {
                         Size = size,
-                        FreshSpan = item.FreshSpan
+                        FreshSpan = item.FreshSpan,
+                        LoadDuration = item.LoadDuration
                     }
                 }
             })
@@ -43,7 +45,8 @@ internal class CacheMonitor : IManagedCacheMonitor
             b.Items.AddOrUpdate(key, new CacheItemInfo(item.CreateTime)
             {
                 Size = size,
-                FreshSpan = item.FreshSpan
+                FreshSpan = item.FreshSpan,
+                LoadDuration = item.LoadDuration
             }, (_, c) =>
             {
                 c.SetUpdated(item.CreateTime, item.UpdateTime);
@@ -53,6 +56,41 @@ internal class CacheMonitor : IManagedCacheMonitor
         });
 
         DataSetEvent?.Invoke(this, new DataSetEventArgs(key, item.Data));
+    }
+
+    public void Track<T>(Type type, Key key, CacheItem<T> item, bool staleWhileRevalidate, bool returnDefaultOnFirstLoad)
+    {
+        if (_caches.ContainsKey(type) && _caches[type].Items.ContainsKey(key))
+            return;
+
+        var size = item.Data.ToSize();
+
+        _caches.AddOrUpdate(type, new CacheTypeInfo
+        {
+            Type = type,
+            StaleWhileRevalidate = staleWhileRevalidate,
+            ReturnDefaultOnFirstLoad = returnDefaultOnFirstLoad,
+            Items = new ConcurrentDictionary<string, CacheItemInfo>(new Dictionary<string, CacheItemInfo>
+            {
+                {
+                    key, new CacheItemInfo(item.CreateTime)
+                    {
+                        Size = size,
+                        FreshSpan = item.FreshSpan,
+                        LoadDuration = item.LoadDuration
+                    }
+                }
+            })
+        }, (_, b) =>
+        {
+            b.Items.TryAdd(key, new CacheItemInfo(item.CreateTime)
+            {
+                Size = size,
+                FreshSpan = item.FreshSpan,
+                LoadDuration = item.LoadDuration
+            });
+            return b;
+        });
     }
 
     public void Accessed(Type type, Key key, bool buyMoreTime)

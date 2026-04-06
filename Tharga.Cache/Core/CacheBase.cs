@@ -40,17 +40,27 @@ internal abstract class CacheBase : ICache
 
         if (result.IsValid())
         {
+            TrackIfNeeded(key, result);
             await OnGetAsync<T>(key);
             return (result.GetData(), true);
         }
 
-        if (GetTypeOptions<T>().StaleWhileRevalidate && result != null)
+        var typeOptions = GetTypeOptions<T>();
+
+        if (typeOptions.StaleWhileRevalidate && result != null)
         {
+            TrackIfNeeded(key, result);
             var response = result.GetData();
             await OnGetAsync<T>(key);
             BackgroundLoad(key, fetch, callback, fs);
 
             return (response, false);
+        }
+
+        if (typeOptions.ReturnDefaultOnFirstLoad && result == null)
+        {
+            BackgroundLoad(key, fetch, callback, fs);
+            return (default, false);
         }
 
         var loadResponse = await _fetchQueue.LoadData(key, fetch, fs, FetchCallback);
@@ -178,7 +188,8 @@ internal abstract class CacheBase : ICache
         await EvictItems(item.Data);
 
         DataSetEvent?.Invoke(this, new DataSetEventArgs(key, item.Data));
-        _cacheMonitor.Set(typeof(T), key, item, staleWhileRevalidate);
+        var returnDefaultOnFirstLoad = GetTypeOptions<T>().ReturnDefaultOnFirstLoad;
+        _cacheMonitor.Set(typeof(T), key, item, staleWhileRevalidate, returnDefaultOnFirstLoad);
     }
 
     protected virtual Task OnGetAsync<T>(Key key)
@@ -203,6 +214,12 @@ internal abstract class CacheBase : ICache
     {
         DataDropEvent?.Invoke(this, new DataDropEventArgs(key));
         _cacheMonitor.Drop(typeof(T), key);
+    }
+
+    private void TrackIfNeeded<T>(Key key, CacheItem<T> item)
+    {
+        var typeOptions = GetTypeOptions<T>();
+        _cacheMonitor.Track(typeof(T), key, item, typeOptions.StaleWhileRevalidate, typeOptions.ReturnDefaultOnFirstLoad);
     }
 
     private IPersist GetPersist<T>()

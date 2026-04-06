@@ -12,9 +12,9 @@ public record CacheItemInfo
         _createTime = createTime;
     }
 
-    //TODO: Add information about load time
     public required int Size { get; init; }
     public required TimeSpan? FreshSpan { get; init; }
+    public TimeSpan? LoadDuration { get; init; }
     public DateTime CreateTime => _createTime;
     public DateTime? UpdateTime => _updateTime;
     public DateTime? ExpireTime => FreshSpan.HasValue && FreshSpan.Value != TimeSpan.MaxValue ? (UpdateTime ?? CreateTime).Add(FreshSpan.Value) : null;

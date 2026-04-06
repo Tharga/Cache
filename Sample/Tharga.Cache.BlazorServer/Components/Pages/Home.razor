@@ -18,13 +18,21 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _data = await TimeToLiveCache.GetAsync("CacheKey", () => Task.FromResult("Initial data expires after 3 seconds. Wait 3 seconds and press 'Load Data' to get new data from cache."));
+        _data = await TimeToLiveCache.GetAsync("CacheKey", async () =>
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(500));
+            return "Initial data expires after 3 seconds. Wait 3 seconds and press 'Load Data' to get new data from cache.";
+        });
         await base.OnInitializedAsync();
     }
 
     private async Task LoadDataAsync(MouseEventArgs arg)
     {
-        _data = await TimeToLiveCache.GetAsync("CacheKey", () => Task.FromResult("New data."));
+        _data = await TimeToLiveCache.GetAsync("CacheKey", async () =>
+        {
+            await Task.Delay(TimeSpan.FromSeconds(1));
+            return "New data.";
+        });
         StateHasChanged();
     }
 

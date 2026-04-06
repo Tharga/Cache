@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using Tharga.Cache.Persist;
 
@@ -36,10 +37,12 @@ internal class FetchQueue : IFetchQueue
                     {
                         try
                         {
+                            var sw = Stopwatch.StartNew();
                             var result = await fetch();
+                            sw.Stop();
 
                             var staleWhileRevalidate = _options.Get<T>().StaleWhileRevalidate;
-                            var item = CacheItemBuilder.BuildCacheItem(key.KeyParts, result, freshSpan);
+                            var item = CacheItemBuilder.BuildCacheItem(key.KeyParts, result, freshSpan, sw.Elapsed);
                             await fetchCallback.Invoke(key, item, staleWhileRevalidate);
 
                             tcs.TrySetResult(result!);

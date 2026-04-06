@@ -3,5 +3,5 @@
 public record MongoDBCacheOptions
 {
     public string CollectionName { get; set; } = "_cache";
-    public string ConfigurationName { get; set; }
+    public string ConfigurationName { get; set; } = "Default";
 }

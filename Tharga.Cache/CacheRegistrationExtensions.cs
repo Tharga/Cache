@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Reflection;
@@ -11,6 +12,11 @@ public static class CacheRegistrationExtensions
 {
     private static readonly Dictionary<Type, CacheTypeOptions> _configuredPersistTypes = new();
 
+    internal static void ResetRegistrations()
+    {
+        _configuredPersistTypes.Clear();
+    }
+
     public static void AddCache(this IServiceCollection serviceCollection, Action<CacheOptions> options = null)
     {
         var o = new CacheOptions
@@ -21,17 +27,19 @@ public static class CacheRegistrationExtensions
 
         AppendPreviousRegistrations(o);
 
+        // Replace IOptions<CacheOptions> on each call so it carries the merged type registrations.
+        serviceCollection.RemoveAll<IOptions<CacheOptions>>();
         serviceCollection.AddSingleton(Options.Create(o));
 
-        serviceCollection.AddSingleton<ICacheMonitor>(s => s.GetService<IManagedCacheMonitor>());
-        serviceCollection.AddSingleton<IFetchQueue>(s =>
+        serviceCollection.TryAddSingleton<ICacheMonitor>(s => s.GetService<IManagedCacheMonitor>());
+        serviceCollection.TryAddSingleton<IFetchQueue>(s =>
         {
             var cacheMonitor = s.GetService<IManagedCacheMonitor>();
             var loggerFactory = s.GetService<ILoggerFactory>();
             var logger = loggerFactory?.CreateLogger<FetchQueue>();
             return new FetchQueue(cacheMonitor, o, logger);
         });
-        serviceCollection.AddSingleton<IManagedCacheMonitor>(s =>
+        serviceCollection.TryAddSingleton<IManagedCacheMonitor>(s =>
         {
             var persistLoader = s.GetService<IPersistLoader>();
             var cacheMonitor = new CacheMonitor(persistLoader, o);
@@ -41,44 +49,36 @@ public static class CacheRegistrationExtensions
         RegisterPersist(serviceCollection);
         RegisterAllIPersistImplementations(serviceCollection, o);
 
-        serviceCollection.AddSingleton<ICache>(s =>
+        serviceCollection.TryAddSingleton<ICache>(s =>
         {
             throw new NotImplementedException($"Direct use of {nameof(ICache)} has not yet been implemented.");
-            //var cacheMonitor = s.GetService<IManagedCacheMonitor>();
-            //var persistLoader = s.GetService<IPersistLoader>();
-            //var fetchQueue = s.GetService<IFetchQueue>();
-            //return new GenericCache(cacheMonitor, persistLoader, fetchQueue, o);
         });
-        serviceCollection.AddSingleton<ITimeCache>(s =>
+        serviceCollection.TryAddSingleton<ITimeCache>(s =>
         {
             throw new NotImplementedException($"Direct use of {nameof(ITimeCache)} has not yet been implemented.");
-            //var cacheMonitor = s.GetService<IManagedCacheMonitor>();
-            //var persistLoader = s.GetService<IPersistLoader>();
-            //var fetchQueue = s.GetService<IFetchQueue>();
-            //return new GenericTimeCache(cacheMonitor, persistLoader, fetchQueue, o);
         });
-        serviceCollection.AddSingleton<IEternalCache>(s =>
+        serviceCollection.TryAddSingleton<IEternalCache>(s =>
         {
             var cacheMonitor = s.GetService<IManagedCacheMonitor>();
             var persistLoader = s.GetService<IPersistLoader>();
             var fetchQueue = s.GetService<IFetchQueue>();
             return new EternalCache(cacheMonitor, persistLoader, fetchQueue, o);
         });
-        serviceCollection.AddSingleton<ITimeToLiveCache>(s =>
+        serviceCollection.TryAddSingleton<ITimeToLiveCache>(s =>
         {
             var cacheMonitor = s.GetService<IManagedCacheMonitor>();
             var persistLoader = s.GetService<IPersistLoader>();
             var fetchQueue = s.GetService<IFetchQueue>();
             return new TimeToLiveCache(cacheMonitor, persistLoader, fetchQueue, o);
         });
-        serviceCollection.AddSingleton<ITimeToIdleCache>(s =>
+        serviceCollection.TryAddSingleton<ITimeToIdleCache>(s =>
         {
             var cacheMonitor = s.GetService<IManagedCacheMonitor>();
             var persistLoader = s.GetService<IPersistLoader>();
             var fetchQueue = s.GetService<IFetchQueue>();
             return new TimeToIdleCache(cacheMonitor, persistLoader, fetchQueue, o);
         });
-        serviceCollection.AddScoped<IScopeCache>(s =>
+        serviceCollection.TryAddScoped<IScopeCache>(s =>
         {
             var cacheMonitor = s.GetService<IManagedCacheMonitor>();
             var persistLoader = s.GetService<IPersistLoader>();
@@ -86,8 +86,11 @@ public static class CacheRegistrationExtensions
             return new EternalCache(cacheMonitor, persistLoader, fetchQueue, o);
         });
 
-        serviceCollection.AddSingleton<IWatchDogService, WatchDogService>();
-        serviceCollection.AddHostedService<WatchDogService>();
+        serviceCollection.TryAddSingleton<IWatchDogService, WatchDogService>();
+        if (!serviceCollection.Any(s => s.ServiceType == typeof(Microsoft.Extensions.Hosting.IHostedService) && s.ImplementationType == typeof(WatchDogService)))
+        {
+            serviceCollection.AddHostedService<WatchDogService>();
+        }
 
         InvokeAllPersistRegistrations(serviceCollection);
 
@@ -95,31 +98,27 @@ public static class CacheRegistrationExtensions
     }
 
     /// <summary>
-    /// If AddCache are called several times, this feature appends all registrations so they can be used in the end.
+    /// If AddCache is called several times, this method merges all registrations so they can be used in the end.
+    /// First registration wins — duplicate types are silently skipped.
     /// </summary>
-    /// <param name="o"></param>
-    /// <exception cref="InvalidOperationException"></exception>
     private static void AppendPreviousRegistrations(CacheOptions o)
     {
         var previouslyRegisteredTypes = _configuredPersistTypes.ToArray();
         foreach (var item in o.GetRegistered())
         {
-            if (!_configuredPersistTypes.TryAdd(item.Key, item.Value))
-            {
-                throw new InvalidOperationException($"The type {item.Key.Name} has already been registered.");
-            }
+            _configuredPersistTypes.TryAdd(item.Key, item.Value);
         }
         foreach (var previouslyRegisteredType in previouslyRegisteredTypes)
         {
-            o.AddType(previouslyRegisteredType.Key, previouslyRegisteredType.Value);
+            o.TryAddType(previouslyRegisteredType.Key, previouslyRegisteredType.Value);
         }
     }
 
     private static void RegisterPersist(IServiceCollection serviceCollection)
     {
-        serviceCollection.AddTransient<IPersistLoader, PersistLoader>();
-        serviceCollection.AddSingleton<IPersist>(_ => throw new InvalidOperationException($"Cannot inject {nameof(IPersist)} directly, use {nameof(IPersistLoader)} instead."));
-        serviceCollection.AddSingleton<IMemory, Memory>();
+        serviceCollection.TryAddTransient<IPersistLoader, PersistLoader>();
+        serviceCollection.TryAddSingleton<IPersist>(_ => throw new InvalidOperationException($"Cannot inject {nameof(IPersist)} directly, use {nameof(IPersistLoader)} instead."));
+        serviceCollection.TryAddSingleton<IMemory, Memory>();
     }
 
     private static void RegisterAllIPersistImplementations(IServiceCollection services, CacheOptions options)
@@ -153,7 +152,7 @@ public static class CacheRegistrationExtensions
 
             if (implementation != null)
             {
-                services.AddSingleton(iface, implementation);
+                services.TryAddSingleton(iface, implementation);
             }
         }
     }

@@ -17,4 +17,7 @@ public record CacheEntity : EntityBase<string>
 
     [BsonIgnoreIfDefault]
     public required bool StaleWhileRevalidate { get; init; }
+
+    [BsonIgnoreIfDefault]
+    public TimeSpan? LoadDuration { get; init; }
 }

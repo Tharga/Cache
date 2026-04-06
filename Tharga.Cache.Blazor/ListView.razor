@@ -48,6 +48,11 @@ else
                             <DateTimeView Date="@context.Value.LastAccessTime"/>
                         </Template>
                     </RadzenDataGridColumn>
+                    <RadzenDataGridColumn Title="Load Time" SortProperty="Value.LoadDuration">
+                        <Template>
+                            <TimeSpanView TimeSpan="@context.Value.LoadDuration"/>
+                        </Template>
+                    </RadzenDataGridColumn>
                     <RadzenDataGridColumn Title="Size" SortProperty="Value.Size">
                         <Template Context="item">
                             @item.Value.Size.ToReadableByteSize()

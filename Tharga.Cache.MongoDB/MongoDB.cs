@@ -53,6 +53,7 @@ internal class MongoDB : IMongoDB
                 Data = JsonSerializer.Deserialize<T>(item.Data),
                 FreshSpan = item.FreshSpan,
                 UpdateTime = item.UpdateTime,
+                LoadDuration = item.LoadDuration,
             };
         }
 
@@ -82,7 +83,8 @@ internal class MongoDB : IMongoDB
             CreateTime = cacheItem.CreateTime,
             FreshSpan = cacheItem.FreshSpan,
             UpdateTime = cacheItem.UpdateTime,
-            StaleWhileRevalidate = staleWhileRevalidate
+            StaleWhileRevalidate = staleWhileRevalidate,
+            LoadDuration = cacheItem.LoadDuration
         };
 
         var collection = GetCollection();

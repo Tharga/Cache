@@ -40,13 +40,13 @@ public class TimeToIdleCacheTests
         _cacheMonitor.DataDropEvent += (_, _) => { monitorDropEventCount++; };
 
         //Act
-        _ = await sut.GetAsync("a", () => Task.FromResult("a1"), TimeSpan.FromMilliseconds(200));
-        await Task.Delay(100);
-        _ = await sut.GetAsync("a", () => Task.FromResult("a2"), TimeSpan.FromMilliseconds(200));
-        await Task.Delay(100);
-        if (keep) _ = await sut.GetAsync("a", () => Task.FromResult("a3"), TimeSpan.FromMilliseconds(200));
-        await Task.Delay(100);
-        var result = await sut.GetAsync("a", () => Task.FromResult("a4"), TimeSpan.FromMilliseconds(200));
+        _ = await sut.GetAsync("a", () => Task.FromResult("a1"), TimeSpan.FromMilliseconds(400));
+        await Task.Delay(200);
+        _ = await sut.GetAsync("a", () => Task.FromResult("a2"), TimeSpan.FromMilliseconds(400));
+        await Task.Delay(200);
+        if (keep) _ = await sut.GetAsync("a", () => Task.FromResult("a3"), TimeSpan.FromMilliseconds(400));
+        await Task.Delay(250);
+        var result = await sut.GetAsync("a", () => Task.FromResult("a4"), TimeSpan.FromMilliseconds(400));
 
         //Assert
         result.Should().Be(keep ? "a1" : "a4");

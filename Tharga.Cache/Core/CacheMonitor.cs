@@ -35,7 +35,8 @@ internal class CacheMonitor : IManagedCacheMonitor
                     key, new CacheItemInfo(item.CreateTime)
                     {
                         Size = size,
-                        FreshSpan = item.FreshSpan
+                        FreshSpan = item.FreshSpan,
+                        LoadDuration = item.LoadDuration
                     }
                 }
             })
@@ -44,7 +45,8 @@ internal class CacheMonitor : IManagedCacheMonitor
             b.Items.AddOrUpdate(key, new CacheItemInfo(item.CreateTime)
             {
                 Size = size,
-                FreshSpan = item.FreshSpan
+                FreshSpan = item.FreshSpan,
+                LoadDuration = item.LoadDuration
             }, (_, c) =>
             {
                 c.SetUpdated(item.CreateTime, item.UpdateTime);
@@ -74,7 +76,8 @@ internal class CacheMonitor : IManagedCacheMonitor
                     key, new CacheItemInfo(item.CreateTime)
                     {
                         Size = size,
-                        FreshSpan = item.FreshSpan
+                        FreshSpan = item.FreshSpan,
+                        LoadDuration = item.LoadDuration
                     }
                 }
             })
@@ -83,7 +86,8 @@ internal class CacheMonitor : IManagedCacheMonitor
             b.Items.TryAdd(key, new CacheItemInfo(item.CreateTime)
             {
                 Size = size,
-                FreshSpan = item.FreshSpan
+                FreshSpan = item.FreshSpan,
+                LoadDuration = item.LoadDuration
             });
             return b;
         });

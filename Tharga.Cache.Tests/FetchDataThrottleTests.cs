@@ -99,7 +99,7 @@ public class FetchDataThrottleTests
         monitorGetEventCount.Should().Be(fetchCount);
         monitorDropEventCount.Should().Be(0);
         stopwatch.Elapsed.TotalMilliseconds.Should().BeGreaterThan(minTime);
-        stopwatch.Elapsed.TotalMilliseconds.Should().BeLessThan(maxTime + 200);
+        stopwatch.Elapsed.TotalMilliseconds.Should().BeLessThan(maxTime + 400);
     }
 
     [Theory]

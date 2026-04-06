@@ -56,6 +56,39 @@ internal class CacheMonitor : IManagedCacheMonitor
         DataSetEvent?.Invoke(this, new DataSetEventArgs(key, item.Data));
     }
 
+    public void Track<T>(Type type, Key key, CacheItem<T> item, bool staleWhileRevalidate, bool returnDefaultOnFirstLoad)
+    {
+        if (_caches.ContainsKey(type) && _caches[type].Items.ContainsKey(key))
+            return;
+
+        var size = item.Data.ToSize();
+
+        _caches.AddOrUpdate(type, new CacheTypeInfo
+        {
+            Type = type,
+            StaleWhileRevalidate = staleWhileRevalidate,
+            ReturnDefaultOnFirstLoad = returnDefaultOnFirstLoad,
+            Items = new ConcurrentDictionary<string, CacheItemInfo>(new Dictionary<string, CacheItemInfo>
+            {
+                {
+                    key, new CacheItemInfo(item.CreateTime)
+                    {
+                        Size = size,
+                        FreshSpan = item.FreshSpan
+                    }
+                }
+            })
+        }, (_, b) =>
+        {
+            b.Items.TryAdd(key, new CacheItemInfo(item.CreateTime)
+            {
+                Size = size,
+                FreshSpan = item.FreshSpan
+            });
+            return b;
+        });
+    }
+
     public void Accessed(Type type, Key key, bool buyMoreTime)
     {
         if (_caches.TryGetValue(type, out var info))

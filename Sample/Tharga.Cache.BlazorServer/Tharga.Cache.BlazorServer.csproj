@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Tharga.Cache.Blazor\Tharga.Cache.Blazor.csproj" />
+    <ProjectReference Include="..\..\Tharga.Cache.MongoDB\Tharga.Cache.MongoDB.csproj" />
   </ItemGroup>
 
 </Project>

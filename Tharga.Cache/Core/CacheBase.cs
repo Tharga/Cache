@@ -40,6 +40,7 @@ internal abstract class CacheBase : ICache
 
         if (result.IsValid())
         {
+            TrackIfNeeded(key, result);
             await OnGetAsync<T>(key);
             return (result.GetData(), true);
         }
@@ -48,6 +49,7 @@ internal abstract class CacheBase : ICache
 
         if (typeOptions.StaleWhileRevalidate && result != null)
         {
+            TrackIfNeeded(key, result);
             var response = result.GetData();
             await OnGetAsync<T>(key);
             BackgroundLoad(key, fetch, callback, fs);
@@ -212,6 +214,12 @@ internal abstract class CacheBase : ICache
     {
         DataDropEvent?.Invoke(this, new DataDropEventArgs(key));
         _cacheMonitor.Drop(typeof(T), key);
+    }
+
+    private void TrackIfNeeded<T>(Key key, CacheItem<T> item)
+    {
+        var typeOptions = GetTypeOptions<T>();
+        _cacheMonitor.Track(typeof(T), key, item, typeOptions.StaleWhileRevalidate, typeOptions.ReturnDefaultOnFirstLoad);
     }
 
     private IPersist GetPersist<T>()

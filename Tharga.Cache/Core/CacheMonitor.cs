@@ -23,10 +23,12 @@ internal class CacheMonitor : IManagedCacheMonitor
     public void Set<T>(Type type, Key key, CacheItem<T> item, bool staleWhileRevalidate, bool returnDefaultOnFirstLoad)
     {
         var size = item.Data.ToSize();
+        var persistType = _cacheOptions.Get<T>().PersistType;
 
         _caches.AddOrUpdate(type, new CacheTypeInfo
         {
             Type = type,
+            PersistType = persistType,
             StaleWhileRevalidate = staleWhileRevalidate,
             ReturnDefaultOnFirstLoad = returnDefaultOnFirstLoad,
             Items = new ConcurrentDictionary<string, CacheItemInfo>(new Dictionary<string, CacheItemInfo>
@@ -64,10 +66,12 @@ internal class CacheMonitor : IManagedCacheMonitor
             return;
 
         var size = item.Data.ToSize();
+        var persistType = _cacheOptions.Get<T>().PersistType;
 
         _caches.AddOrUpdate(type, new CacheTypeInfo
         {
             Type = type,
+            PersistType = persistType,
             StaleWhileRevalidate = staleWhileRevalidate,
             ReturnDefaultOnFirstLoad = returnDefaultOnFirstLoad,
             Items = new ConcurrentDictionary<string, CacheItemInfo>(new Dictionary<string, CacheItemInfo>

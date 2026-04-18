@@ -1,0 +1,66 @@
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+    <RadzenRow>
+        <RadzenColumn Size="6">
+            <RadzenText TextStyle="TextStyle.Caption">Key</RadzenText>
+            <RadzenText TextStyle="TextStyle.Body1">@CacheKey</RadzenText>
+        </RadzenColumn>
+        <RadzenColumn Size="6">
+            <RadzenText TextStyle="TextStyle.Caption">Type</RadzenText>
+            <RadzenText TextStyle="TextStyle.Body1">@CacheType?.Name</RadzenText>
+        </RadzenColumn>
+    </RadzenRow>
+    <RadzenRow>
+        <RadzenColumn Size="4">
+            <RadzenText TextStyle="TextStyle.Caption">Created</RadzenText>
+            <div><DateTimeView Date="@Info?.CreateTime" /></div>
+        </RadzenColumn>
+        <RadzenColumn Size="4">
+            <RadzenText TextStyle="TextStyle.Caption">Updated</RadzenText>
+            <div><DateTimeView Date="@Info?.UpdateTime" /></div>
+        </RadzenColumn>
+        <RadzenColumn Size="4">
+            <RadzenText TextStyle="TextStyle.Caption">Last Accessed</RadzenText>
+            <div><DateTimeView Date="@Info?.LastAccessTime" /></div>
+        </RadzenColumn>
+    </RadzenRow>
+    <RadzenRow>
+        <RadzenColumn Size="4">
+            <RadzenText TextStyle="TextStyle.Caption">Fresh Span</RadzenText>
+            <div><TimeSpanView TimeSpan="@Info?.FreshSpan" /></div>
+        </RadzenColumn>
+        <RadzenColumn Size="4">
+            <RadzenText TextStyle="TextStyle.Caption">Expires</RadzenText>
+            <div><DateTimeView Date="@Info?.ExpireTime" /></div>
+        </RadzenColumn>
+        <RadzenColumn Size="4">
+            <RadzenText TextStyle="TextStyle.Caption">Load Time</RadzenText>
+            <div><TimeSpanView TimeSpan="@Info?.LoadDuration" /></div>
+        </RadzenColumn>
+    </RadzenRow>
+    <RadzenRow>
+        <RadzenColumn Size="4">
+            <RadzenText TextStyle="TextStyle.Caption">Size</RadzenText>
+            <RadzenText TextStyle="TextStyle.Body1">@(Info?.Size.ToReadableByteSize() ?? "-")</RadzenText>
+        </RadzenColumn>
+        <RadzenColumn Size="4">
+            <RadzenText TextStyle="TextStyle.Caption">Access Count</RadzenText>
+            <RadzenText TextStyle="TextStyle.Body1">@(Info?.AccessCount.ToString() ?? "-")</RadzenText>
+        </RadzenColumn>
+        <RadzenColumn Size="4">
+            <RadzenText TextStyle="TextStyle.Caption">Stale</RadzenText>
+            <RadzenText TextStyle="TextStyle.Body1">@(Info?.IsStale.ToString() ?? "-")</RadzenText>
+        </RadzenColumn>
+    </RadzenRow>
+    <ExpandableCard Text="Content" Icon="data_object" AllowSaveState="false">
+        <ChildContent>
+            <CacheContent CacheType="@CacheType" CacheKey="@CacheKey" />
+        </ChildContent>
+    </ExpandableCard>
+</RadzenStack>
+
+@code {
+    [Parameter] public Type CacheType { get; set; }
+    [Parameter] public string CacheKey { get; set; }
+    [Parameter] public CacheItemInfo Info { get; set; }
+}

@@ -1,4 +1,6 @@
-﻿@inject ICacheMonitor CacheMonitor
+@implements IDisposable
+@inject ICacheMonitor CacheMonitor
+@inject DialogService DialogService
 
 @if (_model == null)
 {
@@ -23,29 +25,9 @@ else
                             <span title="@item.Key">@item.Key</span>
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn Title="Created" SortProperty="Value.CreateTime">
-                        <Template>
-                            <DateTimeView Date="@context.Value.CreateTime"/>
-                        </Template>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn Title="Updated" SortProperty="Value.UpdateTime">
-                        <Template>
-                            <DateTimeView Date="@context.Value.UpdateTime"/>
-                        </Template>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn Title="Fresh Span" SortProperty="Value.FreshSpan">
-                        <Template>
-                            <TimeSpanView TimeSpan="@context.Value.FreshSpan"/>
-                        </Template>
-                    </RadzenDataGridColumn>
                     <RadzenDataGridColumn Title="Expires" SortProperty="Value.ExpireTime">
                         <Template>
                             <DateTimeView Date="@context.Value.ExpireTime"/>
-                        </Template>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn Title="Last Accessed" SortProperty="Value.LastAccessTime">
-                        <Template>
-                            <DateTimeView Date="@context.Value.LastAccessTime"/>
                         </Template>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn Title="Load Time" SortProperty="Value.LoadDuration">
@@ -58,12 +40,13 @@ else
                             @item.Value.Size.ToReadableByteSize()
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn Title="Access Count" SortProperty="Value.AccessCount">
-                        <Template>
-                            @context.Value.AccessCount
+                    <RadzenDataGridColumn Title="Stale" Property="Value.IsStale" Sortable="false"/>
+                    <RadzenDataGridColumn Title="" Sortable="false" Filterable="false" Width="48px" TextAlign="TextAlign.Right">
+                        <Template Context="item">
+                            <RadzenButton Icon="article" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                                          Click="@(() => OpenDetailAsync(cacheType.Type, item.Key, item.Value))" />
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn Title="Stale" Property="Value.IsStale" Sortable="false"/>
                 </Columns>
             </RadzenDataGrid>
         </Template>
@@ -71,6 +54,11 @@ else
             <RadzenDataGridColumn Title="Type">
                 <Template>
                     @context.Type.Name
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn Title="Persist">
+                <Template>
+                    @FormatPersistType(context.PersistType)
                 </Template>
             </RadzenDataGridColumn>
             <RadzenDataGridColumn Title="Count">
@@ -88,9 +76,45 @@ else
 
     protected override Task OnInitializedAsync()
     {
-        _model = CacheMonitor.GetInfos().ToArray();
-
+        Refresh();
+        CacheMonitor.DataSetEvent += OnCacheChanged;
+        CacheMonitor.DataDropEvent += OnCacheChanged;
         return base.OnInitializedAsync();
     }
 
+    public void Dispose()
+    {
+        CacheMonitor.DataSetEvent -= OnCacheChanged;
+        CacheMonitor.DataDropEvent -= OnCacheChanged;
+    }
+
+    private void OnCacheChanged(object sender, EventArgs e)
+    {
+        Refresh();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void Refresh()
+    {
+        _model = CacheMonitor.GetInfos().ToArray();
+    }
+
+    private static string FormatPersistType(Type persistType)
+    {
+        if (persistType == null) return "-";
+        var name = persistType.Name;
+        return name.StartsWith("I") && name.Length > 1 && char.IsUpper(name[1]) ? name.Substring(1) : name;
+    }
+
+    private async Task OpenDetailAsync(Type type, string key, CacheItemInfo info)
+    {
+        await DialogService.OpenAsync<DetailView>($"Cache: {key}",
+            new Dictionary<string, object>
+            {
+                ["CacheType"] = type,
+                ["CacheKey"] = key,
+                ["Info"] = info
+            },
+            new DialogOptions { Width = "800px", Resizable = true, Draggable = true });
+    }
 }

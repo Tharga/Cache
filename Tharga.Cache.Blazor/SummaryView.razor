@@ -1,4 +1,5 @@
-﻿@inject ICacheMonitor CacheMonitor
+@implements IDisposable
+@inject ICacheMonitor CacheMonitor
 
 <RadzenRow>
     <RadzenColumn>
@@ -28,8 +29,21 @@
     protected override Task OnInitializedAsync()
     {
         LoadCacheInfo();
-
+        CacheMonitor.DataSetEvent += OnCacheChanged;
+        CacheMonitor.DataDropEvent += OnCacheChanged;
         return base.OnInitializedAsync();
+    }
+
+    public void Dispose()
+    {
+        CacheMonitor.DataSetEvent -= OnCacheChanged;
+        CacheMonitor.DataDropEvent -= OnCacheChanged;
+    }
+
+    private void OnCacheChanged(object sender, EventArgs e)
+    {
+        LoadCacheInfo();
+        InvokeAsync(StateHasChanged);
     }
 
     private void LoadCacheInfo()

@@ -1,0 +1,125 @@
+@using System.Reflection
+@using System.Text.Json
+@inject IEternalCache Cache
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+    <RadzenRow>
+        <RadzenColumn Size="6">
+            <RadzenText TextStyle="TextStyle.Caption">Key</RadzenText>
+            <RadzenText TextStyle="TextStyle.Body1">@CacheKey</RadzenText>
+        </RadzenColumn>
+        <RadzenColumn Size="6">
+            <RadzenText TextStyle="TextStyle.Caption">Type</RadzenText>
+            <RadzenText TextStyle="TextStyle.Body1">@CacheType?.Name</RadzenText>
+        </RadzenColumn>
+    </RadzenRow>
+    <RadzenRow>
+        <RadzenColumn Size="4">
+            <RadzenText TextStyle="TextStyle.Caption">Created</RadzenText>
+            <DateTimeView Date="@Info?.CreateTime"/>
+        </RadzenColumn>
+        <RadzenColumn Size="4">
+            <RadzenText TextStyle="TextStyle.Caption">Updated</RadzenText>
+            <DateTimeView Date="@Info?.UpdateTime"/>
+        </RadzenColumn>
+        <RadzenColumn Size="4">
+            <RadzenText TextStyle="TextStyle.Caption">Last Accessed</RadzenText>
+            <DateTimeView Date="@Info?.LastAccessTime"/>
+        </RadzenColumn>
+    </RadzenRow>
+    <RadzenRow>
+        <RadzenColumn Size="4">
+            <RadzenText TextStyle="TextStyle.Caption">Fresh Span</RadzenText>
+            <TimeSpanView TimeSpan="@Info?.FreshSpan"/>
+        </RadzenColumn>
+        <RadzenColumn Size="4">
+            <RadzenText TextStyle="TextStyle.Caption">Expires</RadzenText>
+            <DateTimeView Date="@Info?.ExpireTime"/>
+        </RadzenColumn>
+        <RadzenColumn Size="4">
+            <RadzenText TextStyle="TextStyle.Caption">Load Time</RadzenText>
+            <TimeSpanView TimeSpan="@Info?.LoadDuration"/>
+        </RadzenColumn>
+    </RadzenRow>
+    <RadzenRow>
+        <RadzenColumn Size="4">
+            <RadzenText TextStyle="TextStyle.Caption">Size</RadzenText>
+            <RadzenText TextStyle="TextStyle.Body1">@(Info?.Size.ToReadableByteSize() ?? "-")</RadzenText>
+        </RadzenColumn>
+        <RadzenColumn Size="4">
+            <RadzenText TextStyle="TextStyle.Caption">Access Count</RadzenText>
+            <RadzenText TextStyle="TextStyle.Body1">@(Info?.AccessCount.ToString() ?? "-")</RadzenText>
+        </RadzenColumn>
+        <RadzenColumn Size="4">
+            <RadzenText TextStyle="TextStyle.Caption">Stale</RadzenText>
+            <RadzenText TextStyle="TextStyle.Body1">@(Info?.IsStale.ToString() ?? "-")</RadzenText>
+        </RadzenColumn>
+    </RadzenRow>
+    <RadzenRow>
+        <RadzenColumn>
+            <RadzenText TextStyle="TextStyle.Subtitle2">Content</RadzenText>
+            @if (_loading)
+            {
+                <Loading />
+            }
+            else
+            {
+                <pre style="background:#f5f5f5;padding:0.75rem;border-radius:4px;max-height:400px;overflow:auto;">@_json</pre>
+                <CopyButton Content="@_json" />
+            }
+        </RadzenColumn>
+    </RadzenRow>
+</RadzenStack>
+
+@code {
+    [Parameter] public Type CacheType { get; set; }
+    [Parameter] public string CacheKey { get; set; }
+    [Parameter] public CacheItemInfo Info { get; set; }
+
+    private string _json;
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadContentAsync();
+    }
+
+    private async Task LoadContentAsync()
+    {
+        _loading = true;
+        try
+        {
+            if (CacheType == null || string.IsNullOrEmpty(CacheKey))
+            {
+                _json = "(no key/type)";
+                return;
+            }
+
+            var method = typeof(ICache).GetMethod(nameof(ICache.PeekAsync), BindingFlags.Public | BindingFlags.Instance);
+            if (method == null)
+            {
+                _json = "(PeekAsync method not found)";
+                return;
+            }
+
+            var generic = method.MakeGenericMethod(CacheType);
+            Key key = CacheKey;
+            var task = (Task)generic.Invoke(Cache, [key]);
+            await task.ConfigureAwait(false);
+            var resultProperty = task.GetType().GetProperty("Result");
+            var data = resultProperty?.GetValue(task);
+
+            _json = data == null
+                ? "(no data)"
+                : JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
+        }
+        catch (Exception ex)
+        {
+            _json = $"(error: {ex.Message})";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

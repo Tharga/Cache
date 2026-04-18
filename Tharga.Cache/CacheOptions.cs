@@ -16,12 +16,6 @@ public record CacheOptions
     /// </summary>
     public TimeSpan WatchDogInterval { get; set; } = TimeSpan.FromSeconds(60);
 
-    //TODO: Enable this method in fugure version, so that memory will be default.
-    //public void RegisterType<TCache>(Action<CacheTypeOptions> options = null)
-    //{
-    //    RegisterType<TCache, IMemory>(options);
-    //}
-
     public void RegisterType<TCache, TPersist>(Action<CacheTypeOptions> options = null) where TPersist : IPersist
     {
         var typeOptions = (Default ?? BuildDefault()) with { };

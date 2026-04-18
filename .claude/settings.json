@@ -14,8 +14,6 @@
       "Bash(cat:*)",
       "Skill(update-config)",
       "Skill(update-config:*)",
-      "Bash(rm .claude/feature.md)",
-      "Bash(rm .claude/plan.md)",
       "Bash(xargs grep:*)",
       "Bash(dotnet test:*)",
       "Bash(gh pr:*)",

@@ -1,3 +1,4 @@
+using Blazored.LocalStorage;
 using Radzen;
 using Tharga.Cache;
 using Tharga.Cache.BlazorServer.Components;
@@ -13,6 +14,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddRadzenComponents();
+builder.Services.AddBlazoredLocalStorage();
 builder.AddMongoDB();
 builder.Services.AddCache(o =>
 {

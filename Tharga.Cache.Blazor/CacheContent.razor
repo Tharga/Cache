@@ -1,0 +1,84 @@
+@using System.Reflection
+@using System.Text.Json
+@using Microsoft.JSInterop
+@inject IEternalCache Cache
+@inject IJSRuntime Js
+@inject NotificationService NotificationService
+
+<div style="position:relative;">
+    <div style="position:absolute; top:0; right:0;">
+        <RadzenButton Icon="content_copy" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Light"
+                      Click="CopyAction" Disabled="@_loading" title="Copy JSON" />
+    </div>
+    @if (_loading)
+    {
+        <Loading />
+    }
+    else
+    {
+        <pre style="background:#f5f5f5; padding:0.75rem; padding-right:3rem; border-radius:4px; max-height:400px; overflow:auto; margin:0;">@_json</pre>
+    }
+</div>
+
+@code {
+    [Parameter] public Type CacheType { get; set; }
+    [Parameter] public string CacheKey { get; set; }
+
+    private string _json;
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadContentAsync();
+    }
+
+    private async Task LoadContentAsync()
+    {
+        _loading = true;
+        try
+        {
+            if (CacheType == null || string.IsNullOrEmpty(CacheKey))
+            {
+                _json = "(no key/type)";
+                return;
+            }
+
+            var method = typeof(ICache).GetMethod(nameof(ICache.PeekAsync), BindingFlags.Public | BindingFlags.Instance);
+            if (method == null)
+            {
+                _json = "(PeekAsync method not found)";
+                return;
+            }
+
+            var generic = method.MakeGenericMethod(CacheType);
+            Key key = CacheKey;
+            var task = (Task)generic.Invoke(Cache, [key]);
+            await task.ConfigureAwait(false);
+            var resultProperty = task.GetType().GetProperty("Result");
+            var data = resultProperty?.GetValue(task);
+
+            _json = data == null
+                ? "(no data)"
+                : JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
+        }
+        catch (Exception ex)
+        {
+            _json = $"(error: {ex.Message})";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task CopyAction()
+    {
+        if (string.IsNullOrWhiteSpace(_json)) return;
+        await Js.InvokeVoidAsync("clipboard.copyText", _json);
+        NotificationService.Notify(new NotificationMessage
+        {
+            Summary = "Content copied.",
+            Severity = NotificationSeverity.Info
+        });
+    }
+}

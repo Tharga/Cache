@@ -43,7 +43,7 @@ else
                     <RadzenDataGridColumn Title="Stale" Property="Value.IsStale" Sortable="false"/>
                     <RadzenDataGridColumn Title="" Sortable="false" Filterable="false" Width="48px" TextAlign="TextAlign.Right">
                         <Template Context="item">
-                            <RadzenButton Icon="chevron_right" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                            <RadzenButton Icon="article" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
                                           Click="@(() => OpenDetailAsync(cacheType.Type, item.Key, item.Value))" />
                         </Template>
                     </RadzenDataGridColumn>

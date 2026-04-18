@@ -16,29 +16,29 @@
     <RadzenRow>
         <RadzenColumn Size="4">
             <RadzenText TextStyle="TextStyle.Caption">Created</RadzenText>
-            <DateTimeView Date="@Info?.CreateTime"/>
+            <div><DateTimeView Date="@Info?.CreateTime" /></div>
         </RadzenColumn>
         <RadzenColumn Size="4">
             <RadzenText TextStyle="TextStyle.Caption">Updated</RadzenText>
-            <DateTimeView Date="@Info?.UpdateTime"/>
+            <div><DateTimeView Date="@Info?.UpdateTime" /></div>
         </RadzenColumn>
         <RadzenColumn Size="4">
             <RadzenText TextStyle="TextStyle.Caption">Last Accessed</RadzenText>
-            <DateTimeView Date="@Info?.LastAccessTime"/>
+            <div><DateTimeView Date="@Info?.LastAccessTime" /></div>
         </RadzenColumn>
     </RadzenRow>
     <RadzenRow>
         <RadzenColumn Size="4">
             <RadzenText TextStyle="TextStyle.Caption">Fresh Span</RadzenText>
-            <TimeSpanView TimeSpan="@Info?.FreshSpan"/>
+            <div><TimeSpanView TimeSpan="@Info?.FreshSpan" /></div>
         </RadzenColumn>
         <RadzenColumn Size="4">
             <RadzenText TextStyle="TextStyle.Caption">Expires</RadzenText>
-            <DateTimeView Date="@Info?.ExpireTime"/>
+            <div><DateTimeView Date="@Info?.ExpireTime" /></div>
         </RadzenColumn>
         <RadzenColumn Size="4">
             <RadzenText TextStyle="TextStyle.Caption">Load Time</RadzenText>
-            <TimeSpanView TimeSpan="@Info?.LoadDuration"/>
+            <div><TimeSpanView TimeSpan="@Info?.LoadDuration" /></div>
         </RadzenColumn>
     </RadzenRow>
     <RadzenRow>

@@ -1,3 +1,6 @@
+// These tests deliberately reference an obsolete type to verify the [Obsolete] attribute is present.
+#pragma warning disable CS0618
+
 using FluentAssertions;
 using Xunit;
 

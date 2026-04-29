@@ -30,14 +30,10 @@ public class CacheMonitorController : ControllerBase
     [HttpGet("type/{type}")]
     public Task<IActionResult> GetType(string type)
     {
-        //TODO: Make it possible to provide a type.
-        //var t = Type.GetType(type);
-        //if (t == null) return BadRequest($"Cannot find type {type}.");
-        var t1 = Type.GetType(type);
-        var t = typeof(WeatherForecast[]);
+        var info = _cacheMonitor.GetInfos().FirstOrDefault(x => x.Type.Name == type);
+        if (info == null) return Task.FromResult<IActionResult>(NotFound($"Cannot find cache type '{type}'."));
 
-        var datas = _cacheMonitor.GetByType(t);
-        var response = datas.Select(x => new
+        var response = info.Items.Select(x => new
         {
             x.Key,
             x.Value.AccessCount,

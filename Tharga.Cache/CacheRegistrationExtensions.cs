@@ -135,15 +135,17 @@ public static class CacheRegistrationExtensions
 
     private static void RegisterIPersistFromAssembly(IServiceCollection services, Assembly assembly, Type ipersistType)
     {
+        var types = GetTypesSafe(assembly);
+
         // Find all interfaces extending IPersist (excluding IPersist itself)
-        var persistInterfaces = assembly.GetTypes()
+        var persistInterfaces = types
             .Where(t => t.IsInterface && ipersistType.IsAssignableFrom(t) && t != ipersistType)
             .ToList();
 
         foreach (var iface in persistInterfaces)
         {
             // Find a non-abstract, non-interface class that implements this interface
-            var implementation = assembly.GetTypes()
+            var implementation = types
                 .FirstOrDefault(c =>
                     c.IsClass &&
                     !c.IsInterface &&
@@ -166,7 +168,7 @@ public static class CacheRegistrationExtensions
 
         foreach (var assembly in assemblies)
         {
-            foreach (var type in assembly.GetTypes())
+            foreach (var type in GetTypesSafe(assembly))
             {
                 if (!registrationType.IsAssignableFrom(type)) continue;
                 if (type.IsAbstract || type.IsInterface) continue;
@@ -174,7 +176,6 @@ public static class CacheRegistrationExtensions
                 // Check for parameterless constructor
                 if (type.GetConstructor(Type.EmptyTypes) is not ConstructorInfo ctor)
                 {
-                    // Optional: log or throw
                     continue;
                 }
 
@@ -182,6 +183,37 @@ public static class CacheRegistrationExtensions
                 var instance = (IPersistRegistration)ctor.Invoke(null);
                 instance.Register(services);
             }
+        }
+    }
+
+    private static readonly HashSet<string> _warnedAssemblies = new();
+    private static readonly object _warnLock = new();
+
+    internal static Type[] GetTypesSafe(Assembly assembly)
+    {
+        try
+        {
+            return assembly.GetTypes();
+        }
+        catch (ReflectionTypeLoadException ex)
+        {
+            var loaded = ex.Types.Where(t => t != null).Cast<Type>().ToArray();
+            var missed = ex.Types.Length - loaded.Length;
+
+            // Warn once per assembly so the root cause isn't silently swallowed.
+            var name = assembly.FullName ?? "(unknown)";
+            bool warn = false;
+            lock (_warnLock)
+            {
+                if (_warnedAssemblies.Add(name)) warn = true;
+            }
+            if (warn)
+            {
+                Console.Error.WriteLine(
+                    $"[Tharga.Cache] Skipped {missed} unresolvable type(s) in '{name}' during assembly scan: {ex.LoaderExceptions.FirstOrDefault()?.Message}");
+            }
+
+            return loaded;
         }
     }
 }

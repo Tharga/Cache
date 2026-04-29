@@ -35,11 +35,11 @@
     <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.202">
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.203">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Tharga.MongoDB" Version="2.10.3" />
+    <PackageReference Include="Tharga.MongoDB" Version="2.10.5" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Tharga.Cache\Tharga.Cache.csproj" />

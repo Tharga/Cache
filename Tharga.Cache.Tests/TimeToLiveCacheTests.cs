@@ -40,12 +40,14 @@ public class TimeToLiveCacheTests
         _cacheMonitor.DataDropEvent += (_, _) => { monitorDropEventCount++; };
 
         //Act
+        // Timing chosen so every assertion has >= 100ms margin from the TTL boundary on slow CI runners.
+        // TTL=400ms; delays sum to t=250 (fresh), t=500 (expired), t=800 (re-fetched item still fresh).
         _ = await sut.GetAsync("a", () => Task.FromResult("a1"), TimeSpan.FromMilliseconds(400));
-        await Task.Delay(200);
-        _ = await sut.GetAsync("a", () => Task.FromResult("a2"), TimeSpan.FromMilliseconds(400));
-        await Task.Delay(200);
-        if (keep) _ = await sut.GetAsync("a", () => Task.FromResult("a3"), TimeSpan.FromMilliseconds(400));
         await Task.Delay(250);
+        _ = await sut.GetAsync("a", () => Task.FromResult("a2"), TimeSpan.FromMilliseconds(400));
+        await Task.Delay(250);
+        if (keep) _ = await sut.GetAsync("a", () => Task.FromResult("a3"), TimeSpan.FromMilliseconds(400));
+        await Task.Delay(300);
         var result = await sut.GetAsync("a", () => Task.FromResult("a4"), TimeSpan.FromMilliseconds(400));
 
         //Assert

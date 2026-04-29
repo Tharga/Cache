@@ -74,13 +74,43 @@ jobs:
           echo "previous_tag=$LATEST_TAG" >> "$GITHUB_OUTPUT"
           echo "Computed version: $VERSION (previous: $LATEST_TAG)"
 
-      - name: Pack
+      - name: Compute pre-release version
+        id: preversion
+        if: github.event_name == 'pull_request'
         run: |
-          dotnet pack Tharga.Cache/Tharga.Cache.csproj -c Release --no-build -o ./artifacts /p:PackageVersion=${{ steps.version.outputs.version }}
-          dotnet pack Tharga.Cache.Redis/Tharga.Cache.Redis.csproj -c Release --no-build -o ./artifacts /p:PackageVersion=${{ steps.version.outputs.version }}
-          dotnet pack Tharga.Cache.MongoDB/Tharga.Cache.MongoDB.csproj -c Release --no-build -o ./artifacts /p:PackageVersion=${{ steps.version.outputs.version }}
-          dotnet pack Tharga.Cache.File/Tharga.Cache.File.csproj -c Release --no-build -o ./artifacts /p:PackageVersion=${{ steps.version.outputs.version }}
-          dotnet pack Tharga.Cache.Blazor/Tharga.Cache.Blazor.csproj -c Release --no-build -o ./artifacts /p:PackageVersion=${{ steps.version.outputs.version }}
+          VERSION="${{ steps.version.outputs.version }}"
+          PRE_BASE="${VERSION}-pre"
+
+          LATEST_PRE=$(git tag -l "${PRE_BASE}.*" --sort=-v:refname | head -1)
+
+          if [ -z "$LATEST_PRE" ]; then
+            COUNTER=1
+          else
+            COUNTER=$(echo "$LATEST_PRE" | sed "s/.*-pre\.\([0-9]*\)/\1/")
+            COUNTER=$((COUNTER + 1))
+          fi
+
+          PRE_VERSION="${PRE_BASE}.${COUNTER}"
+          echo "version=$PRE_VERSION" >> "$GITHUB_OUTPUT"
+          echo "Computed pre-release version: $PRE_VERSION"
+
+      - name: Pack (stable — push to master)
+        if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+        run: |
+          dotnet pack Tharga.Cache/Tharga.Cache.csproj -c Release --no-build -o ./artifacts -p:PackageVersion=${{ steps.version.outputs.version }}
+          dotnet pack Tharga.Cache.Redis/Tharga.Cache.Redis.csproj -c Release --no-build -o ./artifacts -p:PackageVersion=${{ steps.version.outputs.version }}
+          dotnet pack Tharga.Cache.MongoDB/Tharga.Cache.MongoDB.csproj -c Release --no-build -o ./artifacts -p:PackageVersion=${{ steps.version.outputs.version }}
+          dotnet pack Tharga.Cache.File/Tharga.Cache.File.csproj -c Release --no-build -o ./artifacts -p:PackageVersion=${{ steps.version.outputs.version }}
+          dotnet pack Tharga.Cache.Blazor/Tharga.Cache.Blazor.csproj -c Release --no-build -o ./artifacts -p:PackageVersion=${{ steps.version.outputs.version }}
+
+      - name: Pack (pre-release — pull request)
+        if: github.event_name == 'pull_request'
+        run: |
+          dotnet pack Tharga.Cache/Tharga.Cache.csproj -c Release --no-build -o ./artifacts -p:PackageVersion=${{ steps.preversion.outputs.version }}
+          dotnet pack Tharga.Cache.Redis/Tharga.Cache.Redis.csproj -c Release --no-build -o ./artifacts -p:PackageVersion=${{ steps.preversion.outputs.version }}
+          dotnet pack Tharga.Cache.MongoDB/Tharga.Cache.MongoDB.csproj -c Release --no-build -o ./artifacts -p:PackageVersion=${{ steps.preversion.outputs.version }}
+          dotnet pack Tharga.Cache.File/Tharga.Cache.File.csproj -c Release --no-build -o ./artifacts -p:PackageVersion=${{ steps.preversion.outputs.version }}
+          dotnet pack Tharga.Cache.Blazor/Tharga.Cache.Blazor.csproj -c Release --no-build -o ./artifacts -p:PackageVersion=${{ steps.preversion.outputs.version }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

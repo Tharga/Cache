@@ -46,7 +46,8 @@ jobs:
           fi
 
       - name: Test with coverage
-        run: dotnet test -c Release --no-build --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./coverage
+        # Skip Integration (needs Mongo/Redis) and TimeCritical (wall-clock asserts) tests on shared CI runners.
+        run: dotnet test -c Release --no-build --verbosity normal --filter "(Category!=Integration)&(Category!=TimeCritical)" --collect:"XPlat Code Coverage" --results-directory ./coverage
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5

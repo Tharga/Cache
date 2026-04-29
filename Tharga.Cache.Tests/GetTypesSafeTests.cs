@@ -66,10 +66,10 @@ public class GetTypesSafeTests
 
         public override Type[] GetTypes()
         {
-            var types = new Type?[_loadedTypes.Length + _unresolvedCount];
+            var types = new Type[_loadedTypes.Length + _unresolvedCount];
             for (var i = 0; i < _loadedTypes.Length; i++) types[i] = _loadedTypes[i];
 
-            var loaderExceptions = new Exception?[_unresolvedCount];
+            var loaderExceptions = new Exception[_unresolvedCount];
             for (var i = 0; i < _unresolvedCount; i++)
                 loaderExceptions[i] = new TypeLoadException("Could not load type 'Missing.Type' for testing.");
 

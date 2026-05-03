@@ -42,6 +42,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "File", "File", "{09A0B60C-A
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tharga.Cache.File.Tests", "Tharga.Cache.File.Tests\Tharga.Cache.File.Tests.csproj", "{05B3FF19-42EB-4EAE-BAD6-803B2EEDAA71}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tharga.Cache.Mcp", "Tharga.Cache.Mcp\Tharga.Cache.Mcp.csproj", "{08346EDF-D783-4FB0-8430-64618907B1C8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -196,6 +198,18 @@ Global
 		{05B3FF19-42EB-4EAE-BAD6-803B2EEDAA71}.Release|x64.Build.0 = Release|Any CPU
 		{05B3FF19-42EB-4EAE-BAD6-803B2EEDAA71}.Release|x86.ActiveCfg = Release|Any CPU
 		{05B3FF19-42EB-4EAE-BAD6-803B2EEDAA71}.Release|x86.Build.0 = Release|Any CPU
+		{08346EDF-D783-4FB0-8430-64618907B1C8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{08346EDF-D783-4FB0-8430-64618907B1C8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{08346EDF-D783-4FB0-8430-64618907B1C8}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{08346EDF-D783-4FB0-8430-64618907B1C8}.Debug|x64.Build.0 = Debug|Any CPU
+		{08346EDF-D783-4FB0-8430-64618907B1C8}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{08346EDF-D783-4FB0-8430-64618907B1C8}.Debug|x86.Build.0 = Debug|Any CPU
+		{08346EDF-D783-4FB0-8430-64618907B1C8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{08346EDF-D783-4FB0-8430-64618907B1C8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{08346EDF-D783-4FB0-8430-64618907B1C8}.Release|x64.ActiveCfg = Release|Any CPU
+		{08346EDF-D783-4FB0-8430-64618907B1C8}.Release|x64.Build.0 = Release|Any CPU
+		{08346EDF-D783-4FB0-8430-64618907B1C8}.Release|x86.ActiveCfg = Release|Any CPU
+		{08346EDF-D783-4FB0-8430-64618907B1C8}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

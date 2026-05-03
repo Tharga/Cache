@@ -34,6 +34,7 @@
 
 	<ItemGroup>
 	  <ProjectReference Include="..\Tharga.Cache\Tharga.Cache.csproj" />
+	  <ProjectReference Include="..\Tharga.Cache.Mcp\Tharga.Cache.Mcp.csproj" />
 	</ItemGroup>
 
 </Project>

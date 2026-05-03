@@ -5,7 +5,7 @@
 - [x] 2. Implement `ThargaMcpBuilderExtensions.AddCache()` extension
 - [x] 3. Implement `CacheResourceProvider` with 4 resources (`cache://types`, `cache://items`, `cache://health`, `cache://queue`)
 - [x] 4. Implement `CacheToolProvider` with 2 tools (`cache.clear_stale`, `cache.clear_all`)
-- [ ] 5. Add unit tests (resource list/read, tool list/invoke against mock `ICacheMonitor`)
+- [x] 5. Add unit tests (resource list/read, tool list/invoke against mock `ICacheMonitor`) — 10 tests, all green
 - [ ] 6. Wire MCP into the `Tharga.Cache.WebApi` sample (`AddThargaMcp(b => b.AddCache())` + `app.UseThargaMcp()`)
 - [ ] 7. Add `Tharga.Cache.Mcp.csproj` to both Pack steps in `.github/workflows/build.yml`
 - [ ] 8. Build, run full test suite, commit

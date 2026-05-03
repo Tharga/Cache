@@ -1,7 +1,9 @@
 using Tharga.Cache;
+using Tharga.Cache.Mcp;
 using Tharga.Cache.MongoDB;
 using Tharga.Cache.Persist;
 using Tharga.Cache.Web;
+using Tharga.Mcp;
 using Tharga.MongoDB;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -38,6 +40,13 @@ builder.Services.AddCache(o =>
 
 builder.Services.AddHostedService<CacheMonitorBackgroundService>();
 
+builder.Services.AddThargaMcp(mcp =>
+{
+    // Sample runs without authentication — production consumers leave RequireAuth=true and wire auth middleware.
+    mcp.Options.RequireAuth = false;
+    mcp.AddCache();
+});
+
 //builder.Services.AddQuilt4NetApi(o =>
 //{
 //    //o.ShowInOpenApi = !Debugger.IsAttached;
@@ -57,6 +66,8 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.UseThargaMcp();
 
 //app.UseQuilt4NetApi();
 

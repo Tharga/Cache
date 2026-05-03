@@ -103,6 +103,7 @@ jobs:
           dotnet pack Tharga.Cache.MongoDB/Tharga.Cache.MongoDB.csproj -c Release --no-build -o ./artifacts -p:PackageVersion=${{ steps.version.outputs.version }}
           dotnet pack Tharga.Cache.File/Tharga.Cache.File.csproj -c Release --no-build -o ./artifacts -p:PackageVersion=${{ steps.version.outputs.version }}
           dotnet pack Tharga.Cache.Blazor/Tharga.Cache.Blazor.csproj -c Release --no-build -o ./artifacts -p:PackageVersion=${{ steps.version.outputs.version }}
+          dotnet pack Tharga.Cache.Mcp/Tharga.Cache.Mcp.csproj -c Release --no-build -o ./artifacts -p:PackageVersion=${{ steps.version.outputs.version }}
 
       - name: Pack (pre-release — pull request)
         if: github.event_name == 'pull_request'
@@ -112,6 +113,7 @@ jobs:
           dotnet pack Tharga.Cache.MongoDB/Tharga.Cache.MongoDB.csproj -c Release --no-build -o ./artifacts -p:PackageVersion=${{ steps.preversion.outputs.version }}
           dotnet pack Tharga.Cache.File/Tharga.Cache.File.csproj -c Release --no-build -o ./artifacts -p:PackageVersion=${{ steps.preversion.outputs.version }}
           dotnet pack Tharga.Cache.Blazor/Tharga.Cache.Blazor.csproj -c Release --no-build -o ./artifacts -p:PackageVersion=${{ steps.preversion.outputs.version }}
+          dotnet pack Tharga.Cache.Mcp/Tharga.Cache.Mcp.csproj -c Release --no-build -o ./artifacts -p:PackageVersion=${{ steps.preversion.outputs.version }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

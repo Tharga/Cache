@@ -39,7 +39,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Tharga.MongoDB" Version="2.10.7" />
+    <PackageReference Include="Tharga.MongoDB" Version="2.10.9" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Tharga.Cache\Tharga.Cache.csproj" />

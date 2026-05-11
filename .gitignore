@@ -3,9 +3,6 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
-# Local feature scratchpad — archived externally to the Plan directory, never committed
-plan/
-
 # User-specific files
 *.rsuser
 *.suo

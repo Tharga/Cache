@@ -34,15 +34,17 @@ public static class CacheRegistrationExtensions
         serviceCollection.TryAddSingleton<ICacheMonitor>(s => s.GetService<IManagedCacheMonitor>());
         serviceCollection.TryAddSingleton<IFetchQueue>(s =>
         {
+            var opts = s.GetRequiredService<IOptions<CacheOptions>>().Value;
             var cacheMonitor = s.GetService<IManagedCacheMonitor>();
             var loggerFactory = s.GetService<ILoggerFactory>();
             var logger = loggerFactory?.CreateLogger<FetchQueue>();
-            return new FetchQueue(cacheMonitor, o, logger);
+            return new FetchQueue(cacheMonitor, opts, logger);
         });
         serviceCollection.TryAddSingleton<IManagedCacheMonitor>(s =>
         {
+            var opts = s.GetRequiredService<IOptions<CacheOptions>>().Value;
             var persistLoader = s.GetService<IPersistLoader>();
-            var cacheMonitor = new CacheMonitor(persistLoader, o);
+            var cacheMonitor = new CacheMonitor(persistLoader, opts);
             return cacheMonitor;
         });
 
@@ -59,31 +61,35 @@ public static class CacheRegistrationExtensions
         });
         serviceCollection.TryAddSingleton<IEternalCache>(s =>
         {
+            var opts = s.GetRequiredService<IOptions<CacheOptions>>().Value;
             var cacheMonitor = s.GetService<IManagedCacheMonitor>();
             var persistLoader = s.GetService<IPersistLoader>();
             var fetchQueue = s.GetService<IFetchQueue>();
-            return new EternalCache(cacheMonitor, persistLoader, fetchQueue, o);
+            return new EternalCache(cacheMonitor, persistLoader, fetchQueue, opts);
         });
         serviceCollection.TryAddSingleton<ITimeToLiveCache>(s =>
         {
+            var opts = s.GetRequiredService<IOptions<CacheOptions>>().Value;
             var cacheMonitor = s.GetService<IManagedCacheMonitor>();
             var persistLoader = s.GetService<IPersistLoader>();
             var fetchQueue = s.GetService<IFetchQueue>();
-            return new TimeToLiveCache(cacheMonitor, persistLoader, fetchQueue, o);
+            return new TimeToLiveCache(cacheMonitor, persistLoader, fetchQueue, opts);
         });
         serviceCollection.TryAddSingleton<ITimeToIdleCache>(s =>
         {
+            var opts = s.GetRequiredService<IOptions<CacheOptions>>().Value;
             var cacheMonitor = s.GetService<IManagedCacheMonitor>();
             var persistLoader = s.GetService<IPersistLoader>();
             var fetchQueue = s.GetService<IFetchQueue>();
-            return new TimeToIdleCache(cacheMonitor, persistLoader, fetchQueue, o);
+            return new TimeToIdleCache(cacheMonitor, persistLoader, fetchQueue, opts);
         });
         serviceCollection.TryAddScoped<IScopeCache>(s =>
         {
+            var opts = s.GetRequiredService<IOptions<CacheOptions>>().Value;
             var cacheMonitor = s.GetService<IManagedCacheMonitor>();
             var persistLoader = s.GetService<IPersistLoader>();
             var fetchQueue = s.GetService<IFetchQueue>();
-            return new EternalCache(cacheMonitor, persistLoader, fetchQueue, o);
+            return new EternalCache(cacheMonitor, persistLoader, fetchQueue, opts);
         });
 
         serviceCollection.TryAddSingleton<IWatchDogService, WatchDogService>();

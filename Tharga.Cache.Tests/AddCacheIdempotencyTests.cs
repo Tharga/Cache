@@ -120,4 +120,27 @@ public class AddCacheIdempotencyTests : IDisposable
         var cacheMonitorCount = services.Count(s => s.ServiceType == typeof(ICacheMonitor));
         cacheMonitorCount.Should().Be(1);
     }
+
+    [Fact]
+    public async Task AddCache_CalledTwice_SecondCallRegistrationHonoredAtRuntime()
+    {
+        //Arrange — first call registers one type, the resolved cache singleton
+        //must still see the second call's type registration (merged options).
+        //Regression for Eplicta 2026-04-14: singleton factories used to close
+        //over the local CacheOptions, so only the first call's `o` was bound.
+        var services = new ServiceCollection();
+        services.AddLogging();
+
+        services.AddCache(o => o.RegisterType<string, IMemory>(t => t.DefaultFreshSpan = TimeSpan.FromMinutes(5)));
+        services.AddCache(o => o.RegisterType<int, IMemory>(t => t.DefaultFreshSpan = TimeSpan.FromMinutes(5)));
+
+        var provider = services.BuildServiceProvider();
+        var cache = provider.GetRequiredService<ITimeToLiveCache>();
+
+        //Act — second call's type, no explicit freshSpan. Must resolve via merged options.
+        var act = async () => await cache.GetAsync<int>("test-key", () => Task.FromResult(42));
+
+        //Assert
+        await act.Should().NotThrowAsync<InvalidOperationException>();
+    }
 }

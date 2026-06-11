@@ -7,7 +7,7 @@
     <Company>Thargelion AB</Company>
     <Product>Tharga Cache Blazor</Product>
     <Description>Component for manageing the Tharga Cache features in blazor.</Description>
-    <PackageIconUrl>https://thargelion.se/wp-content/uploads/2025/11/Thargelion-Cache-Icon-150.png</PackageIconUrl>
+    <PackageIconUrl>https://thargelion.net/assets/component-cache.png</PackageIconUrl>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <DebugType>portable</DebugType>

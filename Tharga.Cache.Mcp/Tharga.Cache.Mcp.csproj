@@ -8,7 +8,7 @@
 		<Company>Thargelion AB</Company>
 		<Product>Tharga Cache MCP</Product>
 		<Description>Exposes Tharga.Cache monitoring data (cache types, items, persistence health, fetch queue) and actions (clear all, clear stale) via MCP (Model Context Protocol). Plugs into Tharga.Mcp.</Description>
-		<PackageIconUrl>https://thargelion.se/wp-content/uploads/2025/11/Thargelion-Cache-Icon-150.png</PackageIconUrl>
+		<PackageIconUrl>https://thargelion.net/assets/component-cache.png</PackageIconUrl>
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
 		<PackageProjectUrl>https://github.com/Tharga/Cache</PackageProjectUrl>
 		<PackageReadmeFile>README.md</PackageReadmeFile>

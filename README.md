@@ -7,6 +7,8 @@
 
 A flexible .NET caching library with multiple cache strategies, pluggable persistence backends, eviction policies, and a Blazor monitoring UI.
 
+📖 **Documentation:** [cache.tharga.net](https://cache.tharga.net)
+
 ## Packages
 
 | Package | Description | NuGet |

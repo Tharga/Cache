@@ -7,7 +7,7 @@
     <Company>Thargelion AB</Company>
     <Product>Tharga Cache MongoDB</Product>
     <Description>MongoDB cache features.</Description>
-    <PackageIconUrl>https://thargelion.se/wp-content/uploads/2025/11/Thargelion-Cache-Icon-150.png</PackageIconUrl>
+    <PackageIconUrl>https://thargelion.net/assets/component-cache.png</PackageIconUrl>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <PackageProjectUrl>https://github.com/Tharga/Cache</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -39,7 +39,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Tharga.MongoDB" Version="2.10.12" />
+    <PackageReference Include="Tharga.MongoDB" Version="2.11.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Tharga.Cache\Tharga.Cache.csproj" />

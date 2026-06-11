@@ -8,7 +8,7 @@
 		<Company>Thargelion AB</Company>
 		<Product>Tharga Cache</Product>
 		<Description>Memory cache features.</Description>
-		<PackageIconUrl>https://thargelion.se/wp-content/uploads/2025/11/Thargelion-Cache-Icon-150.png</PackageIconUrl>
+		<PackageIconUrl>https://thargelion.net/assets/component-cache.png</PackageIconUrl>
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
 		<PackageProjectUrl>https://github.com/Tharga/Cache</PackageProjectUrl>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
@@ -43,7 +43,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="FluentAssertions" Version="8.10.0" />
-		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.8" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.9" />
 		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.300">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

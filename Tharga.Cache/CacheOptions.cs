@@ -16,6 +16,13 @@ public record CacheOptions
     /// </summary>
     public TimeSpan WatchDogInterval { get; set; } = TimeSpan.FromSeconds(60);
 
+    /// <summary>
+    /// When true (default), an exception thrown by the persist backend is logged and treated as a cache miss
+    /// for reads (control flows to the source loader) and is swallowed for writes — so a backend outage never
+    /// faults the caller. Set to false to restore the previous behavior where backend exceptions propagate.
+    /// </summary>
+    public bool FailOpenOnBackendError { get; set; } = true;
+
     public void RegisterType<TCache, TPersist>(Action<CacheTypeOptions> options = null) where TPersist : IPersist
     {
         var typeOptions = (Default ?? BuildDefault()) with { };

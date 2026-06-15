@@ -1,4 +1,5 @@
-﻿using Tharga.Cache.Persist;
+﻿using Microsoft.Extensions.Logging;
+using Tharga.Cache.Persist;
 
 namespace Tharga.Cache.Core;
 
@@ -7,9 +8,10 @@ internal abstract class CacheBase : ICache
     private readonly IManagedCacheMonitor _cacheMonitor;
     private readonly IPersistLoader _persistLoader;
     private readonly IFetchQueue _fetchQueue;
+    private readonly ILogger _logger;
     protected readonly CacheOptions _options;
 
-    protected CacheBase(IManagedCacheMonitor cacheMonitor, IPersistLoader persistLoader, IFetchQueue fetchQueue, CacheOptions options)
+    protected CacheBase(IManagedCacheMonitor cacheMonitor, IPersistLoader persistLoader, IFetchQueue fetchQueue, CacheOptions options, ILogger logger = null)
     {
         if (options.MaxConcurrentFetchCount <= 0) throw new InvalidOperationException($"Min value for {nameof(options.MaxConcurrentFetchCount)} is 1.");
 
@@ -17,6 +19,7 @@ internal abstract class CacheBase : ICache
         _persistLoader = persistLoader;
         _fetchQueue = fetchQueue;
         _options = options;
+        _logger = logger;
     }
 
     public event EventHandler<DataSetEventArgs> DataSetEvent;
@@ -36,7 +39,7 @@ internal abstract class CacheBase : ICache
 
         key = key.SetTypeKey<T>();
 
-        var result = await GetPersist<T>().GetAsync<T>(key);
+        var result = await TryGetPersistAsync<T>(key);
 
         if (result.IsValid())
         {
@@ -79,8 +82,10 @@ internal abstract class CacheBase : ICache
 
     private async Task FetchCallback<T>(Key key, CacheItem<T> item, bool staleWhileRevalidate)
     {
-        await GetPersist<T>().SetAsync(key, item, staleWhileRevalidate);
-        await OnSetAsync(key, item, staleWhileRevalidate);
+        if (await TrySetPersistAsync(key, item, staleWhileRevalidate))
+        {
+            await OnSetAsync(key, item, staleWhileRevalidate);
+        }
     }
 
     protected CacheTypeOptions GetTypeOptions<T>()
@@ -93,7 +98,7 @@ internal abstract class CacheBase : ICache
     {
         key = key.SetTypeKey<T>();
 
-        var result = await GetPersist<T>().GetAsync<T>(key);
+        var result = await TryGetPersistAsync<T>(key);
         if (result.IsValid())
         {
             var response = result.GetData();
@@ -124,8 +129,10 @@ internal abstract class CacheBase : ICache
 
         var staleWhileRevalidate = GetTypeOptions<T>().StaleWhileRevalidate;
         var item = CacheItemBuilder.BuildCacheItem(key.KeyParts, data, freshSpan);
-        await GetPersist<T>().SetAsync(key, item, staleWhileRevalidate);
-        await OnSetAsync(key, item, staleWhileRevalidate);
+        if (await TrySetPersistAsync(key, item, staleWhileRevalidate))
+        {
+            await OnSetAsync(key, item, staleWhileRevalidate);
+        }
     }
 
     public virtual async Task<int> DropAsync<T>(Key key)
@@ -204,7 +211,14 @@ internal abstract class CacheBase : ICache
         var moreTimeBought = false;
         if (buyMoreTime)
         {
-            moreTimeBought = await GetPersist<T>().BuyMoreTime<T>(key);
+            try
+            {
+                moreTimeBought = await GetPersist<T>().BuyMoreTime<T>(key);
+            }
+            catch (Exception ex) when (_options.FailOpenOnBackendError)
+            {
+                LogFailOpen(ex, "buy-more-time", key, typeof(T));
+            }
         }
 
         _cacheMonitor.Accessed(typeof(T), key, moreTimeBought);
@@ -226,6 +240,46 @@ internal abstract class CacheBase : ICache
     {
         var persist = _persistLoader.GetPersist(_options.Get<T>().PersistType);
         return persist;
+    }
+
+    /// <summary>
+    /// Reads from the persist backend. When <see cref="CacheOptions.FailOpenOnBackendError"/> is enabled, a
+    /// backend exception is logged and treated as a miss (returns null) so the caller falls back to the source loader.
+    /// </summary>
+    private async Task<CacheItem<T>> TryGetPersistAsync<T>(Key key)
+    {
+        try
+        {
+            return await GetPersist<T>().GetAsync<T>(key);
+        }
+        catch (Exception ex) when (_options.FailOpenOnBackendError)
+        {
+            LogFailOpen(ex, "read", key, typeof(T));
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Writes to the persist backend. When <see cref="CacheOptions.FailOpenOnBackendError"/> is enabled, a backend
+    /// exception is logged and swallowed (returns false) so a failed cache write never faults the caller.
+    /// </summary>
+    private async Task<bool> TrySetPersistAsync<T>(Key key, CacheItem<T> item, bool staleWhileRevalidate)
+    {
+        try
+        {
+            await GetPersist<T>().SetAsync(key, item, staleWhileRevalidate);
+            return true;
+        }
+        catch (Exception ex) when (_options.FailOpenOnBackendError)
+        {
+            LogFailOpen(ex, "write", key, typeof(T));
+            return false;
+        }
+    }
+
+    private void LogFailOpen(Exception ex, string operation, Key key, Type type)
+    {
+        _logger?.LogWarning(ex, "Cache persist {Operation} failed for key '{Key}' on type '{Type}'; failing open ({Message}).", operation, key.Value, type.Name, ex.Message);
     }
 
     private async Task EvictItems<T>(T data)

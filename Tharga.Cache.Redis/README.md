@@ -31,6 +31,28 @@ Any type registered with `IRedis` is persisted to Redis. Unregistered types defa
 - **Survives restarts** — cached data is not lost on deploy
 - **High throughput** with low latency
 
+## Resilience (fail-open)
+
+If Redis becomes unreachable, the cache **fails open**: a backend read error is treated as a miss so the
+call falls through to your source loader, and a backend write error is swallowed. A cache outage therefore
+never faults the caller as long as the source of truth is healthy. This is on by default and can be turned
+off with `CacheOptions.FailOpenOnBackendError = false` (which restores the previous throwing behavior).
+
+A Polly **circuit breaker** sits in front of the Redis connection so a sustained outage short-circuits
+immediately instead of paying retry latency on every call (which is what prevents thread-pool starvation).
+The breaker recovers automatically once Redis is healthy again.
+
+```csharp
+o.AddRedisDBOptions(r =>
+{
+    r.ConnectionStringLoader = sp => "localhost:6379";
+    r.RetryCount = 3;                                     // transient-error retries before a call fails (default 3)
+    r.CircuitBreakerFailureThreshold = 5;                 // consecutive failures before the circuit opens (default 5)
+    r.CircuitBreakerDuration = TimeSpan.FromSeconds(30);  // how long it stays open before probing again (default 30s)
+    r.CommandTimeout = TimeSpan.FromSeconds(1);           // optional shorter per-command timeout for fast fail-open
+});
+```
+
 ## Documentation
 
 Full documentation, configuration options, and samples are available on the [GitHub project page](https://github.com/Tharga/Cache).

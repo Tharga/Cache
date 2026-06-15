@@ -1,9 +1,11 @@
-﻿namespace Tharga.Cache.Core;
+﻿using Microsoft.Extensions.Logging;
+
+namespace Tharga.Cache.Core;
 
 internal abstract class TimeCacheBase : CacheBase, ITimeCache
 {
-    protected TimeCacheBase(IManagedCacheMonitor cacheMonitor, IPersistLoader persistLoader, IFetchQueue fetchQueue, CacheOptions options)
-        : base(cacheMonitor, persistLoader, fetchQueue, options)
+    protected TimeCacheBase(IManagedCacheMonitor cacheMonitor, IPersistLoader persistLoader, IFetchQueue fetchQueue, CacheOptions options, ILogger logger = null)
+        : base(cacheMonitor, persistLoader, fetchQueue, options, logger)
     {
     }
 

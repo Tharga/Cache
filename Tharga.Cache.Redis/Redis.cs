@@ -1,11 +1,10 @@
 ﻿using System.Diagnostics;
-using System.Net.Sockets;
 using System.Text.Json;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Polly;
-using Polly.Retry;
+using Polly.CircuitBreaker;
 using StackExchange.Redis;
 using Tharga.Cache.Core;
 
@@ -17,7 +16,7 @@ internal class Redis : IRedis
     private readonly IHostEnvironment _hostEnvironment;
     private readonly RedisCacheOptions _options;
     private readonly ILogger<Redis> _logger;
-    private readonly AsyncRetryPolicy _retryPolicy;
+    private readonly IAsyncPolicy _resiliencePolicy;
     private ConnectionMultiplexer _redisConnection;
 
     public Redis(IServiceProvider serviceProvider, IHostEnvironment hostEnvironment, IManagedCacheMonitor cacheMonitor, IOptions<RedisCacheOptions> options, ILogger<Redis> logger)
@@ -26,14 +25,7 @@ internal class Redis : IRedis
         _hostEnvironment = hostEnvironment;
         _options = options.Value;
         _logger = logger;
-        _retryPolicy = Policy
-            .Handle<RedisException>()
-            .Or<TimeoutException>()
-            .Or<SocketException>()
-            .WaitAndRetryAsync(
-                3,
-                attempt => TimeSpan.FromMilliseconds(200 * Math.Pow(2, attempt)),
-                (exception, timeSpan, retryCount, _) => { _logger.LogWarning($"Retry {retryCount} after {timeSpan.TotalMilliseconds}ms due to: {exception.Message}"); });
+        _resiliencePolicy = RedisResiliencePolicy.Create(_options, logger);
 
         cacheMonitor.RequestEvictEvent += async (_, e) =>
         {
@@ -50,7 +42,7 @@ internal class Redis : IRedis
 
     public async Task<CacheItem<T>> GetAsync<T>(Key key)
     {
-        return await _retryPolicy.ExecuteAsync(async () =>
+        return await _resiliencePolicy.ExecuteAsync(async () =>
         {
             var redisConnection = await GetConnection();
             if (redisConnection.Multiplexer == null) return null;
@@ -74,7 +66,7 @@ internal class Redis : IRedis
 
     public async Task SetAsync<T>(Key key, CacheItem<T> cacheItem, bool staleWhileRevalidate)
     {
-        await _retryPolicy.ExecuteAsync(async () =>
+        await _resiliencePolicy.ExecuteAsync(async () =>
         {
             var item = JsonSerializer.Serialize(cacheItem);
             if (Debugger.IsAttached)
@@ -101,17 +93,17 @@ internal class Redis : IRedis
 
     public async Task<bool> BuyMoreTime<T>(Key key)
     {
-        return await _retryPolicy.ExecuteAsync(async () => await SetUpdateTime<T>(key, DateTime.UtcNow));
+        return await _resiliencePolicy.ExecuteAsync(async () => await SetUpdateTime<T>(key, DateTime.UtcNow));
     }
 
     public async Task<bool> Invalidate<T>(Key key)
     {
-        return await _retryPolicy.ExecuteAsync(async () => await SetUpdateTime<T>(key, DateTime.MinValue));
+        return await _resiliencePolicy.ExecuteAsync(async () => await SetUpdateTime<T>(key, DateTime.MinValue));
     }
 
     public async Task<bool> DropAsync<T>(Key key)
     {
-        return await _retryPolicy.ExecuteAsync(async () =>
+        return await _resiliencePolicy.ExecuteAsync(async () =>
         {
             var redisConnection = await GetConnection();
             if (redisConnection.Multiplexer == null) return false;
@@ -124,13 +116,20 @@ internal class Redis : IRedis
 
     public async Task<(bool Success, string Message)> CanConnectAsync()
     {
-        return await _retryPolicy.ExecuteAsync(async () =>
+        try
         {
-            var redisConnection = await GetConnection();
-            if (redisConnection.Multiplexer == null) return (false, redisConnection.Message);
+            return await _resiliencePolicy.ExecuteAsync(async () =>
+            {
+                var redisConnection = await GetConnection();
+                if (redisConnection.Multiplexer == null) return (false, redisConnection.Message);
 
-            return (redisConnection.Multiplexer.IsConnected, redisConnection.Message);
-        });
+                return (redisConnection.Multiplexer.IsConnected, redisConnection.Message);
+            });
+        }
+        catch (BrokenCircuitException e)
+        {
+            return (false, $"Redis circuit is open: {e.Message}");
+        }
     }
 
     private async Task<bool> SetUpdateTime<T>(Key key, DateTime updateTime)
@@ -174,7 +173,20 @@ internal class Redis : IRedis
 
         try
         {
-            _redisConnection = await ConnectionMultiplexer.ConnectAsync(connectionString);
+            if (_options.CommandTimeout is { } commandTimeout)
+            {
+                var config = ConfigurationOptions.Parse(connectionString);
+                var milliseconds = (int)commandTimeout.TotalMilliseconds;
+                config.AsyncTimeout = milliseconds;
+                config.SyncTimeout = milliseconds;
+                config.ConnectTimeout = milliseconds;
+                _redisConnection = await ConnectionMultiplexer.ConnectAsync(config);
+            }
+            else
+            {
+                _redisConnection = await ConnectionMultiplexer.ConnectAsync(connectionString);
+            }
+
             return (_redisConnection, "Connected to Redis.");
         }
         catch (Exception e)

@@ -65,7 +65,7 @@ public static class CacheRegistrationExtensions
             var cacheMonitor = s.GetService<IManagedCacheMonitor>();
             var persistLoader = s.GetService<IPersistLoader>();
             var fetchQueue = s.GetService<IFetchQueue>();
-            return new EternalCache(cacheMonitor, persistLoader, fetchQueue, opts);
+            return new EternalCache(cacheMonitor, persistLoader, fetchQueue, opts, CreateCacheLogger(s));
         });
         serviceCollection.TryAddSingleton<ITimeToLiveCache>(s =>
         {
@@ -73,7 +73,7 @@ public static class CacheRegistrationExtensions
             var cacheMonitor = s.GetService<IManagedCacheMonitor>();
             var persistLoader = s.GetService<IPersistLoader>();
             var fetchQueue = s.GetService<IFetchQueue>();
-            return new TimeToLiveCache(cacheMonitor, persistLoader, fetchQueue, opts);
+            return new TimeToLiveCache(cacheMonitor, persistLoader, fetchQueue, opts, CreateCacheLogger(s));
         });
         serviceCollection.TryAddSingleton<ITimeToIdleCache>(s =>
         {
@@ -81,7 +81,7 @@ public static class CacheRegistrationExtensions
             var cacheMonitor = s.GetService<IManagedCacheMonitor>();
             var persistLoader = s.GetService<IPersistLoader>();
             var fetchQueue = s.GetService<IFetchQueue>();
-            return new TimeToIdleCache(cacheMonitor, persistLoader, fetchQueue, opts);
+            return new TimeToIdleCache(cacheMonitor, persistLoader, fetchQueue, opts, CreateCacheLogger(s));
         });
         serviceCollection.TryAddScoped<IScopeCache>(s =>
         {
@@ -89,7 +89,7 @@ public static class CacheRegistrationExtensions
             var cacheMonitor = s.GetService<IManagedCacheMonitor>();
             var persistLoader = s.GetService<IPersistLoader>();
             var fetchQueue = s.GetService<IFetchQueue>();
-            return new EternalCache(cacheMonitor, persistLoader, fetchQueue, opts);
+            return new EternalCache(cacheMonitor, persistLoader, fetchQueue, opts, CreateCacheLogger(s));
         });
 
         serviceCollection.TryAddSingleton<IWatchDogService, WatchDogService>();
@@ -118,6 +118,11 @@ public static class CacheRegistrationExtensions
         {
             o.TryAddType(previouslyRegisteredType.Key, previouslyRegisteredType.Value);
         }
+    }
+
+    private static ILogger CreateCacheLogger(IServiceProvider serviceProvider)
+    {
+        return serviceProvider.GetService<ILoggerFactory>()?.CreateLogger("Tharga.Cache.Cache");
     }
 
     private static void RegisterPersist(IServiceCollection serviceCollection)

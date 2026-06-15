@@ -12,6 +12,7 @@ A flexible .NET caching library with multiple cache strategies, configurable evi
 - **Eviction policies** — LRU, FIFO, or Random when size or count limits are reached
 - **Stale-while-revalidate** — return cached data instantly while refreshing in the background
 - **Pluggable persistence** — in-memory by default, with optional Redis, MongoDB, and file backends
+- **Fail-open** — when a persist backend is unreachable, reads fall through to the source loader and writes are skipped, so a cache outage never faults the caller (`CacheOptions.FailOpenOnBackendError`, on by default)
 - **Composite keys** — build cache keys from multiple parts with `KeyBuilder`
 - **Monitoring** — inspect cache state, item counts, and fetch queue depth via `ICacheMonitor`
 - **Background cleanup** — built-in WatchDog service removes stale entries automatically

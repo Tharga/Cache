@@ -1,9 +1,11 @@
-﻿namespace Tharga.Cache.Core;
+﻿using Microsoft.Extensions.Logging;
+
+namespace Tharga.Cache.Core;
 
 internal class EternalCache : CacheBase, IEternalCache, IScopeCache
 {
-    public EternalCache(IManagedCacheMonitor cacheMonitor, IPersistLoader persistLoader, IFetchQueue fetchQueue, CacheOptions options)
-        : base(cacheMonitor, persistLoader, fetchQueue, options)
+    public EternalCache(IManagedCacheMonitor cacheMonitor, IPersistLoader persistLoader, IFetchQueue fetchQueue, CacheOptions options, ILogger logger = null)
+        : base(cacheMonitor, persistLoader, fetchQueue, options, logger)
     {
     }
 

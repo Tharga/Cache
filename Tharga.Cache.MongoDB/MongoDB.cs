@@ -42,7 +42,7 @@ internal class MongoDB : IMongoDB
         {
             if (!item.StaleWhileRevalidate && item.FreshSpan.HasValue && item.FreshSpan.Value != TimeSpan.MaxValue && item.CreateTime.Add(item.FreshSpan.Value) < DateTime.UtcNow)
             {
-                await collection.DeleteOneAsync(item.Id);
+                await collection.DeleteOneAsync(ById(item.Id));
                 return null;
             }
 
@@ -104,15 +104,30 @@ internal class MongoDB : IMongoDB
     public async Task<bool> DropAsync<T>(Key key)
     {
         var collection = GetCollection();
-        var item = await collection.DeleteOneAsync(key.Value);
+        var item = await collection.DeleteOneAsync(ById(key.Value));
         return item != null;
+    }
+
+    /// <summary>
+    /// The id of a cache entity as an explicit filter.
+    /// </summary>
+    /// <remarks>
+    /// There is no DeleteOneAsync(TKey) overload, so a bare string is picked up by
+    /// DeleteOneAsync(FilterDefinition&lt;CacheEntity&gt;) through the driver's implicit
+    /// string -&gt; JsonFilterDefinition conversion. That compiles, and then Mongo parses the
+    /// cache key as a JSON filter document: "JSON reader was expecting a value but found 'MyType'".
+    /// Building the filter here means the key can only ever be read as an id.
+    /// </remarks>
+    private static FilterDefinition<CacheEntity> ById(string id)
+    {
+        return new FilterDefinitionBuilder<CacheEntity>().Eq(x => x.Id, id);
     }
 
     private async Task<bool> SetUpdateTime(Key key, DateTime updateTime)
     {
         var collection = GetCollection();
         var update = new UpdateDefinitionBuilder<CacheEntity>().Set(x => x.UpdateTime, updateTime);
-        var result = await collection.UpdateOneAsync(key.Value, update, OneOption<CacheEntity>.SingleOrDefault);
+        var result = await collection.UpdateOneAsync(ById(key.Value), update, OneOption<CacheEntity>.SingleOrDefault);
         return result.Before != null;
     }
 
@@ -151,3 +166,4 @@ internal class MongoDB : IMongoDB
         return ValueTask.CompletedTask;
     }
 }
+

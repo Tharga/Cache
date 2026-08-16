@@ -5,18 +5,8 @@ using Xunit;
 
 namespace Tharga.Cache.Tests;
 
-public class AddCacheIdempotencyTests : IDisposable
+public class AddCacheIdempotencyTests
 {
-    public AddCacheIdempotencyTests()
-    {
-        CacheRegistrationExtensions.ResetRegistrations();
-    }
-
-    public void Dispose()
-    {
-        CacheRegistrationExtensions.ResetRegistrations();
-    }
-
     [Fact]
     public void AddCache_CalledTwice_WithDifferentTypes_DoesNotThrow()
     {

@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Tharga.Cache.Persist;
 using Xunit;
 
@@ -44,7 +45,7 @@ public class AddCacheIdempotencyTests
     }
 
     [Fact]
-    public void AddCache_CalledTwice_WithSameType_FirstRegistrationWins()
+    public void AddCache_CalledTwice_WithSameType_LatestRegistrationWins()
     {
         //Arrange
         var services = new ServiceCollection();
@@ -56,8 +57,8 @@ public class AddCacheIdempotencyTests
 
         //Assert
         var provider = services.BuildServiceProvider();
-        var cache = provider.GetRequiredService<ITimeToLiveCache>();
-        cache.Should().NotBeNull();
+        var options = provider.GetRequiredService<IOptions<CacheOptions>>().Value;
+        options.GetRegistered()[typeof(string)].DefaultFreshSpan.Should().Be(TimeSpan.FromMinutes(99));
     }
 
     [Fact]

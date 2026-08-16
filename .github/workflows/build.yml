@@ -105,7 +105,9 @@ jobs:
 
       - name: Test with coverage
         # Skip Integration (needs Mongo/Redis) and TimeCritical (wall-clock asserts) tests on shared CI runners.
-        run: dotnet test -c Release --no-build --verbosity normal --filter "(Category!=Integration)&(Category!=TimeCritical)" --collect:"XPlat Code Coverage" --results-directory ./coverage
+        # Microsoft.Testing.Platform (see global.json) — xunit.v3 4.x dropped the VSTest bridge, so the
+        # VSTest --filter expression and --collect:"XPlat Code Coverage" no longer apply here.
+        run: dotnet test -c Release --no-build --filter-not-trait "Category=Integration" --filter-not-trait "Category=TimeCritical" --coverage --coverage-output-format cobertura --results-directory ./coverage
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5

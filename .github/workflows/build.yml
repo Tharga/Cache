@@ -7,7 +7,10 @@ on:
     branches: [master]
 
 env:
-  MAJOR_MINOR: '1.0'
+  # Bumped 1.0 -> 1.1 for the gh#55/#56 release: Tharga.Cache no longer flows
+  # FluentAssertions to consumers, which is a compile-time break for anyone who
+  # was unknowingly relying on the transitive reference.
+  MAJOR_MINOR: '1.1'
 
 permissions:
   contents: write

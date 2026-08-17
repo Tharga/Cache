@@ -16,6 +16,8 @@ builder.Services.AddCache();
 
 `AddCache` is idempotent — calling it more than once (for example when several libraries each register cache types) merges the registrations instead of throwing.
 
+The merge is scoped to the service collection it is called on, so it is safe to build several hosts concurrently in one process — parallel integration tests each constructing a `WebApplicationFactory`, or a multi-tenant host spinning up isolated containers. Registrations made on one service collection never appear in another.
+
 ## The get-or-load pattern
 
 Inject one of the four cache interfaces and call `GetAsync` with a key and a fetch delegate. The first call runs the delegate and stores the result; subsequent calls within the fresh span return the cached value without invoking the delegate.

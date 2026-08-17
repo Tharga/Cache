@@ -149,6 +149,9 @@ coverage*.json
 coverage*.xml
 coverage*.info
 
+# Microsoft.Testing.Platform coverage output directory (--results-directory ./coverage)
+coverage/
+
 # Visual Studio code coverage results
 *.coverage
 *.coveragexml

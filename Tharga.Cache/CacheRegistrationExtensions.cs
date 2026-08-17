@@ -10,13 +10,6 @@ namespace Tharga.Cache;
 
 public static class CacheRegistrationExtensions
 {
-    private static readonly Dictionary<Type, CacheTypeOptions> _configuredPersistTypes = new();
-
-    internal static void ResetRegistrations()
-    {
-        _configuredPersistTypes.Clear();
-    }
-
     public static void AddCache(this IServiceCollection serviceCollection, Action<CacheOptions> options = null)
     {
         var o = new CacheOptions
@@ -25,7 +18,7 @@ public static class CacheRegistrationExtensions
         };
         options?.Invoke(o);
 
-        AppendPreviousRegistrations(o);
+        AppendPreviousRegistrations(serviceCollection, o);
 
         // Replace IOptions<CacheOptions> on each call so it carries the merged type registrations.
         serviceCollection.RemoveAll<IOptions<CacheOptions>>();
@@ -104,17 +97,23 @@ public static class CacheRegistrationExtensions
     }
 
     /// <summary>
-    /// If AddCache is called several times, this method merges all registrations so they can be used in the end.
-    /// First registration wins — duplicate types are silently skipped.
+    /// If AddCache is called several times on the same service collection, this method merges all registrations
+    /// so they can be used in the end. The type registered by this call wins — duplicates from earlier calls are
+    /// silently skipped.
     /// </summary>
-    private static void AppendPreviousRegistrations(CacheOptions o)
+    /// <remarks>
+    /// The accumulated registrations are read back from the service collection rather than from process-wide
+    /// state, so hosts built concurrently in one process neither race nor inherit each other's registrations.
+    /// </remarks>
+    private static void AppendPreviousRegistrations(IServiceCollection serviceCollection, CacheOptions o)
     {
-        var previouslyRegisteredTypes = _configuredPersistTypes.ToArray();
-        foreach (var item in o.GetRegistered())
-        {
-            _configuredPersistTypes.TryAdd(item.Key, item.Value);
-        }
-        foreach (var previouslyRegisteredType in previouslyRegisteredTypes)
+        var previous = serviceCollection
+            .LastOrDefault(x => x.ServiceType == typeof(IOptions<CacheOptions>))?
+            .ImplementationInstance as IOptions<CacheOptions>;
+
+        if (previous == null) return;
+
+        foreach (var previouslyRegisteredType in previous.Value.GetRegistered())
         {
             o.TryAddType(previouslyRegisteredType.Key, previouslyRegisteredType.Value);
         }

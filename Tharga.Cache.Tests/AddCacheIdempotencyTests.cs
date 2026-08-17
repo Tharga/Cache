@@ -1,22 +1,13 @@
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Tharga.Cache.Persist;
 using Xunit;
 
 namespace Tharga.Cache.Tests;
 
-public class AddCacheIdempotencyTests : IDisposable
+public class AddCacheIdempotencyTests
 {
-    public AddCacheIdempotencyTests()
-    {
-        CacheRegistrationExtensions.ResetRegistrations();
-    }
-
-    public void Dispose()
-    {
-        CacheRegistrationExtensions.ResetRegistrations();
-    }
-
     [Fact]
     public void AddCache_CalledTwice_WithDifferentTypes_DoesNotThrow()
     {
@@ -54,7 +45,7 @@ public class AddCacheIdempotencyTests : IDisposable
     }
 
     [Fact]
-    public void AddCache_CalledTwice_WithSameType_FirstRegistrationWins()
+    public void AddCache_CalledTwice_WithSameType_LatestRegistrationWins()
     {
         //Arrange
         var services = new ServiceCollection();
@@ -66,8 +57,8 @@ public class AddCacheIdempotencyTests : IDisposable
 
         //Assert
         var provider = services.BuildServiceProvider();
-        var cache = provider.GetRequiredService<ITimeToLiveCache>();
-        cache.Should().NotBeNull();
+        var options = provider.GetRequiredService<IOptions<CacheOptions>>().Value;
+        options.GetRegistered()[typeof(string)].DefaultFreshSpan.Should().Be(TimeSpan.FromMinutes(99));
     }
 
     [Fact]

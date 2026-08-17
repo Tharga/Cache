@@ -12,8 +12,7 @@ public class AddCacheConcurrencyTests
 
     private sealed record Marker<T>;
 
-    // Nesting a generic in itself yields as many distinct cache types as needed without
-    // declaring one class per host.
+    // Nesting Marker in itself yields N distinct cache types without N declared classes.
     private static Type MarkerType(int depth)
     {
         var type = typeof(object);

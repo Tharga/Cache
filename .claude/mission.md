@@ -8,5 +8,5 @@ Caching library with MongoDB backend support, cache partitioning, and a Blazor m
 - **Shared instructions**: `$DOC_ROOT/Tharga/shared-instructions.md`
 - **Plan directory**: `$DOC_ROOT/Tharga/plans/Toolkit/Cache`
 - **Backlog**: `$DOC_ROOT/Tharga/Toolkit/Cache.md`
-- **Incoming requests**: `c:\Users\danie\SynologyDrive\Documents\Notes\Tharga\Requests.md` — check for pending requests for this project on startup
-- **Eplicta requests**: `$DEV_ROOT/Eplicta/plan/requests.md` — check for requests from Eplicta on startup
+- **Incoming requests**: `$DOC_ROOT/Tharga/Requests.md` — check for pending requests for this project on startup
+- **External requests**: open GitHub issues on this repository — consumers outside Tharga file there. This project does not read another product's files, and does not write status back to them.

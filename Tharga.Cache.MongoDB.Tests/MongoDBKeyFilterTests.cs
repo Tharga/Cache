@@ -50,8 +50,8 @@ public class MongoDBKeyFilterTests
         var (sut, collection) = BuildSut();
         FilterDefinition<CacheEntity> captured = null;
         collection
-            .Setup(x => x.DeleteOneAsync(It.IsAny<FilterDefinition<CacheEntity>>(), It.IsAny<OneOption<CacheEntity>>(), It.IsAny<IClientSessionHandle>()))
-            .Callback<FilterDefinition<CacheEntity>, OneOption<CacheEntity>, IClientSessionHandle>((f, _, _) => captured = f)
+            .Setup(x => x.DeleteOneAsync(It.IsAny<FilterDefinition<CacheEntity>>(), It.IsAny<OneOption<CacheEntity>>(), It.IsAny<IClientSessionHandle>(), It.IsAny<CancellationToken>()))
+            .Callback<FilterDefinition<CacheEntity>, OneOption<CacheEntity>, IClientSessionHandle, CancellationToken>((f, _, _, _) => captured = f)
             .ReturnsAsync((CacheEntity)null);
 
         await sut.DropAsync<object>(CacheKey);

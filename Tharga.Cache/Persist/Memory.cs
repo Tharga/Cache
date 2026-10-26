@@ -6,9 +6,21 @@ namespace Tharga.Cache.Persist;
 internal class Memory : IMemory
 {
     private readonly ConcurrentDictionary<string, CacheItem> _datas = new();
+    private readonly TimeProvider _timeProvider;
 
     public Memory(IManagedCacheMonitor cacheMonitor)
+        : this(cacheMonitor, TimeProvider.System)
     {
+    }
+
+    /// <summary>
+    /// Lets tests control the clock that extends an item's life on access. Not public, so dependency
+    /// injection always uses the constructor above.
+    /// </summary>
+    internal Memory(IManagedCacheMonitor cacheMonitor, TimeProvider timeProvider)
+    {
+        _timeProvider = timeProvider;
+
         cacheMonitor.RequestEvictEvent += async (_, e) =>
         {
             var dropAsyncMethod = typeof(Memory)
@@ -53,7 +65,7 @@ internal class Memory : IMemory
 
     public Task<bool> BuyMoreTime<T>(Key key)
     {
-        return SetUpdateTimeAsync(key, DateTime.UtcNow);
+        return SetUpdateTimeAsync(key, _timeProvider.GetUtcNow().UtcDateTime);
     }
 
     public Task<bool> Invalidate<T>(Key key)

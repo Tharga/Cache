@@ -67,10 +67,12 @@ public class ReturnDefaultOnFirstLoadTests
             typeof(TimeToLiveCache), null, staleWhileRevalidate,
             returnDefaultOnFirstLoad: true);
         var sut = result.Cache;
+        var backgroundLoaded = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        sut.DataSetEvent += (_, _) => backgroundLoaded.TrySetResult();
 
         //Act - first call returns default, factory runs in background
         var first = await sut.GetAsync("Key", () => Task.FromResult("fetched"));
-        await Task.Delay(200);
+        await backgroundLoaded.Task.WaitAsync(TimeSpan.FromSeconds(30));
 
         //Assert - second call should return the now-cached data
         var second = await sut.GetAsync("Key", () => Task.FromResult("should-not-be-called"));

@@ -42,7 +42,7 @@ internal class FetchQueue : IFetchQueue
                             sw.Stop();
 
                             var staleWhileRevalidate = _options.Get<T>().StaleWhileRevalidate;
-                            var item = CacheItemBuilder.BuildCacheItem(key.KeyParts, result, freshSpan, sw.Elapsed);
+                            var item = CacheItemBuilder.BuildCacheItem(key.KeyParts, result, freshSpan, sw.Elapsed, _options.UtcNow);
                             await fetchCallback.Invoke(key, item, staleWhileRevalidate);
 
                             tcs.TrySetResult(result!);
@@ -87,6 +87,11 @@ internal class FetchQueue : IFetchQueue
             {
                 lock (_dispatchLock)
                 {
+                    // A caller may have pushed after TryPop failed but before this lock was taken. That caller
+                    // saw _isDispatching still true and did not start a dispatcher, so look again before stopping,
+                    // or its fetch would never run.
+                    if (!_fetchStack.IsEmpty) continue;
+
                     _isDispatching = false;
                     return;
                 }

@@ -41,7 +41,7 @@ internal abstract class CacheBase : ICache
 
         var result = await TryGetPersistAsync<T>(key);
 
-        if (result.IsValid())
+        if (result.IsValid(_options.UtcNow))
         {
             TrackIfNeeded(key, result);
             await OnGetAsync<T>(key);
@@ -99,7 +99,7 @@ internal abstract class CacheBase : ICache
         key = key.SetTypeKey<T>();
 
         var result = await TryGetPersistAsync<T>(key);
-        if (result.IsValid())
+        if (result.IsValid(_options.UtcNow))
         {
             var response = result.GetData();
             await OnGetAsync<T>(key);
@@ -128,7 +128,7 @@ internal abstract class CacheBase : ICache
         key = key.SetTypeKey<T>();
 
         var staleWhileRevalidate = GetTypeOptions<T>().StaleWhileRevalidate;
-        var item = CacheItemBuilder.BuildCacheItem(key.KeyParts, data, freshSpan);
+        var item = CacheItemBuilder.BuildCacheItem(key.KeyParts, data, freshSpan, createTime: _options.UtcNow);
         if (await TrySetPersistAsync(key, item, staleWhileRevalidate))
         {
             await OnSetAsync(key, item, staleWhileRevalidate);

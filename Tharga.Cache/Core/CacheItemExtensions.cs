@@ -2,11 +2,11 @@
 
 internal static class CacheItemExtensions
 {
-    public static bool IsValid(this CacheItem item)
+    public static bool IsValid(this CacheItem item, DateTime utcNow)
     {
         if (item == null) return false;
 
-        var time = DateTime.UtcNow - (item.UpdateTime ?? item.CreateTime);
+        var time = utcNow - (item.UpdateTime ?? item.CreateTime);
         if (time > item.FreshSpan) return false;
 
         return true;

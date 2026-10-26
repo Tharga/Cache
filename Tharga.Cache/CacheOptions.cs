@@ -23,6 +23,14 @@ public record CacheOptions
     /// </summary>
     public bool FailOpenOnBackendError { get; set; } = true;
 
+    /// <summary>
+    /// The clock that stamps cache items and decides whether they are still fresh. Internal so tests can
+    /// control time; consumers always get the system clock.
+    /// </summary>
+    internal TimeProvider TimeProvider { get; set; } = TimeProvider.System;
+
+    internal DateTime UtcNow => (TimeProvider ?? TimeProvider.System).GetUtcNow().UtcDateTime;
+
     public void RegisterType<TCache, TPersist>(Action<CacheTypeOptions> options = null) where TPersist : IPersist
     {
         var typeOptions = (Default ?? BuildDefault()) with { };

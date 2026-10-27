@@ -138,7 +138,9 @@ internal class Redis : IRedis
         if (redisConnection.Multiplexer == null) return false;
 
         var db = redisConnection.Multiplexer.GetDatabase();
-        var data = (await db.StringGetAsync((string)key)).ToString();
+        var dataTask = db.StringGetAsync((string)key);
+        var timeToLive = await db.KeyTimeToLiveAsync((string)key);
+        var data = (await dataTask).ToString();
         if (!string.IsNullOrEmpty(data))
         {
             var cacheItem = JsonSerializer.Deserialize<CacheItem<T>>(data);
@@ -151,8 +153,8 @@ internal class Redis : IRedis
                 if (itemAgain != item) throw new InvalidOperationException("Failed to serialize/deserialize back to same result.");
             }
 
-            await db.StringSetAsync((string)key, item);
-            return true;
+            var expiry = timeToLive == null || updateTime == DateTime.MinValue ? timeToLive : cacheItem.FreshSpan ?? timeToLive;
+            return await db.StringSetAsync((string)key, item, expiry, When.Exists);
         }
 
         return false;

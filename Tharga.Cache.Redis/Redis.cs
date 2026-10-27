@@ -80,20 +80,25 @@ internal class Redis : IRedis
             if (redisConnection.Multiplexer == null) return;
 
             var db = redisConnection.Multiplexer.GetDatabase();
-            if (cacheItem.FreshSpan == null || cacheItem.FreshSpan == TimeSpan.MaxValue || staleWhileRevalidate)
-            {
-                await db.StringSetAsync((string)key, item);
-            }
-            else
-            {
-                await db.StringSetAsync((string)key, item, cacheItem.FreshSpan, false);
-            }
+            await db.StringSetAsync((string)key, item, GetExpiry(cacheItem, staleWhileRevalidate), false);
         });
     }
 
     public async Task<bool> BuyMoreTime<T>(Key key)
     {
         return await _resiliencePolicy.ExecuteAsync(async () => await SetUpdateTime<T>(key, DateTime.UtcNow));
+    }
+
+    public async Task<bool> BuyMoreTime<T>(Key key, CacheItem<T> cacheItem, bool staleWhileRevalidate)
+    {
+        return await _resiliencePolicy.ExecuteAsync(async () =>
+        {
+            var redisConnection = await GetConnection();
+            if (redisConnection.Multiplexer == null) return false;
+
+            var item = JsonSerializer.Serialize(cacheItem with { UpdateTime = DateTime.UtcNow });
+            return await redisConnection.Multiplexer.GetDatabase().StringSetAsync((string)key, item, GetExpiry(cacheItem, staleWhileRevalidate), When.Exists);
+        });
     }
 
     public async Task<bool> Invalidate<T>(Key key)
@@ -158,6 +163,11 @@ internal class Redis : IRedis
         }
 
         return false;
+    }
+
+    private static TimeSpan? GetExpiry(CacheItem cacheItem, bool staleWhileRevalidate)
+    {
+        return cacheItem.FreshSpan == TimeSpan.MaxValue || staleWhileRevalidate ? null : cacheItem.FreshSpan;
     }
 
     private async Task<(ConnectionMultiplexer Multiplexer, string Message)> GetConnection()

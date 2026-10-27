@@ -79,11 +79,9 @@ public static class CacheRegistrationExtensions
         });
         serviceCollection.TryAddScoped<IScopeCache>(s =>
         {
+            // Each scope gets its own store, disposed with the scope.
             var opts = s.GetRequiredService<IOptions<CacheOptions>>().Value;
-            var cacheMonitor = s.GetService<IManagedCacheMonitor>();
-            var persistLoader = s.GetService<IPersistLoader>();
-            var fetchQueue = s.GetService<IFetchQueue>();
-            return new EternalCache(cacheMonitor, persistLoader, fetchQueue, opts, CreateCacheLogger(s));
+            return new ScopeCache(opts, s.GetService<ILoggerFactory>());
         });
 
         serviceCollection.TryAddSingleton<IWatchDogService, WatchDogService>();

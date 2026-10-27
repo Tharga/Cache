@@ -73,6 +73,14 @@ internal class Memory : IMemory
         return Task.FromResult((true, $"There {(cnt == 1 ? "is" : "are")} {cnt} record{(cnt == 1 ? "" : "s")} cached."));
     }
 
+    /// <summary>
+    /// Removes every item from this store.
+    /// </summary>
+    internal void Clear()
+    {
+        _datas.Clear();
+    }
+
     private Task<bool> SetUpdateTimeAsync(Key key, DateTime updateTime)
     {
         if (_datas.TryGetValue(key, out var item))

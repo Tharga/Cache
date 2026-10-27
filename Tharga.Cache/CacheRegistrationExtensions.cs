@@ -37,7 +37,8 @@ public static class CacheRegistrationExtensions
         {
             var opts = s.GetRequiredService<IOptions<CacheOptions>>().Value;
             var persistLoader = s.GetService<IPersistLoader>();
-            var cacheMonitor = new CacheMonitor(persistLoader, opts);
+            var logger = s.GetService<ILoggerFactory>()?.CreateLogger<CacheMonitor>();
+            var cacheMonitor = new CacheMonitor(persistLoader, opts, logger);
             return cacheMonitor;
         });
 

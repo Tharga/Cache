@@ -107,7 +107,7 @@ var session = await _ttiCache.GetAsync<SessionData>(
 
 ### IScopeCache
 
-A scoped cache instance, cleared at the end of the DI scope (e.g., per HTTP request). Data never expires within the scope.
+A scoped cache instance, cleared at the end of the DI scope (e.g., per HTTP request). Data never expires within the scope. Each scope has its own in-memory store: a value cached in one scope is never returned to another, whatever persist the type is registered for.
 
 ```csharp
 var result = await _scopeCache.GetAsync<RequestContext>(

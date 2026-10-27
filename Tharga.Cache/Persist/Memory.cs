@@ -20,18 +20,6 @@ internal class Memory : IMemory
     internal Memory(IManagedCacheMonitor cacheMonitor, TimeProvider timeProvider)
     {
         _timeProvider = timeProvider;
-
-        cacheMonitor.RequestEvictEvent += async (_, e) =>
-        {
-            var dropAsyncMethod = typeof(Memory)
-                .GetMethod("DropAsync")!
-                .MakeGenericMethod(e.Type);
-
-            var task = (Task)dropAsyncMethod.Invoke(this, [e.Key])!;
-            await task;
-
-            cacheMonitor.Drop(e.Type, e.Key);
-        };
     }
 
     public Task<CacheItem<T>> GetAsync<T>(Key key)
@@ -83,6 +71,14 @@ internal class Memory : IMemory
     {
         var cnt = _datas.Count;
         return Task.FromResult((true, $"There {(cnt == 1 ? "is" : "are")} {cnt} record{(cnt == 1 ? "" : "s")} cached."));
+    }
+
+    /// <summary>
+    /// Removes every item from this store.
+    /// </summary>
+    internal void Clear()
+    {
+        _datas.Clear();
     }
 
     private Task<bool> SetUpdateTimeAsync(Key key, DateTime updateTime)

@@ -37,7 +37,8 @@ public static class CacheRegistrationExtensions
         {
             var opts = s.GetRequiredService<IOptions<CacheOptions>>().Value;
             var persistLoader = s.GetService<IPersistLoader>();
-            var cacheMonitor = new CacheMonitor(persistLoader, opts);
+            var logger = s.GetService<ILoggerFactory>()?.CreateLogger<CacheMonitor>();
+            var cacheMonitor = new CacheMonitor(persistLoader, opts, logger);
             return cacheMonitor;
         });
 
@@ -78,11 +79,9 @@ public static class CacheRegistrationExtensions
         });
         serviceCollection.TryAddScoped<IScopeCache>(s =>
         {
+            // Each scope gets its own store, disposed with the scope.
             var opts = s.GetRequiredService<IOptions<CacheOptions>>().Value;
-            var cacheMonitor = s.GetService<IManagedCacheMonitor>();
-            var persistLoader = s.GetService<IPersistLoader>();
-            var fetchQueue = s.GetService<IFetchQueue>();
-            return new EternalCache(cacheMonitor, persistLoader, fetchQueue, opts, CreateCacheLogger(s));
+            return new ScopeCache(opts, s.GetService<ILoggerFactory>());
         });
 
         serviceCollection.TryAddSingleton<IWatchDogService, WatchDogService>();

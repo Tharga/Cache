@@ -2,7 +2,15 @@
 
 internal interface IManagedCacheMonitor : ICacheMonitor
 {
-    event EventHandler<RequestEvictEventArgs> RequestEvictEvent;
+    /// <summary>
+    /// Evicts the stale items from the persist configured for each item's type. Never throws.
+    /// </summary>
+    Task ClearStaleAsync();
+
+    /// <summary>
+    /// Evicts every item from the persist configured for each item's type. Never throws.
+    /// </summary>
+    Task ClearAllAsync();
 
     void Set<T>(Type type, Key key, CacheItem<T> item, bool staleWhileRevalidate, bool returnDefaultOnFirstLoad);
     void Track<T>(Type type, Key key, CacheItem<T> item, bool staleWhileRevalidate, bool returnDefaultOnFirstLoad);

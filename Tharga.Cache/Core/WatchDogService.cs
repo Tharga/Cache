@@ -23,7 +23,14 @@ internal class WatchDogService : BackgroundService, IWatchDogService
         {
             try
             {
-                _cacheMonitor.ClearStale();
+                if (_cacheMonitor is IManagedCacheMonitor managedCacheMonitor)
+                {
+                    await managedCacheMonitor.ClearStaleAsync();
+                }
+                else
+                {
+                    _cacheMonitor.ClearStale();
+                }
             }
             catch (Exception ex)
             {

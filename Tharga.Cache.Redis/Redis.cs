@@ -26,18 +26,6 @@ internal class Redis : IRedis
         _options = options.Value;
         _logger = logger;
         _resiliencePolicy = RedisResiliencePolicy.Create(_options, logger);
-
-        cacheMonitor.RequestEvictEvent += async (_, e) =>
-        {
-            var dropAsyncMethod = typeof(Redis)
-                .GetMethod("DropAsync")!
-                .MakeGenericMethod(e.Type);
-
-            var task = (Task)dropAsyncMethod.Invoke(this, [e.Key])!;
-            await task;
-
-            cacheMonitor.Drop(e.Type, e.Key);
-        };
     }
 
     public async Task<CacheItem<T>> GetAsync<T>(Key key)

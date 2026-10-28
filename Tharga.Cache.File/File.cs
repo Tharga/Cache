@@ -19,18 +19,6 @@ internal class File : IFile
         _fileFormatService = fileFormatService;
         _hostEnvironment = hostEnvironment;
         _options = options.Value;
-
-        cacheMonitor.RequestEvictEvent += async (_, e) =>
-        {
-            var dropAsyncMethod = typeof(File)
-                .GetMethod("DropAsync")!
-                .MakeGenericMethod(e.Type);
-
-            var task = (Task)dropAsyncMethod.Invoke(this, [e.Key])!;
-            await task;
-
-            cacheMonitor.Drop(e.Type, e.Key);
-        };
     }
 
     public async Task<CacheItem<T>> GetAsync<T>(Key key)

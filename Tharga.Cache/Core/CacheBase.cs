@@ -44,7 +44,7 @@ internal abstract class CacheBase : ICache
         if (result.IsValid(_options.UtcNow))
         {
             TrackIfNeeded(key, result);
-            await OnGetAsync<T>(key);
+            await OnGetAsync(key, result);
             return (result.GetData(), true);
         }
 
@@ -54,7 +54,7 @@ internal abstract class CacheBase : ICache
         {
             TrackIfNeeded(key, result);
             var response = result.GetData();
-            await OnGetAsync<T>(key);
+            await OnGetAsync(key, result);
             BackgroundLoad(key, fetch, callback, fs);
 
             return (response, false);
@@ -67,7 +67,7 @@ internal abstract class CacheBase : ICache
         }
 
         var loadResponse = await _fetchQueue.LoadData(key, fetch, fs, FetchCallback);
-        await OnGetAsync<T>(key);
+        await OnGetAsync<T>(key, null);
         return (loadResponse, true);
     }
 
@@ -98,19 +98,36 @@ internal abstract class CacheBase : ICache
     {
         key = key.SetTypeKey<T>();
 
-        var result = await TryGetPersistAsync<T>(key);
-        if (result.IsValid(_options.UtcNow))
-        {
-            var response = result.GetData();
-            await OnGetAsync<T>(key);
+        return await ResolvePeekAsync(key, await TryGetPersistAsync<T>(key));
+    }
 
-            return response;
+    public virtual async Task<IReadOnlyList<(Key Key, T Data)>> PeekManyAsync<T>(IEnumerable<Key> keys)
+    {
+        var requestedKeys = keys.ToArray();
+        if (requestedKeys.Length == 0) return [];
+
+        var typedKeys = requestedKeys.Select(x => x.SetTypeKey<T>()).ToArray();
+        IReadOnlyList<(Key Key, CacheItem<T> CacheItem)> items;
+        try
+        {
+            items = await GetPersist<T>().GetManyAsync<T>(typedKeys);
+        }
+        catch (Exception ex) when (_options.FailOpenOnBackendError)
+        {
+            LogFailOpen(ex, "read", typedKeys[0], typeof(T));
+            items = typedKeys.Select(x => (x, (CacheItem<T>)null)).ToArray();
         }
 
-        if (GetTypeOptions<T>().StaleWhileRevalidate && result != null)
+        var data = await Task.WhenAll(typedKeys.Select((key, index) => ResolvePeekAsync(key, items[index].CacheItem)));
+        return requestedKeys.Select((key, index) => (key, data[index])).ToArray();
+    }
+
+    private async Task<T> ResolvePeekAsync<T>(Key key, CacheItem<T> result)
+    {
+        if (result.IsValid(_options.UtcNow) || (GetTypeOptions<T>().StaleWhileRevalidate && result != null))
         {
             var response = result.GetData();
-            await OnGetAsync<T>(key);
+            await OnGetAsync(key, result);
 
             return response;
         }
@@ -199,21 +216,38 @@ internal abstract class CacheBase : ICache
         _cacheMonitor.Set(typeof(T), key, item, staleWhileRevalidate, returnDefaultOnFirstLoad);
     }
 
-    protected virtual Task OnGetAsync<T>(Key key)
+    protected virtual Task OnGetAsync<T>(Key key, CacheItem<T> item)
     {
-        return OnGetCoreAsync<T>(key, false);
+        return OnGetCoreAsync(key, item, false);
     }
 
-    protected async Task OnGetCoreAsync<T>(Key key, bool buyMoreTime)
+    protected async Task OnGetCoreAsync<T>(Key key, CacheItem<T> item, bool buyMoreTime)
     {
         DataGetEvent?.Invoke(this, new DataGetEventArgs(key));
+
+        if (buyMoreTime && GetTypeOptions<T>().TouchInBackground)
+        {
+            _cacheMonitor.Accessed(typeof(T), key, false);
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await BuyMoreTimeAsync(key, item);
+                }
+                catch (Exception ex)
+                {
+                    LogFailOpen(ex, "buy-more-time", key, typeof(T));
+                }
+            });
+            return;
+        }
 
         var moreTimeBought = false;
         if (buyMoreTime)
         {
             try
             {
-                moreTimeBought = await GetPersist<T>().BuyMoreTime<T>(key);
+                moreTimeBought = await BuyMoreTimeAsync(key, item);
             }
             catch (Exception ex) when (_options.FailOpenOnBackendError)
             {
@@ -222,6 +256,14 @@ internal abstract class CacheBase : ICache
         }
 
         _cacheMonitor.Accessed(typeof(T), key, moreTimeBought);
+    }
+
+    private Task<bool> BuyMoreTimeAsync<T>(Key key, CacheItem<T> item)
+    {
+        var persist = GetPersist<T>();
+        if (item == null || !item.IsValid(_options.UtcNow)) return persist.BuyMoreTime<T>(key);
+
+        return persist.BuyMoreTime(key, item, GetTypeOptions<T>().StaleWhileRevalidate);
     }
 
     private void OnDrop<T>(Key key)

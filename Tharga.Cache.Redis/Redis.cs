@@ -47,6 +47,30 @@ internal class Redis : IRedis
         });
     }
 
+    public async Task<IReadOnlyList<(Key Key, CacheItem<T> CacheItem)>> GetManyAsync<T>(IEnumerable<Key> keys)
+    {
+        var requestedKeys = keys.ToArray();
+        var items = new CacheItem<T>[requestedKeys.Length];
+        await _resiliencePolicy.ExecuteAsync(async () =>
+        {
+            var redisConnection = await GetConnection();
+            if (redisConnection.Multiplexer == null) return;
+
+            var db = redisConnection.Multiplexer.GetDatabase();
+            foreach (var slot in requestedKeys.Select((key, index) => (Key: (RedisKey)(string)key, Index: index)).GroupBy(x => redisConnection.Multiplexer.HashSlot(x.Key)))
+            {
+                var entries = slot.ToArray();
+                var values = await db.StringGetAsync(entries.Select(x => x.Key).ToArray());
+                for (var i = 0; i < entries.Length; i++)
+                {
+                    items[entries[i].Index] = values[i].IsNullOrEmpty ? null : JsonSerializer.Deserialize<CacheItem<T>>(values[i].ToString());
+                }
+            }
+        });
+
+        return requestedKeys.Select((key, index) => (key, items[index])).ToArray();
+    }
+
     public IAsyncEnumerable<(Key Key, CacheItem<T> CacheItem)> FindAsync<T>(Key key)
     {
         throw new NotImplementedException();
@@ -68,20 +92,25 @@ internal class Redis : IRedis
             if (redisConnection.Multiplexer == null) return;
 
             var db = redisConnection.Multiplexer.GetDatabase();
-            if (cacheItem.FreshSpan == null || cacheItem.FreshSpan == TimeSpan.MaxValue || staleWhileRevalidate)
-            {
-                await db.StringSetAsync((string)key, item);
-            }
-            else
-            {
-                await db.StringSetAsync((string)key, item, cacheItem.FreshSpan, false);
-            }
+            await db.StringSetAsync((string)key, item, GetExpiry(cacheItem, staleWhileRevalidate), false);
         });
     }
 
     public async Task<bool> BuyMoreTime<T>(Key key)
     {
         return await _resiliencePolicy.ExecuteAsync(async () => await SetUpdateTime<T>(key, DateTime.UtcNow));
+    }
+
+    public async Task<bool> BuyMoreTime<T>(Key key, CacheItem<T> cacheItem, bool staleWhileRevalidate)
+    {
+        return await _resiliencePolicy.ExecuteAsync(async () =>
+        {
+            var redisConnection = await GetConnection();
+            if (redisConnection.Multiplexer == null) return false;
+
+            var item = JsonSerializer.Serialize(cacheItem with { UpdateTime = DateTime.UtcNow });
+            return await redisConnection.Multiplexer.GetDatabase().StringSetAsync((string)key, item, GetExpiry(cacheItem, staleWhileRevalidate), When.Exists);
+        });
     }
 
     public async Task<bool> Invalidate<T>(Key key)
@@ -126,7 +155,9 @@ internal class Redis : IRedis
         if (redisConnection.Multiplexer == null) return false;
 
         var db = redisConnection.Multiplexer.GetDatabase();
-        var data = (await db.StringGetAsync((string)key)).ToString();
+        var dataTask = db.StringGetAsync((string)key);
+        var timeToLive = await db.KeyTimeToLiveAsync((string)key);
+        var data = (await dataTask).ToString();
         if (!string.IsNullOrEmpty(data))
         {
             var cacheItem = JsonSerializer.Deserialize<CacheItem<T>>(data);
@@ -139,11 +170,16 @@ internal class Redis : IRedis
                 if (itemAgain != item) throw new InvalidOperationException("Failed to serialize/deserialize back to same result.");
             }
 
-            await db.StringSetAsync((string)key, item);
-            return true;
+            var expiry = timeToLive == null || updateTime == DateTime.MinValue ? timeToLive : cacheItem.FreshSpan ?? timeToLive;
+            return await db.StringSetAsync((string)key, item, expiry, When.Exists);
         }
 
         return false;
+    }
+
+    private static TimeSpan? GetExpiry(CacheItem cacheItem, bool staleWhileRevalidate)
+    {
+        return cacheItem.FreshSpan == TimeSpan.MaxValue || staleWhileRevalidate ? null : cacheItem.FreshSpan;
     }
 
     private async Task<(ConnectionMultiplexer Multiplexer, string Message)> GetConnection()

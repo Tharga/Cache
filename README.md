@@ -20,6 +20,10 @@ A flexible .NET caching library with multiple cache strategies, pluggable persis
 | **Tharga.Cache.Blazor** | Blazor monitoring UI components | [![NuGet](https://img.shields.io/nuget/v/Tharga.Cache.Blazor)](https://www.nuget.org/packages/Tharga.Cache.Blazor) |
 | **Tharga.Cache.Mcp** | MCP (Model Context Protocol) provider | [![NuGet](https://img.shields.io/nuget/v/Tharga.Cache.Mcp)](https://www.nuget.org/packages/Tharga.Cache.Mcp) |
 
+## Supported frameworks
+
+All packages target .NET 10 (`net10.0`) and .NET 11 (`net11.0`). A project on .NET 10 gets the 10.x Microsoft packages and a project on .NET 11 gets the 11.x ones.
+
 ## Quick Start
 
 Install the core package:

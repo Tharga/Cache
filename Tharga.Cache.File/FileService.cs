@@ -61,6 +61,11 @@ internal class FileService : IFileService
         }
     }
 
+    public Task<string[]> GetFilenamesAsync(string directory)
+    {
+        return Task.FromResult(Directory.Exists(directory) ? Directory.GetFiles(directory) : []);
+    }
+
     public async Task<(bool Success, string Message)> CanConnectAsync(string filename)
     {
         try

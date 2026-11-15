@@ -25,7 +25,7 @@ internal class MemoryWithRedis : IMemoryWithRedis, IAsyncDisposable, IDisposable
 
     public IAsyncEnumerable<(Key Key, CacheItem<T> CacheItem)> FindAsync<T>(Key key)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException("Finding cached items by key parts is not supported by the MemoryWithRedis persist, so dropping or invalidating by key parts (or every entry of a type) is not available on it. Drop or invalidate a single entry by its full key instead.");
     }
 
     public Task SetAsync<T>(Key key, CacheItem<T> item, bool staleWhileRevalidate)

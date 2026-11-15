@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net10.0</TargetFramework>
+		<TargetFrameworks>net10.0;net11.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Authors>Daniel Bohlin</Authors>
 		<Company>Thargelion AB</Company>
@@ -49,11 +49,13 @@
 		<InternalsVisibleTo Include="Tharga.Cache.File" />
 		<InternalsVisibleTo Include="Tharga.Cache.Tests" />
 		<InternalsVisibleTo Include="Tharga.Cache.MongoDB.Tests" />
+		<InternalsVisibleTo Include="Tharga.Cache.Redis.Tests" />
 		<InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.14" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.14" Condition="'$(TargetFramework)' == 'net10.0'" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="11.0.0" Condition="'$(TargetFramework)' == 'net11.0'" />
 		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.403">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

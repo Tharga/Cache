@@ -73,7 +73,7 @@ internal class Redis : IRedis
 
     public IAsyncEnumerable<(Key Key, CacheItem<T> CacheItem)> FindAsync<T>(Key key)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException("Finding cached items by key parts is not supported by the Redis persist, so dropping or invalidating by key parts (or every entry of a type) is not available on it. Drop or invalidate a single entry by its full key instead.");
     }
 
     public async Task SetAsync<T>(Key key, CacheItem<T> cacheItem, bool staleWhileRevalidate)

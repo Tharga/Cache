@@ -32,23 +32,22 @@ internal class File : IFile
 
     public async IAsyncEnumerable<(Key Key, CacheItem<T> CacheItem)> FindAsync<T>(Key key)
     {
-        //var datas = _datas
-        //    .Where(x => x.Value.GetType() == typeof(CacheItem<T>))
-        //    .Where(x =>
-        //        key.KeyParts
-        //            .All(kvp =>
-        //                x.Value.KeyParts.TryGetValue(kvp.Key, out var value) &&
-        //                value == kvp.Value
-        //            )
-        //    );
+        var keyParts = key?.KeyParts ?? [];
+        var fileExtension = _fileFormatService.GetFileExtensions(_options.Format);
+        var suffix = $".{fileExtension}";
+        var directory = Path.GetDirectoryName(BuildFilename("x", typeof(T), fileExtension));
 
-        //foreach (var data in datas)
-        //{
-        //    yield return (data.Key, (CacheItem<T>)data.Value);
-        //}
-        Debugger.Break();
-        throw new NotImplementedException($"{nameof(FindAsync)} has not yet been impleented for {nameof(IFile)}.");
-        yield break;
+        foreach (var filename in await _fileService.GetFilenamesAsync(directory))
+        {
+            if (!filename.EndsWith(suffix, StringComparison.OrdinalIgnoreCase)) continue;
+
+            var item = _fileFormatService.Unpack<T>(await _fileService.GetDataAsync(filename));
+            if (item?.KeyParts == null) continue;
+            if (!keyParts.All(kvp => item.KeyParts.TryGetValue(kvp.Key, out var value) && value == kvp.Value)) continue;
+
+            var keyValue = Path.GetFileName(filename)[..^suffix.Length];
+            yield return (new Key(keyValue, item.KeyParts), item);
+        }
     }
 
     public async Task SetAsync<T>(Key key, CacheItem<T> item, bool staleWhileRevalidate)

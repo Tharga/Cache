@@ -214,6 +214,10 @@ builder.Services.AddCache(o =>
 });
 ```
 
+### Dropping and invalidating by key parts
+
+`DropAsync` and `InvalidateAsync` with key parts, or with an empty key (every entry of a type), need the persist to find entries. That works for `IMemory` and `IFile`. The `IRedis` and `IMongoDB` persists throw a `NotSupportedException` naming the backend; drop or invalidate a single entry by its full key there.
+
 ### Mixing Backends
 
 You can register different types with different backends in the same application:

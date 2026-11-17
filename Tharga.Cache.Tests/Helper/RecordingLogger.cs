@@ -14,6 +14,18 @@ internal class RecordingLogger<T> : ILogger<T>
         }
     }
 
+    public async Task<bool> WaitForAsync(Func<(LogLevel Level, Exception Exception, string Message), bool> predicate, TimeSpan timeout)
+    {
+        var until = DateTime.UtcNow + timeout;
+        while (DateTime.UtcNow < until)
+        {
+            if (Entries.Any(predicate)) return true;
+            await Task.Delay(10);
+        }
+
+        return Entries.Any(predicate);
+    }
+
     public IDisposable BeginScope<TState>(TState state) where TState : notnull => null;
 
     public bool IsEnabled(LogLevel logLevel) => true;

@@ -73,10 +73,17 @@ internal abstract class CacheBase : ICache
 
     private void BackgroundLoad<T>(Key key, Func<Task<T>> fetch, Func<T, Task> callback, TimeSpan? fs)
     {
-        Task.Run(async () =>
+        _ = Task.Run(async () =>
         {
-            var data = await _fetchQueue.LoadData(key, fetch, fs, FetchCallback);
-            callback?.Invoke(data);
+            try
+            {
+                var data = await _fetchQueue.LoadData(key, fetch, fs, FetchCallback);
+                if (callback != null) await callback(data);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogWarning(ex, "Background load failed for key '{Key}' on type '{Type}' ({Message}).", key.Value, typeof(T).Name, ex.Message);
+            }
         });
     }
 

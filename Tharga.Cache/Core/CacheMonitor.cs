@@ -132,7 +132,7 @@ internal class CacheMonitor : IManagedCacheMonitor
         switch (evictionPolicy)
         {
             case EvictionPolicy.LeastRecentlyUsed:
-                return val.Items.OrderByDescending(x => x.Value?.LastAccessTime ?? DateTime.MinValue).FirstOrDefault().Key;
+                return val.Items.OrderBy(x => x.Value?.LastAccessTime ?? x.Value?.CreateTime ?? DateTime.MinValue).FirstOrDefault().Key;
             case EvictionPolicy.FirstInFirstOut:
                 return val.Items.OrderBy(x => x.Value?.CreateTime).FirstOrDefault().Key;
             case EvictionPolicy.RandomReplacement:

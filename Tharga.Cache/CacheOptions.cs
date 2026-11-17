@@ -13,6 +13,8 @@ public record CacheOptions
 
     /// <summary>
     /// The interval for the backgroud job that cleans out stale data.
+    /// A zero or negative interval disables the watchdog (a warning is logged once when the service starts).
+    /// <see cref="System.Threading.Timeout.InfiniteTimeSpan"/> runs the cleanup once at start and never again.
     /// </summary>
     public TimeSpan WatchDogInterval { get; set; } = TimeSpan.FromSeconds(60);
 

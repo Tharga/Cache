@@ -19,6 +19,12 @@ internal class WatchDogService : BackgroundService, IWatchDogService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        if (_interval <= TimeSpan.Zero && _interval != Timeout.InfiniteTimeSpan)
+        {
+            _logger?.LogWarning("WatchDogInterval is {Interval}; a zero or negative interval disables the watchdog, so stale items are not cleared in the background.", _interval);
+            return;
+        }
+
         while (!stoppingToken.IsCancellationRequested)
         {
             try

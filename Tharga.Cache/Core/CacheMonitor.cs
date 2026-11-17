@@ -125,18 +125,21 @@ internal class CacheMonitor : IManagedCacheMonitor
         }
     }
 
-    public Key Get<T>(EvictionPolicy evictionPolicy)
+    public Key Get<T>(EvictionPolicy evictionPolicy, Key exclude = null)
     {
         if (!_caches.TryGetValue(typeof(T), out var val)) return null;
+
+        var items = exclude?.Value == null ? val.Items.ToArray() : val.Items.Where(x => x.Key != exclude.Value).ToArray();
+        if (items.Length == 0) return null;
 
         switch (evictionPolicy)
         {
             case EvictionPolicy.LeastRecentlyUsed:
-                return val.Items.OrderBy(x => x.Value?.LastAccessTime ?? x.Value?.CreateTime ?? DateTime.MinValue).FirstOrDefault().Key;
+                return items.OrderBy(x => x.Value?.LastAccessTime ?? x.Value?.CreateTime ?? DateTime.MinValue).First().Key;
             case EvictionPolicy.FirstInFirstOut:
-                return val.Items.OrderBy(x => x.Value?.CreateTime).FirstOrDefault().Key;
+                return items.OrderBy(x => x.Value?.CreateTime).First().Key;
             case EvictionPolicy.RandomReplacement:
-                return val.Items.TakeRandom().Key;
+                return items.ToDictionary(x => x.Key, x => x.Value).TakeRandom().Key;
             default:
                 throw new ArgumentOutOfRangeException(nameof(EvictionPolicy), $"Unknown {nameof(EvictionPolicy)} {evictionPolicy}.");
         }

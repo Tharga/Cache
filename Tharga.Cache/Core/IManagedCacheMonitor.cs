@@ -16,6 +16,9 @@ internal interface IManagedCacheMonitor : ICacheMonitor
     void Track<T>(Type type, Key key, CacheItem<T> item, bool staleWhileRevalidate, bool returnDefaultOnFirstLoad);
     void Accessed(Type type, Key key, bool buyMoreTime);
     void Drop(Type type, Key key);
-    Key Get<T>(EvictionPolicy evictionPolicy);
+    /// <summary>
+    /// Picks the item to evict for the type, never <paramref name="exclude"/>. Returns null when there is no candidate.
+    /// </summary>
+    Key Get<T>(EvictionPolicy evictionPolicy, Key exclude = null);
     void AddFetchCount(Func<int> func);
 }

@@ -79,7 +79,7 @@ public class UnloadDataTests
         await sut.GetAsync("a", () => Task.FromResult("aa"));
         await sut.GetAsync("b", () => Task.FromResult("bb"));
         await sut.GetAsync("c", () => Task.FromResult("cc"));
-        await sut.PeekAsync<string>("a"); //NOTE: Access "a", so it should not be evicted.
+        await sut.PeekAsync<string>("a"); //NOTE: Access "a", so it should not be evicted. "b" is the least recently used.
 
         //Act
         await sut.SetAsync("d", "dd");
@@ -90,9 +90,37 @@ public class UnloadDataTests
         monitorGetEventCount.Should().Be(4);
         monitorDropEventCount.Should().Be(1);
         _cacheMonitor.GetInfos().Single().Items.Count.Should().Be(3);
-        _cacheMonitor.GetInfos().Single().Items.Should().Contain(x => x.Key == KeyBuilder.SetTypeKey<string>("b"));
-        _cacheMonitor.GetInfos().Single().Items.Should().NotContain(x => x.Key == KeyBuilder.SetTypeKey<string>("a"));
+        _cacheMonitor.GetInfos().Single().Items.Should().Contain(x => x.Key == KeyBuilder.SetTypeKey<string>("a"));
+        _cacheMonitor.GetInfos().Single().Items.Should().Contain(x => x.Key == KeyBuilder.SetTypeKey<string>("c"));
+        _cacheMonitor.GetInfos().Single().Items.Should().Contain(x => x.Key == KeyBuilder.SetTypeKey<string>("d"));
+        _cacheMonitor.GetInfos().Single().Items.Should().NotContain(x => x.Key == KeyBuilder.SetTypeKey<string>("b"));
         _cacheMonitor.GetInfos().SelectMany(x => x.Items).Sum(x => x.Value.Size).Should().BeGreaterThan(0);
+    }
+
+    [Fact]
+    public async Task LeastRecentlyUsed_NeverAccessedItemsAreOldest()
+    {
+        //Arrange
+        var options = new CacheOptions();
+        options.RegisterType<string, IMemory>(o =>
+        {
+            o.MaxCount = 3;
+            o.EvictionPolicy = EvictionPolicy.LeastRecentlyUsed;
+        });
+        var sut = new EternalCache(_cacheMonitor, _persistLoader.Object, _fetchQueue, options);
+        await sut.SetAsync("a", "aa");
+        await Task.Delay(20);
+        await sut.SetAsync("b", "bb");
+        await Task.Delay(20);
+        await sut.SetAsync("c", "cc");
+        await sut.PeekAsync<string>("c"); //NOTE: Only "c" is accessed, "a" and "b" never are, and "a" is the oldest.
+
+        //Act
+        await sut.SetAsync("d", "dd");
+
+        //Assert
+        var keys = _cacheMonitor.GetInfos().Single().Items.Keys;
+        keys.Should().BeEquivalentTo(["String.b", "String.c", "String.d"]);
     }
 
     [Fact]

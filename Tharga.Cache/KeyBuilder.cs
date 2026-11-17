@@ -15,7 +15,7 @@ public static class KeyBuilder
         return new Key($"{typeName}.{key}", key.KeyParts);
     }
 
-    public static KeyDefinition Empty { get; } = new() { Keys = new ConcurrentDictionary<string, string>() };
+    public static KeyDefinition Empty => new() { Keys = new ConcurrentDictionary<string, string>() };
 
     public static KeyDefinition Set(string name, string value)
     {

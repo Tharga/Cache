@@ -73,10 +73,17 @@ internal abstract class CacheBase : ICache
 
     private void BackgroundLoad<T>(Key key, Func<Task<T>> fetch, Func<T, Task> callback, TimeSpan? fs)
     {
-        Task.Run(async () =>
+        _ = Task.Run(async () =>
         {
-            var data = await _fetchQueue.LoadData(key, fetch, fs, FetchCallback);
-            callback?.Invoke(data);
+            try
+            {
+                var data = await _fetchQueue.LoadData(key, fetch, fs, FetchCallback);
+                if (callback != null) await callback(data);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogWarning(ex, "Background load failed for key '{Key}' on type '{Type}' ({Message}).", key.Value, typeof(T).Name, ex.Message);
+            }
         });
     }
 
@@ -209,7 +216,7 @@ internal abstract class CacheBase : ICache
 
     private async Task OnSetAsync<T>(Key key, CacheItem<T> item, bool staleWhileRevalidate)
     {
-        await EvictItems(item.Data);
+        await EvictItems(key, item.Data);
 
         DataSetEvent?.Invoke(this, new DataSetEventArgs(key, item.Data));
         var returnDefaultOnFirstLoad = GetTypeOptions<T>().ReturnDefaultOnFirstLoad;
@@ -324,7 +331,7 @@ internal abstract class CacheBase : ICache
         _logger?.LogWarning(ex, "Cache persist {Operation} failed for key '{Key}' on type '{Type}'; failing open ({Message}).", operation, key.Value, type.Name, ex.Message);
     }
 
-    private async Task EvictItems<T>(T data)
+    private async Task EvictItems<T>(Key key, T data)
     {
         var maxCount = GetTypeOptions<T>().MaxCount;
         var maxSize = GetTypeOptions<T>().MaxSize;
@@ -332,9 +339,20 @@ internal abstract class CacheBase : ICache
         if (maxCount != null || maxSize != null)
         {
             var result = _cacheMonitor.GetInfos().FirstOrDefault(x => x.Type == typeof(T));
-            if (maxCount <= result?.Items.Count || maxSize <= result?.Items.Sum(x => x.Value.Size) + data.ToSize())
+            if (result == null) return;
+
+            // Overwriting a key that is already cached does not add an item, so it never counts against MaxCount,
+            // and only the other items count towards MaxSize because the new value takes the place of the old one.
+            var exists = result.Items.ContainsKey(key.Value);
+            var others = result.Items.Where(x => x.Key != key.Value);
+            var overCount = !exists && maxCount <= result.Items.Count;
+            var overSize = maxSize <= others.Sum(x => x.Value.Size) + data.ToSize();
+            if (overCount || overSize)
             {
-                var keyToDrop = _cacheMonitor.Get<T>(GetTypeOptions<T>().EvictionPolicy);
+                // The incoming key is never the victim, the value was just written.
+                var keyToDrop = _cacheMonitor.Get<T>(GetTypeOptions<T>().EvictionPolicy, key);
+                if (keyToDrop == null) return;
+
                 await GetPersist<T>().DropAsync<T>(keyToDrop);
                 OnDrop<T>(keyToDrop);
             }

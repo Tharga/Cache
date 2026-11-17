@@ -104,7 +104,7 @@ builder.Services.AddCache(o =>
 builder.Services.AddCache(o =>
 {
     o.MaxConcurrentFetchCount = 20;               // Max parallel background fetches (default: 10)
-    o.WatchDogInterval = TimeSpan.FromMinutes(2); // Stale-cleanup interval (default: 60s)
+    o.WatchDogInterval = TimeSpan.FromMinutes(2); // Stale-cleanup interval (default: 60s; zero or negative disables the watchdog)
 
     o.Default = new CacheTypeOptions             // Defaults applied to all types
     {

@@ -38,7 +38,7 @@ public record Key
 
     public override int GetHashCode()
     {
-        return (_value != null ? _value.GetHashCode() : 0);
+        return _value != null ? StringComparer.OrdinalIgnoreCase.GetHashCode(_value) : 0;
     }
 }
 

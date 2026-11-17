@@ -115,4 +115,38 @@ public class KeyBuilderTests
         key.KeyParts.First().Key.Should().Be("b");
         key.KeyParts.First().Value.Should().Be("2");
     }
+
+    [Fact]
+    public void Empty_IsNotChangedBySet()
+    {
+        //Arrange
+        var first = KeyBuilder.Empty.Set("id", "1");
+
+        //Act
+        var second = KeyBuilder.Empty;
+
+        //Assert
+        first.Keys.Should().ContainKey("id");
+        second.Keys.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Empty_CanBeSetRepeatedly()
+    {
+        //Arrange
+        KeyBuilder.Empty.Set("id", "1");
+
+        //Act
+        var act = () => KeyBuilder.Empty.Set("id", "2");
+
+        //Assert
+        act.Should().NotThrow();
+        act().Keys["id"].Should().Be("2");
+    }
+
+    [Fact]
+    public void Empty_IsNewInstanceEachTime()
+    {
+        KeyBuilder.Empty.Should().NotBeSameAs(KeyBuilder.Empty);
+    }
 }
